@@ -1,0 +1,30 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+       {
+      "name": "Run console",
+      "debugPort": "9999",
+      "request": "launch",
+      "script": "${workspaceRoot}/bin/console",
+      "type": "rdbg",
+      "useTerminal": true,
+      "rdbgPath": "bundle exec rdbg",
+
+      "args": []
+    },
+    {
+      "name": "Run rspec",
+      "request": "launch",
+      "script": "respec",
+      "type": "rdbg",
+      "useTerminal": true,
+      "rdbgPath": "bundle exec rdbg",
+
+      "args": []
+    }
+    ]
+}

@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "irb"
+require "irb/completion"
+require "bundler/setup"
+require "conexa"
+require "factory_bot"
+require "faker"
+
+
+# You can add fixtures and/or initialization code here to make experimenting
+# with your gem easier. You can also use a different console, if you like.
+
+# (If you use this, don't forget to add pry to your Gemfile!)
+# require "pry"
+# Pry.start
+
+# Config IRB to enable --simple-prompt and auto indent
+IRB.conf[:PROMPT_MODE] = :SIMPLE
+IRB.conf[:AUTO_INDENT] = true
+include FactoryBot::Syntax::Methods
+
+
+FactoryBot.find_definitions
+FactoryBot.reload
+Faker::Config.locale = 'pt-BR'
+
+
+def reload!(print = true)
+  puts 'Reloading ...' if print
+  # Main project directory.
+  root_dir = File.expand_path('..', __dir__)
+  # Directories within the project that should be reloaded.
+  reload_dirs = %w{lib}
+  # Loop through and reload every file in all relevant project directories.
+  reload_dirs.each do |dir|
+    Dir.glob("#{root_dir}/#{dir}/**/*.rb").each { |f| load(f) }
+  end
+
+  FactoryBot.reload
+
+  # Return true when complete.
+  true
+end
+
+def initialize_conexa
+  pp "Initilizing..."
+
+  Conexa.configure do |config|
+    config.api_token = ENV['API_TOKEN']
+    config.api_host = ENV['API_HOST']
+  end
+
+  pp Conexa.configuration
+
+
+end
+
+initialize_conexa
+IRB.start
