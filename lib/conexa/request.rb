@@ -62,7 +62,12 @@ module Conexa
 
     def call(ressource_name)
       dt = run
-      return ConexaObject.convert({data: ConexaObject.convert(dt[:data], ressource_name), pagination: ConexaObject.convert(dt[:pagination], "pagination")}, "result") if dt[:pagination]
+
+      if dt[:pagination]
+        return ConexaObject.convert({
+          data: ConexaObject.convert(dt[:data], ressource_name),
+          pagination: ConexaObject.convert(dt[:pagination], "pagination")}, "result")
+      end
 
       ConexaObject.convert(dt[:data], ressource_name)
     end
