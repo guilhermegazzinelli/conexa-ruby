@@ -18,15 +18,15 @@ module Conexa
     def method_missing(name, *args, &block)
       name = Util.to_snake_case(name.to_s)
 
+      if @attributes["data"] && @attributes["data"].respond_to?(name) && args != ["data"]
+        return @attributes["data"].public_send name, *args, &block
+      end
+
       unless block_given?
 
         if name.end_with?('=') && args.size == 1
           attribute_name = name[0...-1]
           return self[attribute_name] = args[0]
-        end
-
-        if @attributes["data"] && @attributes["data"].respond_to?(name) && args != ["data"]
-          return @attributes["data"].public_send name, *args, &block
         end
 
         if args.size == 0
