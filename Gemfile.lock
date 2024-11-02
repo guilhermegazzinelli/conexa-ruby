@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    conexa (0.0.2)
+    conexa (0.0.3)
       jwt
       multi_json
       rest-client
