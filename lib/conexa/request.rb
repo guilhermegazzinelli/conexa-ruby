@@ -27,7 +27,7 @@ module Conexa
       response = RestClient::Request.execute request_params
 
       response = MultiJson.decode response.body
-      response.dig("data") || response
+      return {data: response.dig("data") || response, pagination: response.dig("pagination")}
 
 
       rescue RestClient::Exception => error
@@ -61,7 +61,15 @@ module Conexa
     end
 
     def call(ressource_name)
-      ConexaObject.convert run, ressource_name
+      dt = run
+
+      if dt[:pagination]
+        return ConexaObject.convert({
+          data: ConexaObject.convert(dt[:data], ressource_name),
+          pagination: ConexaObject.convert(dt[:pagination], "pagination")}, "result")
+      end
+
+      ConexaObject.convert(dt[:data], ressource_name)
     end
 
     def self.get(url, options={})
