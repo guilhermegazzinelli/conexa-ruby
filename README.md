@@ -2,6 +2,8 @@
 
 Conexa Ruby library
 
+**[Versão em Português](README_pt-BR.md)**
+
 ## Documentation
 
 - [Conexa Website](https://conexa.app/)
@@ -45,24 +47,259 @@ After configuration, you can start using the gem to interact with Conexa API res
 
 - `Bill`
 - `Charge`
+- `Company`
 - `Contract`
+- `CreditCard`
 - `Customer`
+- `InvoicingMethod`
 - `LegalPerson`
 - `Person`
 - `Plan`
 - `Product`
 - `RecurringSale`
 - `Sale`
+- `Supplier`
 
 ### Method Patterns
 
 Each resource follows a consistent set of method patterns:
 
 - `Conexa::<ResourceName>.new(params).create` - Create a new resource.
+- `Conexa::<ResourceName>.all(params)` - Find all entities of the parameter.
 - `Conexa::<ResourceName>.find(id)` - Retrieve a resource by ID.
 - `Conexa::<ResourceName>.find(filter_hash, page, size)` - Retrieve resources matching filters with pagination.
 - `Conexa::<ResourceName>.destroy(id)` - Delete a resource by ID.
 - `Conexa::<ResourceName>.find(id).destroy` - Find and delete a resource.
+
+### Pagination
+
+The API uses `page` and `size` parameters for pagination with the following defaults:
+
+- **page**: Current page number (default: `1`)
+- **size**: Number of items per page (default: `100`)
+
+#### Calling with Pagination
+
+```ruby
+# Default pagination (page 1, 100 items)
+Conexa::Customer.all
+
+# Positional arguments (page, size)
+Conexa::Customer.all(2, 50)  # page 2, 50 items per page
+
+# Named parameters
+Conexa::Customer.all(page: 3, size: 25)
+
+# Using the `where` alias
+Conexa::Customer.where(page: 2, size: 10)
+```
+
+### Result Object
+
+When listing resources, the API returns a `Conexa::Result` object containing:
+
+- **data**: Array of resource objects
+- **pagination**: `Conexa::Pagination` object with pagination metadata
+
+```ruby
+result = Conexa::Customer.all
+
+# Access the data array
+result.data        # => Array of Conexa::Customer objects
+
+# Access pagination info
+result.pagination  # => Conexa::Pagination object
+```
+
+#### Method Delegation to Data
+
+The `Result` object automatically delegates Array methods to the `data` attribute. This means you can call methods like `first`, `second`, `last`, `length`, `count`, `each`, `map`, etc. directly on the result:
+
+```ruby
+result = Conexa::Customer.all
+
+# These methods are delegated to result.data
+result.first       # => First Conexa::Customer (same as result.data.first)
+result.second      # => Second Conexa::Customer
+result.last        # => Last Conexa::Customer
+result.length      # => Number of items in current page
+result.count       # => Number of items in current page
+result.empty?      # => true if no results
+
+# Direct iteration
+result.each { |customer| puts customer.name }
+
+# Transformations
+result.map(&:name)     # => Array of customer names
+result.select { |c| c.active }  # => Filter active customers
+```
+
+### Filtering
+
+You can filter results by passing parameters along with pagination. The available filters vary by resource.
+
+#### Common Filter Patterns
+
+```ruby
+# Filter by name
+Conexa::Customer.all(name: "John", page: 1, size: 10)
+
+# Filter by multiple IDs (array syntax)
+Conexa::Customer.all("id[]": [102, 103])
+
+# Filter by company
+Conexa::Customer.all("companyId[]": [3])
+Conexa::Contract.all("companyId[]": [540], page: 2, size: 5)
+
+# Multiple filters combined
+Conexa::Company.all(
+  "id[]": [3, 4],
+  trade_name: "Acme",
+  legal_name: "Acme Corp",
+  cnpj: "17.992.846/0001-58",
+  city: "São Paulo",
+  active: 1,
+  page: 1,
+  size: 5
+)
+
+# Filter bills by status
+Conexa::Bill.all(status: "pending", page: 1, size: 20)
+
+# Filter sales by date range
+Conexa::Sale.all(page: 2, size: 6)
+```
+
+#### Resource-Specific Filters
+
+| Resource | Common Filters |
+|----------|---------------|
+| Customer | `name`, `id[]`, `companyId[]` |
+| Company | `id[]`, `tradeName`, `legalName`, `cnpj`, `city`, `active` |
+| Contract | `companyId[]`, `active` |
+| Bill | `status`, `companyId[]` |
+| Plan | `id[]` |
+| Sale | `date` |
+| InvoicingMethod | `id[]`, `companyId[]`, `isActive`, `type` |
+
+### Resource-Specific Operations (Sub-processes)
+
+Some resources have additional operations beyond CRUD:
+
+#### Charge Operations
+
+```ruby
+# Settle (pay) a charge
+charge = Conexa::Charge.find(charge_id)
+charge.settle(payment_params)
+
+# Or directly by ID
+Conexa::Charge.settle(charge_id, payment_params)
+
+# Get PIX QR Code for a charge
+pix_data = Conexa::Charge.pix(charge_id)
+# Returns QR code data for payment
+```
+
+#### Contract Operations
+
+```ruby
+# End/terminate a contract
+contract = Conexa::Contract.find(contract_id)
+contract.end_contract(end_date: "2024-12-31", reason: "Customer request")
+
+# Or directly by ID
+Conexa::Contract.end_contract(contract_id, end_date: "2024-12-31")
+```
+
+#### Recurring Sale Operations
+
+```ruby
+# End a recurring sale
+recurring_sale = Conexa::RecurringSale.find(recurring_sale_id)
+recurring_sale.end_recurring_sale(end_date: "2024-12-31")
+
+# Or directly by ID
+Conexa::RecurringSale.end_recurring_sale(recurring_sale_id, end_date: "2024-12-31")
+```
+
+#### Invoicing Method
+
+```ruby
+# List invoicing methods with filters
+Conexa::InvoicingMethod.all("companyId[]": [3], is_active: 1, type: "billet")
+
+# Find by ID
+Conexa::InvoicingMethod.find(invoicing_method_id)
+```
+
+#### Credit Card
+
+```ruby
+# Create a credit card for a customer
+Conexa::CreditCard.new(
+  customer_id: customer_id,
+  card_number: "4111111111111111",
+  card_holder_name: "John Doe",
+  expiration_date: "12/25",
+  cvv: "123"
+).create
+```
+
+#### Supplier
+
+```ruby
+# Create a supplier (legal person)
+Conexa::Supplier.new(
+  company_id: company_id,
+  legal_name: "Supplier Corp",
+  trade_name: "Supplier",
+  cnpj: "12.345.678/0001-90"
+).create
+
+# Create a supplier (natural person)
+Conexa::Supplier.new(
+  company_id: company_id,
+  name: "John Supplier",
+  cpf: "123.456.789-00"
+).create
+```
+
+### Navigating Between Pages
+
+```ruby
+# Fetch first page
+page1 = Conexa::Customer.all(page: 1, size: 10)
+puts "Page 1: #{page1.data.count} customers"
+
+# Fetch next page
+page2 = Conexa::Customer.all(page: 2, size: 10)
+puts "Page 2: #{page2.data.count} customers"
+
+# Check pagination metadata
+pagination = page1.pagination
+# pagination contains total records, total pages, etc.
+```
+
+#### Iterating Through All Pages
+
+```ruby
+page = 1
+size = 100
+
+loop do
+  result = Conexa::Customer.all(page: page, size: size)
+
+  break if result.data.empty?
+
+  result.each do |customer|
+    # Process each customer
+    puts customer.name
+  end
+
+  page += 1
+end
+```
 
 ### Examples
 
@@ -401,6 +638,3 @@ This project is licensed under the [MIT License](LICENSE).
 This gem is based on the Conexa API definitions available in the official [Postman collection](https://web.postman.co/workspace/8e1887b1-bef9-4e36-848f-2b6774a81022/collection/33452984-58f4d7ab-d280-4aac-8578-8366988ff7af). It currently supports authentication via API key only.
 
 For more information about the Conexa API, visit the [official documentation](https://conexa.app/).
-```
-
-Feel free to copy and save this content as your `README.md` file.
