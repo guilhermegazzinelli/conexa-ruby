@@ -80,6 +80,30 @@ RSpec.describe Conexa::Util do
 
       expect(result).to eq(expected_output)
     end
+
+    it 'retorna hash vazio quando recebe nil' do
+      result = described_class.camelize_hash(nil)
+
+      expect(result).to eq({})
+    end
+
+    it 'trata valores nil dentro do hash sem erros' do
+      input_hash = { first_name: 'John', middle_name: nil, last_name: 'Doe' }
+      expected_output = { firstName: 'John', middleName: nil, lastName: 'Doe' }
+
+      result = described_class.camelize_hash(input_hash)
+
+      expect(result).to eq(expected_output)
+    end
+
+    it 'trata hash aninhado com valores nil' do
+      input_hash = { user_info: { first_name: 'John', address: nil } }
+      expected_output = { userInfo: { firstName: 'John', address: nil } }
+
+      result = described_class.camelize_hash(input_hash)
+
+      expect(result).to eq(expected_output)
+    end
   end
 
   describe '.camel_case_lower' do

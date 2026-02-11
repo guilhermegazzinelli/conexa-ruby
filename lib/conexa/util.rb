@@ -51,6 +51,8 @@ module Conexa
 
 
       def camelize_hash(hash)
+        return {} if hash.nil?
+
         new_hash = {}
 
         hash.each do |key, value|
