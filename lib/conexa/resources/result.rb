@@ -5,6 +5,13 @@ module Conexa
       self.data.inspect
     end
 
+    # Delegate empty? to data array instead of checking @attributes
+    # This fixes the case where Conexa returns empty results but
+    # @attributes still has pagination info, making empty? return false
+    def empty?
+      data.nil? || data.empty?
+    end
+
     def pagination
       @attributes["pagination"]
     end
