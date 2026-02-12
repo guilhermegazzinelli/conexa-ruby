@@ -5,22 +5,22 @@ module Conexa
   #
   # @example Create a sale
   #   sale = Conexa::Sale.create(
-  #     customerId: 450,
-  #     productId: 2521,
+  #     customer_id: 450,
+  #     product_id: 2521,
   #     quantity: 1,
   #     amount: 80.99
   #   )
   #
   # @example List sales
-  #   sales = Conexa::Sale.all(customerId: [450], status: 'notBilled')
+  #   sales = Conexa::Sale.all(customer_id: [450], status: 'notBilled')
   #
   class Sale < Model
     # @return [Integer] Sale ID
-    def saleId
-      @attributes['saleId']
+    def sale_id
+      @attributes['sale_id']
     end
-
-    alias_method :id, :saleId
+    alias_method :saleId, :sale_id
+    alias_method :id, :sale_id
 
     # @return [String] Sale status: paid, billed, cancelled, notBilled, 
     #   deductedFromQuota, billedCancelled, billedNegociated, partiallyPaid
@@ -29,24 +29,28 @@ module Conexa
     end
 
     # @return [Integer] Customer ID
-    def customerId
-      @attributes['customerId']
+    def customer_id
+      @attributes['customer_id']
     end
+    alias_method :customerId, :customer_id
 
     # @return [Integer, nil] Requester ID
-    def requesterId
-      @attributes['requesterId']
+    def requester_id
+      @attributes['requester_id']
     end
+    alias_method :requesterId, :requester_id
 
     # @return [Integer] Product ID
-    def productId
-      @attributes['productId']
+    def product_id
+      @attributes['product_id']
     end
+    alias_method :productId, :product_id
 
     # @return [Integer, nil] Seller (user) ID
-    def sellerId
-      @attributes['sellerId']
+    def seller_id
+      @attributes['seller_id']
     end
+    alias_method :sellerId, :seller_id
 
     # @return [Integer] Quantity
     def quantity
@@ -59,19 +63,22 @@ module Conexa
     end
 
     # @return [Float] Original amount before discount
-    def originalAmount
-      @attributes['originalAmount']
+    def original_amount
+      @attributes['original_amount']
     end
+    alias_method :originalAmount, :original_amount
 
     # @return [Float] Discount value
-    def discountValue
-      @attributes['discountValue']
+    def discount_value
+      @attributes['discount_value']
     end
+    alias_method :discountValue, :discount_value
 
     # @return [String] Reference date (W3C format)
-    def referenceDate
-      @attributes['referenceDate']
+    def reference_date
+      @attributes['reference_date']
     end
+    alias_method :referenceDate, :reference_date
 
     # @return [String, nil] Notes
     def notes
@@ -79,14 +86,16 @@ module Conexa
     end
 
     # @return [String, nil] Created at timestamp
-    def createdAt
-      @attributes['createdAt']
+    def created_at
+      @attributes['created_at']
     end
+    alias_method :createdAt, :created_at
 
     # @return [String] Updated at timestamp
-    def updatedAt
-      @attributes['updatedAt']
+    def updated_at
+      @attributes['updated_at']
     end
+    alias_method :updatedAt, :updated_at
 
     # Check if sale is billed
     # @return [Boolean]
