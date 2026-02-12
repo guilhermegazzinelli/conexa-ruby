@@ -148,8 +148,8 @@ Conexa::Customer.all(name: "João", page: 1, size: 10)
 Conexa::Customer.all("id[]": [102, 103])
 
 # Filtrar por empresa
-Conexa::Customer.all("companyId[]": [3])
-Conexa::Contract.all("companyId[]": [540], page: 2, size: 5)
+Conexa::Customer.all("company_id[]": [3])
+Conexa::Contract.all("company_id[]": [540], page: 2, size: 5)
 
 # Múltiplos filtros combinados
 Conexa::Company.all(
@@ -174,13 +174,13 @@ Conexa::Sale.all(page: 2, size: 6)
 
 | Recurso | Filtros Comuns |
 |---------|---------------|
-| Customer | `name`, `id[]`, `companyId[]` |
+| Customer | `name`, `id[]`, `company_id[]` |
 | Company | `id[]`, `tradeName`, `legalName`, `cnpj`, `city`, `active` |
-| Contract | `companyId[]`, `active` |
-| Bill | `status`, `companyId[]` |
+| Contract | `company_id[]`, `active` |
+| Bill | `status`, `company_id[]` |
 | Plan | `id[]` |
 | Sale | `date` |
-| InvoicingMethod | `id[]`, `companyId[]`, `isActive`, `type` |
+| InvoicingMethod | `id[]`, `company_id[]`, `isActive`, `type` |
 
 ### Operações Específicas de Recursos (Sub-processos)
 
@@ -227,7 +227,7 @@ Conexa::RecurringSale.end_recurring_sale(recurring_sale_id, end_date: "2024-12-3
 
 ```ruby
 # Listar meios de faturamento com filtros
-Conexa::InvoicingMethod.all("companyId[]": [3], is_active: 1, type: "billet")
+Conexa::InvoicingMethod.all("company_id[]": [3], is_active: 1, type: "billet")
 
 # Buscar por ID
 Conexa::InvoicingMethod.find(invoicing_method_id)
