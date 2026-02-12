@@ -32,22 +32,29 @@ module Conexa
       end
 
       alias_method :authenticate, :login
-
-      # DSL for Auth attributes (not a Model, so define here)
-      def attribute(snake_name)
-        camel_name = Util.camelize(snake_name.to_s)
-
-        define_method(snake_name) do
-          @attributes[snake_name.to_s]
-        end
-
-        alias_method camel_name.to_sym, snake_name
-      end
     end
 
-    attribute :user
-    attribute :token_type
-    attribute :access_token
-    attribute :expires_in
+    # @return [Hash] User object with id, type, and name
+    def user
+      @attributes['user']
+    end
+
+    # @return [String] Token type (always "Bearer")
+    def token_type
+      @attributes['token_type']
+    end
+    alias_method :tokenType, :token_type
+
+    # @return [String] JWT access token
+    def access_token
+      @attributes['access_token']
+    end
+    alias_method :accessToken, :access_token
+
+    # @return [Integer] Token expiration time in seconds
+    def expires_in
+      @attributes['expires_in']
+    end
+    alias_method :expiresIn, :expires_in
   end
 end

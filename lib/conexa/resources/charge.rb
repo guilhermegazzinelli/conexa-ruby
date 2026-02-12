@@ -14,11 +14,34 @@ module Conexa
   #   Conexa::Charge.settle(789)
   #
   class Charge < Model
-    primary_key_attribute :charge_id
-    attribute :customer_id
-    attribute :due_date
-    attribute :status
-    attribute :amount
+    # @return [Integer] Charge ID
+    def charge_id
+      @attributes['charge_id']
+    end
+    alias_method :chargeId, :charge_id
+    alias_method :id, :charge_id
+
+    # @return [String] Charge status
+    def status
+      @attributes['status']
+    end
+
+    # @return [Float] Charge amount
+    def amount
+      @attributes['amount']
+    end
+
+    # @return [String] Due date
+    def due_date
+      @attributes['due_date']
+    end
+    alias_method :dueDate, :due_date
+
+    # @return [Integer] Customer ID
+    def customer_id
+      @attributes['customer_id']
+    end
+    alias_method :customerId, :customer_id
 
     # Check if charge is paid
     # @return [Boolean]
