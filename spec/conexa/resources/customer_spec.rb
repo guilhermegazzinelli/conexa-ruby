@@ -1,38 +1,48 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
-require 'conexa'
 
-module Conexa
-  RSpec.describe Customer, vcr: { cassette_name: 'customer' } do
-    let(:customer_id) { 3 } # ID de exemplo para busca
-
-    describe '.find' do
-      it 'retrieves a customer by id' do
-        customer = Conexa::Customer.find(customer_id)
-
-        expect(customer).to be_a(Conexa::Customer)
-        expect(customer.id).to eq(customer_id)
-        expect(customer.name).to_not be_nil
+RSpec.describe Conexa::Customer do
+  describe 'class methods' do
+    describe '.url' do
+      it 'returns customers endpoint' do
+        expect(described_class.url).to eq('/customers')
       end
     end
 
-    # describe '.create' do
-    #   it 'creates a new customer' do
-    #     customer_params = { name: "New Customer", email: "customer@example.com" }
-
-    #     new_customer = Conexa::Customer.create(customer_params)
-
-    #     expect(new_customer).to be_a(Conexa::Customer)
-    #     expect(new_customer.name).to eq("New Customer")
-    #   end
-    # end
-
-    describe '.all' do
-      it 'retrieves a list of customers' do
-        customers = Conexa::Customer.all
-
-        expect(customers).to be_an(Array)
-        expect(customers.first).to be_a(Conexa::Customer)
+    describe '.show_url' do
+      it 'returns customer endpoint with id' do
+        expect(described_class.show_url(127)).to eq('/customer/127')
       end
+    end
+
+  end
+
+  describe 'inheritance' do
+    it 'inherits from Model' do
+      expect(described_class).to be < Conexa::Model
+    end
+  end
+
+  describe 'instance methods' do
+    let(:customer) do
+      described_class.new(
+        'customerId' => 127,
+        'name' => 'Test Customer',
+        'companyId' => 3
+      )
+    end
+
+    it 'has customerId' do
+      expect(customer.customer_id).to eq(127)
+    end
+
+    it 'has name' do
+      expect(customer.name).to eq('Test Customer')
+    end
+
+    it 'has companyId' do
+      expect(customer.company_id).to eq(3)
     end
   end
 end

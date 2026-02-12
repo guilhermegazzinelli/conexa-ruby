@@ -10,6 +10,7 @@ require_relative "conexa/errors"
 require_relative "conexa/util"
 require_relative "conexa/configuration"
 require_relative "conexa/order_commom"
+require_relative "conexa/token_manager"
 
 
 Dir[File.expand_path('../conexa/resources/*.rb', __FILE__)].map do |path|

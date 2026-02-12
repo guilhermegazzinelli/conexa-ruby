@@ -2,6 +2,8 @@ require 'jwt'
 
 
 module Conexa
+  # Valid client types for authentication
+  CLIENT_TYPES = [:pdv, :e_comerce].freeze
   #
   # Class to hold client authetication data
   #
