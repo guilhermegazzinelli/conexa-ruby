@@ -8,18 +8,18 @@ module Conexa
   #   charge.status  # => "pending"
   #
   # @example List charges
-  #   charges = Conexa::Charge.all(customerId: [127], status: 'pending')
+  #   charges = Conexa::Charge.all(customer_id: [127], status: 'pending')
   #
   # @example Settle (pay) a charge
   #   Conexa::Charge.settle(789)
   #
   class Charge < Model
     # @return [Integer] Charge ID
-    def chargeId
-      @attributes['chargeId']
+    def charge_id
+      @attributes['charge_id']
     end
-
-    alias_method :id, :chargeId
+    alias_method :chargeId, :charge_id
+    alias_method :id, :charge_id
 
     # @return [String] Charge status
     def status
@@ -32,14 +32,16 @@ module Conexa
     end
 
     # @return [String] Due date
-    def dueDate
-      @attributes['dueDate']
+    def due_date
+      @attributes['due_date']
     end
+    alias_method :dueDate, :due_date
 
     # @return [Integer] Customer ID
-    def customerId
-      @attributes['customerId']
+    def customer_id
+      @attributes['customer_id']
     end
+    alias_method :customerId, :customer_id
 
     # Check if charge is paid
     # @return [Boolean]
