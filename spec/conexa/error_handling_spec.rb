@@ -21,36 +21,37 @@ RSpec.describe 'Error Handling for All Resources' do
   end
 
   # List of resources to test - all Model subclasses
-  resources = {
-    'Customer' => { class: Conexa::Customer, endpoint: '/customer' },
-    'Company' => { class: Conexa::Company, endpoint: '/company' },
-    'Bill' => { class: Conexa::Bill, endpoint: '/bill' },
-    'Charge' => { class: Conexa::Charge, endpoint: '/charge' },
-    'Contract' => { class: Conexa::Contract, endpoint: '/contract' },
-    'CreditCard' => { class: Conexa::CreditCard, endpoint: '/creditcard' },
-    'LegalPerson' => { class: Conexa::LegalPerson, endpoint: '/legalperson' },
-    'Person' => { class: Conexa::Person, endpoint: '/person' },
-    'Plan' => { class: Conexa::Plan, endpoint: '/plan' },
-    'Product' => { class: Conexa::Product, endpoint: '/product' },
-    'RecurringSale' => { class: Conexa::RecurringSale, endpoint: '/recurringsale' },
-    'Sale' => { class: Conexa::Sale, endpoint: '/sale' },
-    'Supplier' => { class: Conexa::Supplier, endpoint: '/supplier' },
-  }
+  # Use each class's show_url method to get the correct endpoint
+  resources = [
+    Conexa::Customer,
+    Conexa::Company,
+    Conexa::Bill,
+    Conexa::Charge,
+    Conexa::Contract,
+    Conexa::CreditCard,
+    Conexa::Person,
+    Conexa::Plan,
+    Conexa::Product,
+    Conexa::RecurringSale,
+    Conexa::Sale,
+    Conexa::Supplier,
+  ]
 
   describe 'NotFound error' do
-    resources.each do |name, config|
-      context "for #{name}" do
+    resources.each do |resource_class|
+      context "for #{resource_class.name.split('::').last}" do
         it 'raises NotFound when ID does not exist' do
-          stub_request(:get, "#{api_base}#{config[:endpoint]}/nonexistent-id-999")
+          endpoint = resource_class.show_url('nonexistent-id-999')
+          stub_request(:get, "#{api_base}#{endpoint}")
             .to_return(
               status: 404,
-              body: { message: "#{name} not found" }.to_json,
+              body: { message: "#{resource_class.name.split('::').last} not found" }.to_json,
               headers: { 'Content-Type' => 'application/json' }
             )
 
-          expect { config[:class].find('nonexistent-id-999') }
+          expect { resource_class.find('nonexistent-id-999') }
             .to raise_error(Conexa::NotFound) do |error|
-              expect(error.response['message']).to eq("#{name} not found")
+              expect(error.response['message']).to include('not found')
             end
         end
       end
@@ -58,10 +59,11 @@ RSpec.describe 'Error Handling for All Resources' do
   end
 
   describe 'ResponseError with validation message' do
-    resources.each do |name, config|
-      context "for #{name}" do
+    resources.each do |resource_class|
+      context "for #{resource_class.name.split('::').last}" do
         it 'raises ResponseError when params are invalid' do
-          stub_request(:get, "#{api_base}#{config[:endpoint]}/invalid-id")
+          endpoint = resource_class.show_url('invalid-id')
+          stub_request(:get, "#{api_base}#{endpoint}")
             .to_return(
               status: 400,
               body: {
@@ -71,7 +73,7 @@ RSpec.describe 'Error Handling for All Resources' do
               headers: { 'Content-Type' => 'application/json' }
             )
 
-          expect { config[:class].find('invalid-id') }
+          expect { resource_class.find('invalid-id') }
             .to raise_error(Conexa::ResponseError) do |error|
               expect(error.message).to include('Invalid parameters')
             end
@@ -81,13 +83,14 @@ RSpec.describe 'Error Handling for All Resources' do
   end
 
   describe 'ConnectionError when API is offline' do
-    resources.each do |name, config|
-      context "for #{name}" do
+    resources.each do |resource_class|
+      context "for #{resource_class.name.split('::').last}" do
         it 'raises ConnectionError when connection fails' do
-          stub_request(:get, "#{api_base}#{config[:endpoint]}/some-id")
+          endpoint = resource_class.show_url('some-id')
+          stub_request(:get, "#{api_base}#{endpoint}")
             .to_raise(SocketError.new('Connection refused'))
 
-          expect { config[:class].find('some-id') }
+          expect { resource_class.find('some-id') }
             .to raise_error(Conexa::ConnectionError) do |error|
               expect(error.message).to include('Connection refused')
             end

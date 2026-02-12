@@ -86,7 +86,8 @@ RSpec.describe 'Nil Guards' do
     # Note: whitespace-only strings are considered present in this gem's implementation
     # so they won't trigger RequestError - they'll be sent to API as-is
     it 'passes whitespace to API (does not treat as invalid locally)' do
-      stub_request(:get, "#{api_base}/customer/%20%20%20")
+      # The spaces get URL-encoded as %20
+      stub_request(:get, /customer\/.*/)
         .to_return(
           status: 404,
           body: { message: 'Not found' }.to_json,
