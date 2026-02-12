@@ -1,11 +1,12 @@
 module Conexa
   class Model < ConexaObject
     class << self
-      # DSL for defining attributes with snake_case + camelCase alias
+      # DSL for primary key attribute with :id alias
+      # Other attributes work via method_missing
       # @example
-      #   attribute :customer_id
-      #   # Generates: customer_id method + customerId alias
-      def attribute(snake_name)
+      #   primary_key_attribute :charge_id
+      #   # Generates: charge_id method + chargeId alias + id alias
+      def primary_key_attribute(snake_name)
         camel_name = Util.camelize_str(snake_name.to_s)
 
         define_method(snake_name) do
@@ -13,14 +14,6 @@ module Conexa
         end
 
         alias_method camel_name.to_sym, snake_name
-      end
-
-      # DSL for primary key attribute (also aliases to :id)
-      # @example
-      #   primary_key_attribute :charge_id
-      #   # Generates: charge_id method + chargeId alias + id alias
-      def primary_key_attribute(snake_name)
-        attribute(snake_name)
         alias_method :id, snake_name
       end
     end

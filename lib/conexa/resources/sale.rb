@@ -16,19 +16,6 @@ module Conexa
   #
   class Sale < Model
     primary_key_attribute :sale_id
-    attribute :customer_id
-    attribute :requester_id
-    attribute :product_id
-    attribute :seller_id
-    attribute :quantity
-    attribute :amount
-    attribute :original_amount
-    attribute :discount_value
-    attribute :reference_date
-    attribute :notes
-    attribute :created_at
-    attribute :updated_at
-    attribute :status
 
     # Check if sale is billed
     # @return [Boolean]

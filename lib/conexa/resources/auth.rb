@@ -32,22 +32,9 @@ module Conexa
       end
 
       alias_method :authenticate, :login
-
-      # DSL for Auth attributes (not a Model, so define here)
-      def attribute(snake_name)
-        camel_name = Util.camelize_str(snake_name.to_s)
-
-        define_method(snake_name) do
-          @attributes[snake_name.to_s]
-        end
-
-        alias_method camel_name.to_sym, snake_name
-      end
     end
 
-    attribute :user
-    attribute :token_type
-    attribute :access_token
-    attribute :expires_in
+    # All attributes (user, token_type, access_token, expires_in) 
+    # are accessible via method_missing
   end
 end

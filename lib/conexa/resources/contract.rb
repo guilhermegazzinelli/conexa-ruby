@@ -16,14 +16,6 @@ module Conexa
   #
   class Contract < Model
     primary_key_attribute :contract_id
-    attribute :customer_id
-    attribute :plan_id
-    attribute :start_date
-    attribute :end_date
-    attribute :payment_day
-    attribute :status
-    attribute :value
-    attribute :billing_day
 
     # Check if contract is active
     # @return [Boolean]
@@ -47,16 +39,11 @@ module Conexa
 
     class << self
       # End a contract by ID
-      # @param id [Integer, String] contract ID
-      # @param params [Hash] options including :end_date, :reason
-      # @return [Contract]
       def end_contract(id, params = {})
         find(id).end_contract(params)
       end
 
       # Create contract with custom product items
-      # @param params [Hash] contract params including :items array
-      # @return [Contract]
       def create_with_products(params = {})
         create(params)
       end

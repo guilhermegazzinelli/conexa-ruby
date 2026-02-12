@@ -19,21 +19,6 @@ module Conexa
   #
   class Customer < Model
     primary_key_attribute :customer_id
-    attribute :company_id
-    attribute :name
-    attribute :trade_name
-    attribute :has_login_access
-    attribute :is_active
-    attribute :is_blocked
-    attribute :is_juridical_person
-    attribute :is_foreign
-    attribute :legal_person
-    attribute :natural_person
-    attribute :phones
-    attribute :emails_message
-    attribute :emails_financial_messages
-    attribute :tags_id
-    attribute :created_at
 
     # @return [Address, nil] Customer address
     def address

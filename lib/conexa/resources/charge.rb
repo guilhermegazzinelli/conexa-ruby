@@ -15,10 +15,6 @@ module Conexa
   #
   class Charge < Model
     primary_key_attribute :charge_id
-    attribute :customer_id
-    attribute :due_date
-    attribute :status
-    attribute :amount
 
     # Check if charge is paid
     # @return [Boolean]
@@ -68,30 +64,21 @@ module Conexa
 
     class << self
       # Settle a charge by ID
-      # @param id [Integer, String] charge ID
-      # @param params [Hash] optional payment details
-      # @return [Charge]
       def settle(id, params = {})
         find(id).settle(params)
       end
 
       # Cancel a charge by ID
-      # @param id [Integer, String] charge ID
-      # @return [Charge]
       def cancel(id)
         find(id).cancel
       end
 
       # Send email for a charge by ID
-      # @param id [Integer, String] charge ID
-      # @return [Charge]
       def send_email(id)
         find(id).send_email
       end
 
       # Get PIX for a charge by ID
-      # @param id [Integer, String] charge ID
-      # @return [ConexaObject]
       def pix(id)
         find(id).pix
       end
