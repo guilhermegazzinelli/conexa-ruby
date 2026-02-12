@@ -1,5 +1,7 @@
 module Conexa
   class RecurringSale < Model
+    primary_key_attribute :recurring_sale_id
+
     # End/terminate a recurring sale
     # @param params [Hash] optional parameters (e.g., endDate)
     # @return [self]
