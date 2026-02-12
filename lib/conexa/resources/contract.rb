@@ -5,22 +5,22 @@ module Conexa
   #
   # @example Create a contract
   #   contract = Conexa::Contract.create(
-  #     customerId: 127,
-  #     planId: 5,
-  #     startDate: '2024-01-01',
-  #     paymentDay: 10
+  #     customer_id: 127,
+  #     plan_id: 5,
+  #     start_date: '2024-01-01',
+  #     payment_day: 10
   #   )
   #
   # @example End a contract
-  #   Conexa::Contract.end_contract(456, endDate: '2024-12-31')
+  #   Conexa::Contract.end_contract(456, end_date: '2024-12-31')
   #
   class Contract < Model
     # @return [Integer] Contract ID
-    def contractId
-      @attributes['contractId']
+    def contract_id
+      @attributes['contract_id']
     end
-
-    alias_method :id, :contractId
+    alias_method :contractId, :contract_id
+    alias_method :id, :contract_id
 
     # @return [String] Contract status
     def status
@@ -28,29 +28,34 @@ module Conexa
     end
 
     # @return [Integer] Customer ID
-    def customerId
-      @attributes['customerId']
+    def customer_id
+      @attributes['customer_id']
     end
+    alias_method :customerId, :customer_id
 
     # @return [Integer, nil] Plan ID
-    def planId
-      @attributes['planId']
+    def plan_id
+      @attributes['plan_id']
     end
+    alias_method :planId, :plan_id
 
     # @return [String] Start date
-    def startDate
-      @attributes['startDate']
+    def start_date
+      @attributes['start_date']
     end
+    alias_method :startDate, :start_date
 
     # @return [String, nil] End date
-    def endDate
-      @attributes['endDate']
+    def end_date
+      @attributes['end_date']
     end
+    alias_method :endDate, :end_date
 
     # @return [Integer] Payment day (1-28)
-    def paymentDay
-      @attributes['paymentDay']
+    def payment_day
+      @attributes['payment_day']
     end
+    alias_method :paymentDay, :payment_day
 
     # Check if contract is active
     # @return [Boolean]
@@ -65,7 +70,7 @@ module Conexa
     end
 
     # End/terminate this contract
-    # @param params [Hash] options including :endDate, :reason
+    # @param params [Hash] options including :end_date, :reason
     # @return [self]
     def end_contract(params = {})
       Conexa::Request.post(self.class.show_url("end", primary_key), params: params).call(class_name)
@@ -75,7 +80,7 @@ module Conexa
     class << self
       # End a contract by ID
       # @param id [Integer, String] contract ID
-      # @param params [Hash] options including :endDate, :reason
+      # @param params [Hash] options including :end_date, :reason
       # @return [Contract]
       def end_contract(id, params = {})
         find(id).end_contract(params)

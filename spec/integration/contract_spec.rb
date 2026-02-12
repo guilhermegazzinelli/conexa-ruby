@@ -109,8 +109,7 @@ RSpec.describe "Contract Integration" do
     end
   end
 
-  # Skip: Bug - Resource methods use camelCase for @attributes but ConexaObject converts to snake_case
-  describe "ending a contract", skip: "Bug: camelCase vs snake_case mismatch in attributes" do
+  describe "ending a contract" do
     before do
       stub_request(:get, /test\.conexa\.app.*contract\/789/)
         .to_return(status: 200, body: contract_response, headers: { "Content-Type" => "application/json" })

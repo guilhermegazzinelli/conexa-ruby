@@ -90,9 +90,7 @@ RSpec.describe "Charge Integration" do
     end
   end
 
-  # Skip: Bug - Resource methods use camelCase for @attributes but ConexaObject converts to snake_case
-  # See issue #13
-  describe "PIX operations", skip: "Bug: camelCase vs snake_case mismatch in attributes" do
+  describe "PIX operations" do
     before do
       stub_request(:get, /test\.conexa\.app.*charge\/123/)
         .to_return(status: 200, body: charge_response, headers: { "Content-Type" => "application/json" })
@@ -115,8 +113,7 @@ RSpec.describe "Charge Integration" do
     end
   end
 
-  # Skip: Bug - Resource methods use camelCase for @attributes but ConexaObject converts to snake_case
-  describe "settling a charge", skip: "Bug: camelCase vs snake_case mismatch in attributes" do
+  describe "settling a charge" do
     let(:settled_response) do
       {
         "chargeId" => 123,
