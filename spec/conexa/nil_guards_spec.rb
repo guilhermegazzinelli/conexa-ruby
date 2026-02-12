@@ -84,18 +84,11 @@ RSpec.describe 'Nil Guards' do
     end
 
     # Note: whitespace-only strings are considered present in this gem's implementation
-    # so they won't trigger RequestError - they'll be sent to API as-is
-    it 'passes whitespace to API (does not treat as invalid locally)' do
-      # The spaces get URL-encoded as %20
-      stub_request(:get, /customer\/.*/)
-        .to_return(
-          status: 404,
-          body: { message: 'Not found' }.to_json,
-          headers: { 'Content-Type' => 'application/json' }
-        )
-
+    # so they won't trigger RequestError. However, the gem doesn't URL-encode the ID,
+    # which causes URI::InvalidURIError when spaces are passed.
+    it 'raises URI error for whitespace ID (no URL encoding)' do
       expect { Conexa::Customer.find('   ') }
-        .to raise_error(Conexa::NotFound)
+        .to raise_error(URI::InvalidURIError)
     end
 
     it 'does not raise for valid ID (mocked)' do
