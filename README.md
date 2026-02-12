@@ -48,7 +48,7 @@ end
 # List customers
 customers = Conexa::Customer.list
 customers.data.each do |customer|
-  puts "#{customer.customerId}: #{customer.name}"
+  puts "#{customer.customer_id}: #{customer.name}"
 end
 
 # Get a specific customer
@@ -57,6 +57,14 @@ puts customer.name
 puts customer.address.city
 ```
 
+## Convention
+
+This gem follows Ruby conventions:
+
+- **Parameters**: Use `snake_case` when calling methods - the gem automatically converts to `camelCase` for the API
+- **Responses**: API responses are converted from `camelCase` to `snake_case`
+- **Backwards compatibility**: `camelCase` methods are aliased (e.g., `customer.customer_id` and `customer.customerId` both work)
+
 ## Resources
 
 ### Customer
@@ -64,17 +72,17 @@ puts customer.address.city
 ```ruby
 # Create a customer (Legal Person - PJ)
 customer = Conexa::Customer.create(
-  companyId: 3,
+  company_id: 3,
   name: 'Empresa ABC Ltda',
-  tradeName: 'ABC',
-  cellNumber: '11999998888',
-  hasLoginAccess: false,
-  legalPerson: {
+  trade_name: 'ABC',
+  cell_number: '11999998888',
+  has_login_access: false,
+  legal_person: {
     cnpj: '99.557.155/0001-90',
-    foundationDate: '2020-06-12'
+    foundation_date: '2020-06-12'
   },
   address: {
-    zipCode: '13058-111',
+    zip_code: '13058-111',
     state: 'SP',
     city: 'Campinas',
     street: 'Rua Principal',
@@ -82,21 +90,21 @@ customer = Conexa::Customer.create(
     neighborhood: 'Centro'
   },
   phones: ['(11) 3333-4444'],
-  emailsMessage: ['contato@empresa.com'],
-  emailsFinancialMessages: ['financeiro@empresa.com']
+  emails_message: ['contato@empresa.com'],
+  emails_financial_messages: ['financeiro@empresa.com']
 )
 puts customer.id  # => 114
 
 # Create a customer (Natural Person - PF)
 customer = Conexa::Customer.create(
-  companyId: 3,
+  company_id: 3,
   name: 'João Silva',
-  naturalPerson: {
+  natural_person: {
     cpf: '516.079.209-05',
-    birthDate: '1990-05-15',
+    birth_date: '1990-05-15',
     profession: 'Developer'
   },
-  hasLoginAccess: true,
+  has_login_access: true,
   login: 'joao.silva',
   password: 'SecurePass123!'
 )
@@ -104,18 +112,18 @@ customer = Conexa::Customer.create(
 # Retrieve customer
 customer = Conexa::Customer.retrieve(127)
 customer.name           # => "Empresa ABC Ltda"
-customer.companyId      # => 3
-customer.isActive       # => true
+customer.company_id     # => 3
+customer.is_active      # => true
 customer.address.city   # => "Campinas"
-customer.legalPerson.cnpj  # => "99.557.155/0001-90"
+customer.legal_person['cnpj']  # => "99.557.155/0001-90"
 
 # Update customer
-Conexa::Customer.update(127, name: 'New Name', cellNumber: '11888887777')
+Conexa::Customer.update(127, name: 'New Name', cell_number: '11888887777')
 
 # List customers with filters
 customers = Conexa::Customer.list(
-  companyId: [3],
-  isActive: true,
+  company_id: [3],
+  is_active: true,
   page: 1,
   size: 20
 )
@@ -126,21 +134,21 @@ customers = Conexa::Customer.list(
 ```ruby
 # Create a contract
 contract = Conexa::Contract.create(
-  customerId: 127,
-  planId: 5,
-  startDate: '2024-01-01',
-  paymentDay: 10,
-  invoicingMethodId: 1
+  customer_id: 127,
+  plan_id: 5,
+  start_date: '2024-01-01',
+  payment_day: 10,
+  invoicing_method_id: 1
 )
 
 # Create contract with custom items
 contract = Conexa::Contract.create_with_products(
-  customerId: 127,
-  startDate: '2024-01-01',
-  paymentDay: 10,
+  customer_id: 127,
+  start_date: '2024-01-01',
+  payment_day: 10,
   items: [
-    { productId: 101, quantity: 1, amount: 299.90 },
-    { productId: 102, quantity: 2, amount: 49.90 }
+    { product_id: 101, quantity: 1, amount: 299.90 },
+    { product_id: 102, quantity: 2, amount: 49.90 }
   ]
 )
 
@@ -148,7 +156,7 @@ contract = Conexa::Contract.create_with_products(
 contract = Conexa::Contract.retrieve(456)
 
 # Cancel contract
-Conexa::Contract.cancel(456, cancelDate: '2024-12-31')
+Conexa::Contract.cancel(456, cancel_date: '2024-12-31')
 ```
 
 ### Sale (One-time)
@@ -156,12 +164,12 @@ Conexa::Contract.cancel(456, cancelDate: '2024-12-31')
 ```ruby
 # Create a one-time sale
 sale = Conexa::Sale.create(
-  customerId: 450,
-  requesterId: 458,
-  productId: 2521,
+  customer_id: 450,
+  requester_id: 458,
+  product_id: 2521,
   quantity: 1,
   amount: 80.99,
-  referenceDate: '2024-09-24T17:24:00-03:00',
+  reference_date: '2024-09-24T17:24:00-03:00',
   notes: 'WhatsApp order'
 )
 puts sale.id  # => 188481
@@ -170,14 +178,14 @@ puts sale.id  # => 188481
 sale = Conexa::Sale.retrieve(188510)
 sale.status         # => "notBilled"
 sale.amount         # => 80.99
-sale.discountValue  # => 69.21
+sale.discount_value # => 69.21
 
 # List sales
 sales = Conexa::Sale.list(
-  customerId: [450, 216],
+  customer_id: [450, 216],
   status: 'notBilled',
-  dateFrom: '2024-01-01',
-  dateTo: '2024-12-31',
+  date_from: '2024-01-01',
+  date_to: '2024-12-31',
   page: 1,
   size: 20
 )
@@ -194,14 +202,14 @@ Conexa::Sale.delete(188510)
 ```ruby
 # Create recurring sale
 recurring = Conexa::RecurringSale.create(
-  customerId: 127,
-  productId: 101,
+  customer_id: 127,
+  product_id: 101,
   quantity: 1,
-  startDate: '2024-01-01'
+  start_date: '2024-01-01'
 )
 
 # List recurring sales for a contract
-Conexa::RecurringSale.list(contractId: 456)
+Conexa::RecurringSale.list(contract_id: 456)
 ```
 
 ### Charge
@@ -209,16 +217,16 @@ Conexa::RecurringSale.list(contractId: 456)
 ```ruby
 # Retrieve charge
 charge = Conexa::Charge.retrieve(789)
-charge.status      # => "paid"
-charge.amount      # => 299.90
-charge.dueDate     # => "2024-02-10"
+charge.status     # => "paid"
+charge.amount     # => 299.90
+charge.due_date   # => "2024-02-10"
 
 # List charges
 charges = Conexa::Charge.list(
-  customerId: [127],
+  customer_id: [127],
   status: 'pending',
-  dueDateFrom: '2024-01-01',
-  dueDateTo: '2024-12-31'
+  due_date_from: '2024-01-01',
+  due_date_to: '2024-12-31'
 )
 
 # Cancel charge
@@ -236,7 +244,7 @@ bill = Conexa::Bill.retrieve(101)
 
 # List bills
 bills = Conexa::Bill.list(
-  customerId: [127],
+  customer_id: [127],
   page: 1,
   size: 50
 )
@@ -246,7 +254,7 @@ bills = Conexa::Bill.list(
 
 ```ruby
 # List plans
-plans = Conexa::Plan.list(companyId: [3])
+plans = Conexa::Plan.list(company_id: [3])
 
 # Retrieve plan
 plan = Conexa::Plan.retrieve(5)
@@ -258,7 +266,7 @@ plan.price  # => 99.90
 
 ```ruby
 # List products
-products = Conexa::Product.list(companyId: [3])
+products = Conexa::Product.list(company_id: [3])
 
 # Retrieve product
 product = Conexa::Product.retrieve(101)
@@ -269,19 +277,19 @@ product = Conexa::Product.retrieve(101)
 ```ruby
 # Add credit card to customer
 card = Conexa::CreditCard.create(
-  customerId: 127,
-  cardNumber: '4111111111111111',
-  cardholderName: 'JOAO SILVA',
-  expirationMonth: '12',
-  expirationYear: '2025',
+  customer_id: 127,
+  card_number: '4111111111111111',
+  cardholder_name: 'JOAO SILVA',
+  expiration_month: '12',
+  expiration_year: '2025',
   cvv: '123'
 )
 
 # List customer's cards
-cards = Conexa::CreditCard.list(customerId: 127)
+cards = Conexa::CreditCard.list(customer_id: 127)
 
 # Delete card
-Conexa::CreditCard.delete(cardId)
+Conexa::CreditCard.delete(card_id)
 ```
 
 ### Company (Unit)
@@ -303,17 +311,17 @@ All list endpoints return paginated results:
 ```ruby
 result = Conexa::Customer.list(page: 1, size: 20)
 
-result.data           # Array of customers
-result.pagination.currentPage   # => 1
-result.pagination.totalPages    # => 10
-result.pagination.totalItems    # => 195
-result.pagination.itemPerPage   # => 20
+result.data                       # Array of customers
+result.pagination.current_page    # => 1
+result.pagination.total_pages     # => 10
+result.pagination.total_items     # => 195
+result.pagination.item_per_page   # => 20
 
 # Iterate through pages
 loop do
   result.data.each { |customer| process(customer) }
-  break if result.pagination.currentPage >= result.pagination.totalPages
-  result = Conexa::Customer.list(page: result.pagination.currentPage + 1)
+  break if result.pagination.current_page >= result.pagination.total_pages
+  result = Conexa::Customer.list(page: result.pagination.current_page + 1)
 end
 ```
 
@@ -364,6 +372,7 @@ The Conexa API has a limit of **100 requests per minute**. Response headers incl
 - [API Documentation](https://conexa.app/api-docs)
 - [Postman Collection](https://documenter.getpostman.com/view/25182821/2s93RZMpcB)
 - [Discord Community](https://discord.gg/zW28sJh7Nz) - Conexa for Developers
+- [REFERENCE.md](REFERENCE.md) - Complete API reference for LLMs/AI agents
 
 ## Development
 
