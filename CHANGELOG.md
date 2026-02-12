@@ -1,26 +1,42 @@
-## 0.0.6
-### Bug Fixes
-- **camelize_hash nil guard** - Adiciona proteção contra `nil` no método `camelize_hash` para evitar `NoMethodError: undefined method 'each' for nil:NilClass` quando a API retorna resposta inesperada ([#6](https://github.com/guilhermegazzinelli/conexa-ruby/pull/6))
-- **Result#empty? delegation** - Corrige `empty?` no `Result` para delegar para `data.empty?` ao invés de verificar `@attributes.empty?`. Isso corrige o caso onde resultados vazios retornavam `false` em `empty?` devido à presença de dados de paginação ([#7](https://github.com/guilhermegazzinelli/conexa-ruby/pull/7), closes [#5](https://github.com/guilhermegazzinelli/conexa-ruby/issues/5))
+# Changelog
 
-### Tests
-- Adiciona testes para `camelize_hash` com input `nil`
-- Adiciona spec completo para `Conexa::Result` (`spec/conexa/resources/result_spec.rb`)
+All notable changes to this project will be documented in this file.
 
-## 0.0.5
-- Adiciona novos recursos: `InvoicingMethod`, `CreditCard`, `Supplier`, `Company`
-- Adiciona sub-processos em recursos existentes:
-  - `Charge#settle` - Quitar cobrança
-  - `Charge#pix` - Obter QR Code PIX
-  - `Contract#end_contract` - Encerrar contrato
-  - `RecurringSale#end_recurring_sale` - Encerrar venda recorrente
-- Adiciona documentação de paginação, filtragem e navegação no README
-- Adiciona README em português (README_pt-BR.md)
-- Documenta delegação de métodos do Result para data (first, last, length, etc.)
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.0.4
-- Adiciona paginação em elementos que retornam array e possuam pagination no objeto de resposta
-- Adiciona delegação para métodos com blocos ao receber um Conexa::Result
+## [Unreleased]
 
-## 0.0.1
-- Início da Gem Conexa Ruby
+### Added
+- Comprehensive README with usage examples for all resources
+- Auth resource for username/password authentication
+- Spec fixtures extracted from official Postman collection
+- YARD documentation for main resources (Customer, Sale, Charge, Contract)
+- Helper methods: `billed?`, `paid?`, `editable?`, `active?`, `ended?`
+- Customer convenience methods: `persons`, `contracts`, `charges`
+- Charge methods: `cancel`, `send_email`, `pix`
+
+### Fixed
+- Renamed `Addres` to `Address` (typo fix)
+
+### Changed
+- Improved documentation across all resources
+
+## [0.0.6] - 2024-02-11
+
+### Fixed
+- `Result#empty?` now correctly delegates to data array
+- `Util.camelize_hash` guards against nil values
+
+## [0.0.5] - 2024-01-15
+
+### Added
+- Initial release with core resources
+- Customer, Contract, Sale, Charge, Bill resources
+- RecurringSale with end functionality
+- Charge with settle and PIX methods
+- Pagination support
+
+[Unreleased]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.6...HEAD
+[0.0.6]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.5...v0.0.6
+[0.0.5]: https://github.com/guilhermegazzinelli/conexa-ruby/releases/tag/v0.0.5
