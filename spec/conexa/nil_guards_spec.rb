@@ -92,15 +92,15 @@ RSpec.describe 'Nil Guards' do
     end
 
     it 'does not raise for valid ID (mocked)' do
-      stub_request(:get, "#{api_base}/customer/valid-id-123")
+      stub_request(:get, "#{api_base}/customer/123")
         .to_return(
           status: 200,
-          body: { id: 'valid-id-123', name: 'Test' }.to_json,
+          body: { customerId: 123, name: 'Test' }.to_json,
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      result = Conexa::Customer.find('valid-id-123')
-      expect(result.id).to eq('valid-id-123')
+      result = Conexa::Customer.find(123)
+      expect(result.customer_id).to eq(123)
     end
   end
 
