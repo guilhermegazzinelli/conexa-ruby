@@ -1,0 +1,10 @@
+{
+    "user": {
+        "id": 1,
+        "type": "admin",
+        "name": "Luke Skywalker"
+    },
+    "tokenType": "Bearer",
+    "accessToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2ODA4MDMwOTQsImp0aSI6IlNoODYyd2FVRS9IajRKQmZESHVIZGl4aGg2VkM3cUVyVjJkQ1J4czV6K009IiwiaXNzIjoibm9tZWNsaWVudGUiLCJuYmYiOjE2ODA4MDMwOTQsImV4cCI6MTY4MDgwNjY5NCwiZGF0YSI6eyJpZCI6MSwidHlwZSI6ImFkbWluIiwicGVyc29uQ3VzdG9tZXJJZCI6bnVsbH19.nbooHw_WK98ThubaDCa2GvvlblKuvXMQrVRuaYN1pwQ",
+    "expiresIn": 28800
+}

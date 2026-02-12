@@ -1,640 +1,395 @@
-# Conexa Ruby Gem
+# Conexa Ruby
 
-Conexa Ruby library
+[![Gem Version](https://badge.fury.io/rb/conexa.svg)](https://badge.fury.io/rb/conexa)
+[![CI](https://github.com/guilhermegazzinelli/conexa-ruby/actions/workflows/main.yml/badge.svg)](https://github.com/guilhermegazzinelli/conexa-ruby/actions)
+
+Ruby client for the [Conexa API](https://conexa.app/) - Billing and subscription management platform.
 
 **[Versão em Português](README_pt-BR.md)**
+
+## Installation
+
+Add to your Gemfile:
+
+```ruby
+gem 'conexa'
+```
+
+Or install directly:
+
+```shell
+gem install conexa
+```
+
+## Configuration
+
+```ruby
+Conexa.configure do |config|
+  config.subdomain = 'YOUR_SUBDOMAIN'  # your-company.conexa.app
+  config.api_token = 'YOUR_API_TOKEN'  # Application Token from Conexa
+end
+```
+
+### Authentication Methods
+
+1. **Application Token** (recommended): Created in Conexa at **Config > Integrações > API / Token**
+2. **Username/Password**: Use the `/auth` endpoint to get a JWT token
+
+## Quick Start
+
+```ruby
+require 'conexa'
+
+Conexa.configure do |config|
+  config.subdomain = 'mycompany'
+  config.api_token = ENV['CONEXA_API_TOKEN']
+end
+
+# List customers
+customers = Conexa::Customer.list
+customers.data.each do |customer|
+  puts "#{customer.customerId}: #{customer.name}"
+end
+
+# Get a specific customer
+customer = Conexa::Customer.retrieve(127)
+puts customer.name
+puts customer.address.city
+```
+
+## Resources
+
+### Customer
+
+```ruby
+# Create a customer (Legal Person - PJ)
+customer = Conexa::Customer.create(
+  companyId: 3,
+  name: 'Empresa ABC Ltda',
+  tradeName: 'ABC',
+  cellNumber: '11999998888',
+  hasLoginAccess: false,
+  legalPerson: {
+    cnpj: '99.557.155/0001-90',
+    foundationDate: '2020-06-12'
+  },
+  address: {
+    zipCode: '13058-111',
+    state: 'SP',
+    city: 'Campinas',
+    street: 'Rua Principal',
+    number: '100',
+    neighborhood: 'Centro'
+  },
+  phones: ['(11) 3333-4444'],
+  emailsMessage: ['contato@empresa.com'],
+  emailsFinancialMessages: ['financeiro@empresa.com']
+)
+puts customer.id  # => 114
+
+# Create a customer (Natural Person - PF)
+customer = Conexa::Customer.create(
+  companyId: 3,
+  name: 'João Silva',
+  naturalPerson: {
+    cpf: '516.079.209-05',
+    birthDate: '1990-05-15',
+    profession: 'Developer'
+  },
+  hasLoginAccess: true,
+  login: 'joao.silva',
+  password: 'SecurePass123!'
+)
+
+# Retrieve customer
+customer = Conexa::Customer.retrieve(127)
+customer.name           # => "Empresa ABC Ltda"
+customer.companyId      # => 3
+customer.isActive       # => true
+customer.address.city   # => "Campinas"
+customer.legalPerson.cnpj  # => "99.557.155/0001-90"
+
+# Update customer
+Conexa::Customer.update(127, name: 'New Name', cellNumber: '11888887777')
+
+# List customers with filters
+customers = Conexa::Customer.list(
+  companyId: [3],
+  isActive: true,
+  page: 1,
+  size: 20
+)
+```
+
+### Contract
+
+```ruby
+# Create a contract
+contract = Conexa::Contract.create(
+  customerId: 127,
+  planId: 5,
+  startDate: '2024-01-01',
+  paymentDay: 10,
+  invoicingMethodId: 1
+)
+
+# Create contract with custom items
+contract = Conexa::Contract.create_with_products(
+  customerId: 127,
+  startDate: '2024-01-01',
+  paymentDay: 10,
+  items: [
+    { productId: 101, quantity: 1, amount: 299.90 },
+    { productId: 102, quantity: 2, amount: 49.90 }
+  ]
+)
+
+# Retrieve contract
+contract = Conexa::Contract.retrieve(456)
+
+# Cancel contract
+Conexa::Contract.cancel(456, cancelDate: '2024-12-31')
+```
+
+### Sale (One-time)
+
+```ruby
+# Create a one-time sale
+sale = Conexa::Sale.create(
+  customerId: 450,
+  requesterId: 458,
+  productId: 2521,
+  quantity: 1,
+  amount: 80.99,
+  referenceDate: '2024-09-24T17:24:00-03:00',
+  notes: 'WhatsApp order'
+)
+puts sale.id  # => 188481
+
+# Retrieve sale
+sale = Conexa::Sale.retrieve(188510)
+sale.status         # => "notBilled"
+sale.amount         # => 80.99
+sale.discountValue  # => 69.21
+
+# List sales
+sales = Conexa::Sale.list(
+  customerId: [450, 216],
+  status: 'notBilled',
+  dateFrom: '2024-01-01',
+  dateTo: '2024-12-31',
+  page: 1,
+  size: 20
+)
+
+# Update sale
+Conexa::Sale.update(188510, quantity: 2, amount: 150.00)
+
+# Delete sale (only if not billed)
+Conexa::Sale.delete(188510)
+```
+
+### Recurring Sale
+
+```ruby
+# Create recurring sale
+recurring = Conexa::RecurringSale.create(
+  customerId: 127,
+  productId: 101,
+  quantity: 1,
+  startDate: '2024-01-01'
+)
+
+# List recurring sales for a contract
+Conexa::RecurringSale.list(contractId: 456)
+```
+
+### Charge
+
+```ruby
+# Retrieve charge
+charge = Conexa::Charge.retrieve(789)
+charge.status      # => "paid"
+charge.amount      # => 299.90
+charge.dueDate     # => "2024-02-10"
+
+# List charges
+charges = Conexa::Charge.list(
+  customerId: [127],
+  status: 'pending',
+  dueDateFrom: '2024-01-01',
+  dueDateTo: '2024-12-31'
+)
+
+# Cancel charge
+Conexa::Charge.cancel(789)
+
+# Send charge by email
+Conexa::Charge.send_email(789)
+```
+
+### Bill (Invoice)
+
+```ruby
+# Retrieve bill
+bill = Conexa::Bill.retrieve(101)
+
+# List bills
+bills = Conexa::Bill.list(
+  customerId: [127],
+  page: 1,
+  size: 50
+)
+```
+
+### Plan
+
+```ruby
+# List plans
+plans = Conexa::Plan.list(companyId: [3])
+
+# Retrieve plan
+plan = Conexa::Plan.retrieve(5)
+plan.name   # => "Plano Básico"
+plan.price  # => 99.90
+```
+
+### Product
+
+```ruby
+# List products
+products = Conexa::Product.list(companyId: [3])
+
+# Retrieve product
+product = Conexa::Product.retrieve(101)
+```
+
+### Credit Card
+
+```ruby
+# Add credit card to customer
+card = Conexa::CreditCard.create(
+  customerId: 127,
+  cardNumber: '4111111111111111',
+  cardholderName: 'JOAO SILVA',
+  expirationMonth: '12',
+  expirationYear: '2025',
+  cvv: '123'
+)
+
+# List customer's cards
+cards = Conexa::CreditCard.list(customerId: 127)
+
+# Delete card
+Conexa::CreditCard.delete(cardId)
+```
+
+### Company (Unit)
+
+```ruby
+# List companies/units
+companies = Conexa::Company.list
+
+# Retrieve company
+company = Conexa::Company.retrieve(3)
+company.name      # => "Matriz"
+company.document  # => "12.345.678/0001-90"
+```
+
+## Pagination
+
+All list endpoints return paginated results:
+
+```ruby
+result = Conexa::Customer.list(page: 1, size: 20)
+
+result.data           # Array of customers
+result.pagination.currentPage   # => 1
+result.pagination.totalPages    # => 10
+result.pagination.totalItems    # => 195
+result.pagination.itemPerPage   # => 20
+
+# Iterate through pages
+loop do
+  result.data.each { |customer| process(customer) }
+  break if result.pagination.currentPage >= result.pagination.totalPages
+  result = Conexa::Customer.list(page: result.pagination.currentPage + 1)
+end
+```
+
+## Error Handling
+
+```ruby
+begin
+  customer = Conexa::Customer.create(name: '')
+rescue Conexa::ValidationError => e
+  # Field validation errors (400)
+  e.errors.each do |error|
+    puts "#{error['field']}: #{error['messages'].join(', ')}"
+  end
+rescue Conexa::AuthenticationError => e
+  # Authentication required (401)
+  puts e.message
+rescue Conexa::AuthorizationError => e
+  # Not authorized (403)
+  puts e.message
+rescue Conexa::NotFoundError => e
+  # Resource not found (404)
+  puts e.message
+rescue Conexa::UnprocessableError => e
+  # Business logic error (422)
+  e.errors.each do |error|
+    puts "#{error['code']}: #{error['message']}"
+  end
+rescue Conexa::RateLimitError => e
+  # Too many requests (429)
+  puts "Rate limit exceeded. Retry after #{e.retry_after} seconds"
+rescue Conexa::ApiError => e
+  # Generic API error
+  puts "Error #{e.status}: #{e.message}"
+end
+```
+
+## Rate Limiting
+
+The Conexa API has a limit of **100 requests per minute**. Response headers include:
+
+- `X-Rate-Limit-Limit`: Maximum requests in 60s
+- `X-Rate-Limit-Remaining`: Remaining requests in 60s
+- `X-Rate-Limit-Reset`: Seconds until reset
 
 ## Documentation
 
 - [Conexa Website](https://conexa.app/)
 - [API Documentation](https://conexa.app/api-docs)
-- [Conexa API Postman Collection](https://web.postman.co/workspace/8e1887b1-bef9-4e36-848f-2b6774a81022/collection/33452984-58f4d7ab-d280-4aac-8578-8366988ff7af)
+- [Postman Collection](https://documenter.getpostman.com/view/25182821/2s93RZMpcB)
+- [Discord Community](https://discord.gg/zW28sJh7Nz) - Conexa for Developers
 
-## Getting Started
+## Development
 
-### Install
+```bash
+# Install dependencies
+bundle install
 
-```shell
-gem install conexa-ruby
+# Run tests
+bundle exec rspec
+
+# Run linter
+bundle exec rubocop
 ```
 
-Or add the following line to your `Gemfile`:
-
-```ruby
-gem 'conexa-ruby'
-```
-
-Then run `bundle install` from your shell.
-
-### Configure Your API Key
-
-You can set your API credentials in Ruby:
-
-```ruby
-Conexa.configure do |config|
-  config.api_token = ENV['API_TOKEN']
-  config.api_host  = ENV['API_HOST']
-end
-```
-
-Ensure that you have set the environment variables `API_TOKEN` and `API_HOST` with your Conexa API token and host URL.
-
-## Usage
-
-After configuration, you can start using the gem to interact with Conexa API resources.
-
-### Available Resources
-
-- `Bill`
-- `Charge`
-- `Company`
-- `Contract`
-- `CreditCard`
-- `Customer`
-- `InvoicingMethod`
-- `LegalPerson`
-- `Person`
-- `Plan`
-- `Product`
-- `RecurringSale`
-- `Sale`
-- `Supplier`
-
-### Method Patterns
-
-Each resource follows a consistent set of method patterns:
-
-- `Conexa::<ResourceName>.new(params).create` - Create a new resource.
-- `Conexa::<ResourceName>.all(params)` - Find all entities of the parameter.
-- `Conexa::<ResourceName>.find(id)` - Retrieve a resource by ID.
-- `Conexa::<ResourceName>.find(filter_hash, page, size)` - Retrieve resources matching filters with pagination.
-- `Conexa::<ResourceName>.destroy(id)` - Delete a resource by ID.
-- `Conexa::<ResourceName>.find(id).destroy` - Find and delete a resource.
-
-### Pagination
-
-The API uses `page` and `size` parameters for pagination with the following defaults:
-
-- **page**: Current page number (default: `1`)
-- **size**: Number of items per page (default: `100`)
-
-#### Calling with Pagination
-
-```ruby
-# Default pagination (page 1, 100 items)
-Conexa::Customer.all
-
-# Positional arguments (page, size)
-Conexa::Customer.all(2, 50)  # page 2, 50 items per page
-
-# Named parameters
-Conexa::Customer.all(page: 3, size: 25)
-
-# Using the `where` alias
-Conexa::Customer.where(page: 2, size: 10)
-```
-
-### Result Object
-
-When listing resources, the API returns a `Conexa::Result` object containing:
-
-- **data**: Array of resource objects
-- **pagination**: `Conexa::Pagination` object with pagination metadata
-
-```ruby
-result = Conexa::Customer.all
-
-# Access the data array
-result.data        # => Array of Conexa::Customer objects
-
-# Access pagination info
-result.pagination  # => Conexa::Pagination object
-```
-
-#### Method Delegation to Data
-
-The `Result` object automatically delegates Array methods to the `data` attribute. This means you can call methods like `first`, `second`, `last`, `length`, `count`, `each`, `map`, etc. directly on the result:
-
-```ruby
-result = Conexa::Customer.all
-
-# These methods are delegated to result.data
-result.first       # => First Conexa::Customer (same as result.data.first)
-result.second      # => Second Conexa::Customer
-result.last        # => Last Conexa::Customer
-result.length      # => Number of items in current page
-result.count       # => Number of items in current page
-result.empty?      # => true if no results
-
-# Direct iteration
-result.each { |customer| puts customer.name }
-
-# Transformations
-result.map(&:name)     # => Array of customer names
-result.select { |c| c.active }  # => Filter active customers
-```
-
-### Filtering
-
-You can filter results by passing parameters along with pagination. The available filters vary by resource.
-
-#### Common Filter Patterns
-
-```ruby
-# Filter by name
-Conexa::Customer.all(name: "John", page: 1, size: 10)
-
-# Filter by multiple IDs (array syntax)
-Conexa::Customer.all("id[]": [102, 103])
-
-# Filter by company
-Conexa::Customer.all("companyId[]": [3])
-Conexa::Contract.all("companyId[]": [540], page: 2, size: 5)
-
-# Multiple filters combined
-Conexa::Company.all(
-  "id[]": [3, 4],
-  trade_name: "Acme",
-  legal_name: "Acme Corp",
-  cnpj: "17.992.846/0001-58",
-  city: "São Paulo",
-  active: 1,
-  page: 1,
-  size: 5
-)
-
-# Filter bills by status
-Conexa::Bill.all(status: "pending", page: 1, size: 20)
-
-# Filter sales by date range
-Conexa::Sale.all(page: 2, size: 6)
-```
-
-#### Resource-Specific Filters
-
-| Resource | Common Filters |
-|----------|---------------|
-| Customer | `name`, `id[]`, `companyId[]` |
-| Company | `id[]`, `tradeName`, `legalName`, `cnpj`, `city`, `active` |
-| Contract | `companyId[]`, `active` |
-| Bill | `status`, `companyId[]` |
-| Plan | `id[]` |
-| Sale | `date` |
-| InvoicingMethod | `id[]`, `companyId[]`, `isActive`, `type` |
-
-### Resource-Specific Operations (Sub-processes)
-
-Some resources have additional operations beyond CRUD:
-
-#### Charge Operations
-
-```ruby
-# Settle (pay) a charge
-charge = Conexa::Charge.find(charge_id)
-charge.settle(payment_params)
-
-# Or directly by ID
-Conexa::Charge.settle(charge_id, payment_params)
-
-# Get PIX QR Code for a charge
-pix_data = Conexa::Charge.pix(charge_id)
-# Returns QR code data for payment
-```
-
-#### Contract Operations
-
-```ruby
-# End/terminate a contract
-contract = Conexa::Contract.find(contract_id)
-contract.end_contract(end_date: "2024-12-31", reason: "Customer request")
-
-# Or directly by ID
-Conexa::Contract.end_contract(contract_id, end_date: "2024-12-31")
-```
-
-#### Recurring Sale Operations
-
-```ruby
-# End a recurring sale
-recurring_sale = Conexa::RecurringSale.find(recurring_sale_id)
-recurring_sale.end_recurring_sale(end_date: "2024-12-31")
-
-# Or directly by ID
-Conexa::RecurringSale.end_recurring_sale(recurring_sale_id, end_date: "2024-12-31")
-```
-
-#### Invoicing Method
-
-```ruby
-# List invoicing methods with filters
-Conexa::InvoicingMethod.all("companyId[]": [3], is_active: 1, type: "billet")
-
-# Find by ID
-Conexa::InvoicingMethod.find(invoicing_method_id)
-```
-
-#### Credit Card
-
-```ruby
-# Create a credit card for a customer
-Conexa::CreditCard.new(
-  customer_id: customer_id,
-  card_number: "4111111111111111",
-  card_holder_name: "John Doe",
-  expiration_date: "12/25",
-  cvv: "123"
-).create
-```
-
-#### Supplier
-
-```ruby
-# Create a supplier (legal person)
-Conexa::Supplier.new(
-  company_id: company_id,
-  legal_name: "Supplier Corp",
-  trade_name: "Supplier",
-  cnpj: "12.345.678/0001-90"
-).create
-
-# Create a supplier (natural person)
-Conexa::Supplier.new(
-  company_id: company_id,
-  name: "John Supplier",
-  cpf: "123.456.789-00"
-).create
-```
-
-### Navigating Between Pages
-
-```ruby
-# Fetch first page
-page1 = Conexa::Customer.all(page: 1, size: 10)
-puts "Page 1: #{page1.data.count} customers"
-
-# Fetch next page
-page2 = Conexa::Customer.all(page: 2, size: 10)
-puts "Page 2: #{page2.data.count} customers"
-
-# Check pagination metadata
-pagination = page1.pagination
-# pagination contains total records, total pages, etc.
-```
-
-#### Iterating Through All Pages
-
-```ruby
-page = 1
-size = 100
-
-loop do
-  result = Conexa::Customer.all(page: page, size: size)
-
-  break if result.data.empty?
-
-  result.each do |customer|
-    # Process each customer
-    puts customer.name
-  end
-
-  page += 1
-end
-```
-
-### Examples
-
-#### Customers
-
-##### Creating a Customer
-
-```ruby
-customer = Conexa::Customer.new(
-  name:  'John Doe',
-  email: 'john.doe@example.com',
-  phone: '555-1234'
-).create
-```
-
-##### Retrieving a Customer
-
-```ruby
-customer = Conexa::Customer.find(customer_id)
-```
-
-##### Updating a Customer
-
-```ruby
-customer = Conexa::Customer.find(customer_id)
-customer.email = 'new.email@example.com'
-customer.save
-```
-
-##### Deleting a Customer
-
-```ruby
-Conexa::Customer.destroy(customer_id)
-```
-
-Or:
-
-```ruby
-customer = Conexa::Customer.find(customer_id)
-customer.destroy
-```
-
-##### Listing Customers
-
-```ruby
-customers = Conexa::Customer.find({ name: 'John Doe' }, 1, 20)
-```
-
-#### Bills
-
-##### Creating a Bill
-
-```ruby
-bill = Conexa::Bill.new(
-  customer_id: customer_id,
-  amount:      1000,    # in cents
-  due_date:    '2024-12-31'
-).create
-```
-
-##### Retrieving a Bill
-
-```ruby
-bill = Conexa::Bill.find(bill_id)
-```
-
-##### Deleting a Bill
-
-```ruby
-Conexa::Bill.destroy(bill_id)
-```
-
-##### Listing Bills
-
-```ruby
-bills = Conexa::Bill.find({ status: 'pending' }, 1, 20)
-```
-
-#### Charges
-
-##### Creating a Charge
-
-```ruby
-charge = Conexa::Charge.new(
-  customer_id:          customer_id,
-  amount:               1000,    # in cents
-  payment_method:       'credit_card',
-  card_number:          '4111111111111111',
-  card_holder_name:     'John Doe',
-  card_expiration_date: '12/25',
-  card_cvv:             '123'
-).create
-```
-
-##### Retrieving a Charge
-
-```ruby
-charge = Conexa::Charge.find(charge_id)
-```
-
-##### Deleting a Charge
-
-```ruby
-Conexa::Charge.destroy(charge_id)
-```
-
-##### Listing Charges
-
-```ruby
-charges = Conexa::Charge.find({ status: 'paid' }, 1, 20)
-```
-
-#### Plans
-
-##### Creating a Plan
-
-```ruby
-plan = Conexa::Plan.new(
-  name:          'Premium Plan',
-  amount:        4990,   # in cents
-  billing_cycle: 'monthly'
-).create
-```
-
-##### Retrieving a Plan
-
-```ruby
-plan = Conexa::Plan.find(plan_id)
-```
-
-##### Deleting a Plan
-
-```ruby
-Conexa::Plan.destroy(plan_id)
-```
-
-##### Listing Plans
-
-```ruby
-plans = Conexa::Plan.find({}, 1, 20)
-```
-
-#### Contracts
-
-##### Creating a Contract
-
-```ruby
-contract = Conexa::Contract.new(
-  customer_id: customer_id,
-  plan_id:     plan_id,
-  start_date:  '2024-01-01',
-  end_date:    '2024-12-31'
-).create
-```
-
-##### Retrieving a Contract
-
-```ruby
-contract = Conexa::Contract.find(contract_id)
-```
-
-##### Deleting a Contract
-
-```ruby
-Conexa::Contract.destroy(contract_id)
-```
-
-##### Listing Contracts
-
-```ruby
-contracts = Conexa::Contract.find({ active: true }, 1, 20)
-```
-
-#### Products
-
-##### Creating a Product
-
-```ruby
-product = Conexa::Product.new(
-  name:        'Product Name',
-  description: 'Product Description',
-  price:       2990  # in cents
-).create
-```
-
-##### Retrieving a Product
-
-```ruby
-product = Conexa::Product.find(product_id)
-```
-
-##### Deleting a Product
-
-```ruby
-Conexa::Product.destroy(product_id)
-```
-
-##### Listing Products
-
-```ruby
-products = Conexa::Product.find({ category: 'Electronics' }, 1, 20)
-```
-
-#### Sales
-
-##### Creating a Sale
-
-```ruby
-sale = Conexa::Sale.new(
-  customer_id: customer_id,
-  product_id:  product_id,
-  quantity:    2,
-  total_amount: 5980  # in cents
-).create
-```
-
-##### Retrieving a Sale
-
-```ruby
-sale = Conexa::Sale.find(sale_id)
-```
-
-##### Deleting a Sale
-
-```ruby
-Conexa::Sale.destroy(sale_id)
-```
-
-##### Listing Sales
-
-```ruby
-sales = Conexa::Sale.find({ date: '2024-01-01' }, 1, 20)
-```
-
-#### Recurring Sales
-
-##### Creating a Recurring Sale
-
-```ruby
-recurring_sale = Conexa::RecurringSale.new(
-  customer_id: customer_id,
-  plan_id:     plan_id,
-  start_date:  '2024-01-01'
-).create
-```
-
-##### Retrieving a Recurring Sale
-
-```ruby
-recurring_sale = Conexa::RecurringSale.find(recurring_sale_id)
-```
-
-##### Deleting a Recurring Sale
-
-```ruby
-Conexa::RecurringSale.destroy(recurring_sale_id)
-```
-
-##### Listing Recurring Sales
-
-```ruby
-recurring_sales = Conexa::RecurringSale.find({ active: true }, 1, 20)
-```
-
-### Common Methods
-
-Each resource provides common methods:
-
-- `new(params).create` - Create a new record.
-- `find(id)` - Retrieve a specific record by ID.
-- `find(filter_hash, page, size)` - Retrieve records matching filters with pagination.
-- `destroy(id)` - Delete a record by ID.
-- `find(id).destroy` - Find and delete a record.
-
-### Resource-Specific Operations
-
-Some resources may offer additional methods specific to their functionality. Refer to the [Conexa API Documentation](https://conexa.app/api-docs) for detailed information.
-
-## Validating Webhooks
-
-To ensure that all received webhooks are sent by Conexa, you should validate the signature provided in the HTTP header `X-Signature`. You can validate it using the raw payload and the signature.
-
-```ruby
-valid = Conexa::Webhook.valid_request_signature?(raw_payload, signature)
-```
-
-### Rails Example
-
-If you are using Rails, you can validate the webhook in your controller:
-
-```ruby
-class WebhooksController < ApplicationController
-  skip_before_action :verify_authenticity_token
-
-  def receive
-    if valid_webhook?
-      # Handle your code here
-      # Webhook payload is in params
-    else
-      render_invalid_webhook_response
-    end
-  end
-
-  private
-
-  def valid_webhook?
-    raw_payload = request.raw_post
-    signature   = request.headers['X-Signature']
-    Conexa::Webhook.valid_request_signature?(raw_payload, signature)
-  end
-
-  def render_invalid_webhook_response
-    render json: { error: 'Invalid webhook' }, status: 400
-  end
-end
-```
-
-## Undocumented Features
-
-This gem is stable but under continuous development. This README provides a quick overview of its main features.
-
-You can explore the source code to see all [supported resources](lib/conexa/resources). We will continue to document and add support for all features listed in the [Conexa API Documentation](https://conexa.app/api-docs).
-
-Feel free to contribute by sending pull requests.
-
-## Support
-
-If you have any problems or suggestions, please open an issue [here](https://github.com/guilhermegazzinelli/conexa-ruby/issues).
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -am 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Create a Pull Request
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+MIT License. See [LICENSE](LICENSE) for details.
 
-## Disclaimer
+## Changelog
 
-This gem is based on the Conexa API definitions available in the official [Postman collection](https://web.postman.co/workspace/8e1887b1-bef9-4e36-848f-2b6774a81022/collection/33452984-58f4d7ab-d280-4aac-8578-8366988ff7af). It currently supports authentication via API key only.
-
-For more information about the Conexa API, visit the [official documentation](https://conexa.app/).
+See [CHANGELOG.md](CHANGELOG.md) for release history.

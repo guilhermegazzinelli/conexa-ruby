@@ -1,0 +1,22 @@
+{
+    "status": "notBilled",
+    "createdAt": "2024-09-24T17:24:00-03:00",
+    "updatedAt": "2024-09-26T19:12:19-03:00",
+    "product": {
+        "id": 2521,
+        "name": "Café15",
+        "description": null,
+        "companyId": 3
+    },
+    "saleId": 188510,
+    "amount": 80.99,
+    "sellerId": 534,
+    "quantity": 1,
+    "productId": 2521,
+    "customerId": 450,
+    "requesterId": 458,
+    "referenceDate": "2024-09-24T17:24:00-03:00",
+    "discountValue": 69.21,
+    "originalAmount": 150.2,
+    "notes": "Solicitação pelo WhatsApp"
+}

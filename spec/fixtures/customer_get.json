@@ -1,0 +1,206 @@
+{
+    "address": {
+        "additionalDetails": "Sala 4, Térreo",
+        "city": "Campinas",
+        "neighborhood": "Conjunto Habitacional Parque da Floresta",
+        "number": "443",
+        "state": {
+            "id": 26,
+            "name": "São Paulo",
+            "abbreviation": "SP"
+        },
+        "street": "Rua Alziro Arten",
+        "zipCode": "13058-111"
+    },
+    "automaticallyIssueNfse": null,
+    "cellNumber": "11988997766",
+    "companyId": 3,
+    "createdAt": "2023-05-29T17:33:22-03:00",
+    "customerId": 127,
+    "emails": null,
+    "emailsFinancialMessages": [
+        "financeiro@fakeabc.com",
+        " financeiro.fakeabc@gmail.com"
+    ],
+    "emailsMessage": [
+        "admin@fakeabc.com",
+        "crm@fakeabc.com"
+    ],
+    "extraFields": [
+        {
+            "id": 1,
+            "name": "UTM",
+            "value": "Instagram"
+        },
+        {
+            "id": 2,
+            "name": "External ID",
+            "value": "1001"
+        }
+    ],
+    "fieldOfActivity": "Indústria",
+    "firstName": "Fake",
+    "hasLoginAccess": null,
+    "isActive": true,
+    "isBlocked": false,
+    "isForeign": false,
+    "isJuridicalPerson": true,
+    "legalPerson": {
+        "cnpj": "99.557.155/0001-90",
+        "foundationDate": "2020-06-12",
+        "municipalInscription": "145263",
+        "stateInscription": "4569"
+    },
+    "login": null,
+    "name": "Empresa Fake ABC Ltda",
+    "notes": "Uma empresa que produz droides de batalha, incluindo os Droidekas",
+    "notesNfse": null,
+    "phones": [
+        "7522225455",
+        "7538853344"
+    ],
+    "pronunciation": null,
+    "tagsId": [
+        3
+    ],
+    "taxDeductions": {
+        "iss": false
+    },
+    "tradeName": "Fake ABC",
+    "website": "fakeabc.app"
+}
+{
+    "data": [
+        {
+            "address": {
+                "additionalDetails": "Sala 4, Térreo -1",
+                "city": "Sao Paulo",
+                "neighborhood": "Conjunto Habitacional Parque da Floresta 4",
+                "number": "432A",
+                "state": {
+                    "id": 26,
+                    "name": "São Paulo",
+                    "abbreviation": "SP"
+                },
+                "street": "Rua ABCDEF",
+                "zipCode": "13058-112"
+            },
+            "automaticallyIssueNfse": "notIssue",
+            "cellNumber": "75999999999",
+            "companyId": 3,
+            "createdAt": "2023-11-24T18:21:54-03:00",
+            "customerId": 102,
+            "emailsFinancialMessages": [
+                "lorem.ipsum@mauris.com"
+            ],
+            "emailsMessage": [
+                "lorem.ipsum@mauris.com"
+            ],
+            "extraFields": [
+                {
+                    "id": 1,
+                    "name": "UTM",
+                    "value": "Instagram"
+                },
+                {
+                    "id": 2,
+                    "name": "External ID",
+                    "value": "1001"
+                }
+            ],
+            "fieldOfActivity": "Indústria de Software",
+            "firstName": "Caleb",
+            "hasIssRetention": true,
+            "hasLoginAccess": false,
+            "isActive": true,
+            "isBlocked": false,
+            "isForeign": false,
+            "isJuridicalPerson": false,
+            "login": null,
+            "name": "Thiago Miguel Calebe Carvalho Sertanejo",
+            "naturalPerson": {
+                "birthDate": "1977-05-01",
+                "cpf": "111.111.111-11",
+                "issuingAuthority": "SSP BA",
+                "maritalStatus": "single",
+                "profession": "Developer",
+                "rg": "789456123"
+            },
+            "notes": "Stack: Node.js, Go, Ruby, Java, PHP e Python",
+            "notesNfse": "Serviço Intelectual",
+            "phones": [
+                "11987654321",
+                "75999999999"
+            ],
+            "pronunciation": null,
+            "tradeName": "Caleb",
+            "website": "caleb.app"
+        },
+        {
+            "address": {
+                "additionalDetails": null,
+                "city": "Cangucu",
+                "neighborhood": "Prado Redondo",
+                "number": "424",
+                "state": {
+                    "id": 23,
+                    "name": "Rio Grande do Sul",
+                    "abbreviation": "RS"
+                },
+                "street": "Rua Machado Brasil",
+                "zipCode": "96700-001"
+            },
+            "automaticallyIssueNfse": "notIssue",
+            "cellNumber": "75999999999",
+            "companyId": 3,
+            "createdAt": "2023-11-30T14:29:26-03:00",
+            "customerId": 103,
+            "emailsFinancialMessages": [
+                "lorem.ipsum@mauris.com"
+            ],
+            "emailsMessage": [
+                "lorem.ipsum@mauris.com"
+            ],
+            "extraFields": [
+                {
+                    "id": 1,
+                    "name": "UTM",
+                    "value": "Instagram"
+                },
+                {
+                    "id": 2,
+                    "name": "External ID",
+                    "value": "1002"
+                }
+            ],
+            "fieldOfActivity": "Comércio atacadista de solda",
+            "firstName": "DISTRIBUIDORA",
+            "hasIssRetention": false,
+            "hasLoginAccess": false,
+            "isActive": true,
+            "isBlocked": false,
+            "isForeign": false,
+            "isJuridicalPerson": true,
+            "legalPerson": {
+                "cnpj": "11.111.111/0001-11",
+                "foundationDate": "2011-11-10",
+                "municipalInscription": null,
+                "stateInscription": null
+            },
+            "login": null,
+            "name": "RENBERG XOTE LUNAR LTDA - TEF",
+            "notes": null,
+            "notesNfse": null,
+            "phones": null,
+            "pronunciation": null,
+            "tradeName": "DISTRIBUIDORA AVANTI",
+            "website": null
+        }
+    ],
+    "pagination": {
+        "itemPerPage": 10,
+        "currentPage": 1,
+        "totalPages": 1,
+        "totalItems": 2
+    }
+}

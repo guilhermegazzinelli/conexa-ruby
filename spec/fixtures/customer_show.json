@@ -1,0 +1,71 @@
+{
+    "address": {
+        "additionalDetails": "Sala 4, Térreo",
+        "city": "Campinas",
+        "neighborhood": "Conjunto Habitacional Parque da Floresta",
+        "number": "443",
+        "state": {
+            "id": 26,
+            "name": "São Paulo",
+            "abbreviation": "SP"
+        },
+        "street": "Rua Alziro Arten",
+        "zipCode": "13058-111"
+    },
+    "automaticallyIssueNfse": null,
+    "cellNumber": "11988997766",
+    "companyId": 3,
+    "createdAt": "2023-05-29T17:33:22-03:00",
+    "customerId": 127,
+    "emails": null,
+    "emailsFinancialMessages": [
+        "financeiro@fakeabc.com",
+        " financeiro.fakeabc@gmail.com"
+    ],
+    "emailsMessage": [
+        "admin@fakeabc.com",
+        "crm@fakeabc.com"
+    ],
+    "extraFields": [
+        {
+            "id": 1,
+            "name": "UTM",
+            "value": "Instagram"
+        },
+        {
+            "id": 2,
+            "name": "External ID",
+            "value": "1001"
+        }
+    ],
+    "fieldOfActivity": "Indústria",
+    "firstName": "Fake",
+    "hasLoginAccess": null,
+    "isActive": true,
+    "isBlocked": false,
+    "isForeign": false,
+    "isJuridicalPerson": true,
+    "legalPerson": {
+        "cnpj": "99.557.155/0001-90",
+        "foundationDate": "2020-06-12",
+        "municipalInscription": "145263",
+        "stateInscription": "4569"
+    },
+    "login": null,
+    "name": "Empresa Fake ABC Ltda",
+    "notes": "Uma empresa que produz droides de batalha, incluindo os Droidekas",
+    "notesNfse": null,
+    "phones": [
+        "7522225455",
+        "7538853344"
+    ],
+    "pronunciation": null,
+    "tagsId": [
+        3
+    ],
+    "taxDeductions": {
+        "iss": false
+    },
+    "tradeName": "Fake ABC",
+    "website": "fakeabc.app"
+}
