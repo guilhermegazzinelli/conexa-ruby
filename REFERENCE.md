@@ -38,6 +38,33 @@ rails generate conexa:install
 # Creates config/initializers/conexa.rb
 ```
 
+## Convention: snake_case
+
+This gem follows Ruby/Rails conventions. Use **snake_case** for all parameters - the gem automatically converts to camelCase for the API.
+
+```ruby
+# ✅ Correct - snake_case
+Conexa::Customer.create(
+  company_id: 3,
+  legal_person: { cnpj: '99.557.155/0001-90' }
+)
+
+# ❌ Avoid - camelCase (works but not idiomatic)
+Conexa::Customer.create(
+  companyId: 3,
+  legalPerson: { cnpj: '99.557.155/0001-90' }
+)
+```
+
+Response attributes are also accessible in snake_case:
+```ruby
+customer = Conexa::Customer.find(127)
+customer.customer_id      # => 127
+customer.company_id       # => 3
+customer.is_active        # => true
+customer.legal_person     # => { cnpj: '...' }
+```
+
 ## Resources
 
 ### Customer
@@ -47,31 +74,31 @@ Manages clients (pessoas físicas ou jurídicas).
 ```ruby
 # Create customer (Pessoa Jurídica)
 customer = Conexa::Customer.create(
-  companyId: 3,
+  company_id: 3,
   name: 'Empresa ABC Ltda',
-  legalPerson: { cnpj: '99.557.155/0001-90' },
-  emailsMessage: ['contato@abc.com.br'],
+  legal_person: { cnpj: '99.557.155/0001-90' },
+  emails_message: ['contato@abc.com.br'],
   phones: ['31999998888']
 )
 
 # Create customer (Pessoa Física)
 customer = Conexa::Customer.create(
-  companyId: 3,
+  company_id: 3,
   name: 'João Silva',
-  naturalPerson: { cpf: '123.456.789-00' }
+  natural_person: { cpf: '123.456.789-00' }
 )
 
 # Find by ID
 customer = Conexa::Customer.find(127)
-customer.name           # => "Empresa ABC Ltda"
-customer.customerId     # => 127
-customer.isActive       # => true
-customer.address        # => Address object or nil
+customer.name             # => "Empresa ABC Ltda"
+customer.customer_id      # => 127
+customer.is_active        # => true
+customer.address          # => Address object or nil
 
 # List with filters
 customers = Conexa::Customer.all(
-  companyId: [3],
-  isActive: true,
+  company_id: [3],
+  is_active: true,
   page: 1,
   size: 50
 )
@@ -84,31 +111,26 @@ customer.save
 customer.destroy
 # or
 Conexa::Customer.destroy(127)
-
-# Related data
-Conexa::Customer.persons(127)    # List requesters
-Conexa::Customer.contracts(127)  # List contracts
-Conexa::Customer.charges(127)    # List charges
 ```
 
 **Customer attributes:**
-- `customerId` - ID
-- `companyId` - Unit/company ID
+- `customer_id` - ID
+- `company_id` - Unit/company ID
 - `name` - Full name
-- `tradeName` - Trade name (optional)
-- `hasLoginAccess` - Has portal access
-- `isActive` - Active status
-- `isBlocked` - Blocked status
-- `isJuridicalPerson` - Is PJ (legal person)
-- `isForeign` - Is foreigner
+- `trade_name` - Trade name (optional)
+- `has_login_access` - Has portal access
+- `is_active` - Active status
+- `is_blocked` - Blocked status
+- `is_juridical_person` - Is PJ (legal person)
+- `is_foreign` - Is foreigner
 - `address` - Address object
-- `legalPerson` - PJ data (cnpj, etc)
-- `naturalPerson` - PF data (cpf, etc)
+- `legal_person` - PJ data (cnpj, etc)
+- `natural_person` - PF data (cpf, etc)
 - `phones` - Array of phones
-- `emailsMessage` - General emails
-- `emailsFinancialMessages` - Financial emails
-- `tagsId` - Tag IDs
-- `createdAt` - Creation timestamp
+- `emails_message` - General emails
+- `emails_financial_messages` - Financial emails
+- `tags_id` - Tag IDs
+- `created_at` - Creation timestamp
 
 ---
 
@@ -119,60 +141,54 @@ Manages recurring billing contracts.
 ```ruby
 # Create contract
 contract = Conexa::Contract.create(
-  customerId: 127,
-  planId: 5,
-  startDate: '2024-01-01',
-  paymentDay: 10,
-  invoicingMethodId: 1
+  customer_id: 127,
+  plan_id: 5,
+  start_date: '2024-01-01',
+  payment_day: 10,
+  invoicing_method_id: 1
 )
 
 # Create with custom products (no plan)
 contract = Conexa::Contract.create_with_products(
-  customerId: 127,
-  startDate: '2024-01-01',
-  paymentDay: 10,
+  customer_id: 127,
+  start_date: '2024-01-01',
+  payment_day: 10,
   items: [
-    { productId: 100, quantity: 1, amount: 99.90 },
-    { productId: 101, quantity: 2, amount: 50.00 }
+    { product_id: 100, quantity: 1, amount: 99.90 },
+    { product_id: 101, quantity: 2, amount: 50.00 }
   ]
 )
 
 # Find contract
 contract = Conexa::Contract.find(456)
-contract.status      # => "active"
-contract.active?     # => true
-contract.planId      # => 5
-contract.paymentDay  # => 10
+contract.status       # => "active"
+contract.plan_id      # => 5
+contract.payment_day  # => 10
 
 # List contracts
 contracts = Conexa::Contract.all(
-  customerId: [127],
+  customer_id: [127],
   status: 'active'
 )
 
 # End/terminate contract
-contract.end_contract(endDate: '2024-12-31', reason: 'Cliente solicitou')
+contract.end_contract(end_date: '2024-12-31', reason: 'Cliente solicitou')
 # or
-Conexa::Contract.end_contract(456, endDate: '2024-12-31')
+Conexa::Contract.end_contract(456, end_date: '2024-12-31')
 
 # Update
-contract.paymentDay = 15
+contract.payment_day = 15
 contract.save
 ```
 
 **Contract attributes:**
-- `contractId` - ID
-- `customerId` - Customer ID
-- `planId` - Plan ID (optional)
+- `contract_id` - ID
+- `customer_id` - Customer ID
+- `plan_id` - Plan ID (optional)
 - `status` - Status (active, ended, cancelled)
-- `startDate` - Start date
-- `endDate` - End date (if terminated)
-- `paymentDay` - Day of month for billing (1-28)
-
-**Methods:**
-- `active?` - Check if active
-- `ended?` - Check if ended/cancelled
-- `end_contract(params)` - Terminate contract
+- `start_date` - Start date
+- `end_date` - End date (if terminated)
+- `payment_day` - Day of month for billing (1-28)
 
 ---
 
@@ -183,29 +199,27 @@ Manages invoices/boletos.
 ```ruby
 # Find charge
 charge = Conexa::Charge.find(789)
-charge.status     # => "pending"
-charge.amount     # => 199.90
-charge.dueDate    # => "2024-02-10"
-charge.pending?   # => true
-charge.paid?      # => false
+charge.status      # => "pending"
+charge.amount      # => 199.90
+charge.due_date    # => "2024-02-10"
 
 # List charges
 charges = Conexa::Charge.all(
-  customerId: [127],
+  customer_id: [127],
   status: 'pending',
-  dueDateFrom: '2024-01-01',
-  dueDateTo: '2024-01-31'
+  due_date_from: '2024-01-01',
+  due_date_to: '2024-01-31'
 )
 
 # Settle (mark as paid)
-charge.settle(paymentDate: '2024-02-05', paymentValue: 199.90)
+charge.settle(payment_date: '2024-02-05', payment_value: 199.90)
 # or
-Conexa::Charge.settle(789, paymentDate: '2024-02-05')
+Conexa::Charge.settle(789, payment_date: '2024-02-05')
 
 # Get PIX QR Code
 pix = charge.pix
-pix.qrCode       # => "00020126..."
-pix.qrCodeImage  # => Base64 image
+pix.qr_code        # => "00020126..."
+pix.qr_code_image  # => Base64 image
 
 # Send email notification
 charge.send_email
@@ -219,14 +233,13 @@ Conexa::Charge.cancel(789)
 ```
 
 **Charge attributes:**
-- `chargeId` - ID
-- `customerId` - Customer ID
+- `charge_id` - ID
+- `customer_id` - Customer ID
 - `status` - Status (pending, paid, overdue, cancelled)
 - `amount` - Amount due
-- `dueDate` - Due date
+- `due_date` - Due date
 
 **Methods:**
-- `pending?` / `paid?` / `overdue?` - Status checks
 - `settle(params)` - Mark as paid
 - `pix` - Get PIX payment data
 - `send_email` - Send notification
@@ -241,26 +254,25 @@ Manages one-time sales.
 ```ruby
 # Create sale
 sale = Conexa::Sale.create(
-  customerId: 450,
-  productId: 2521,
+  customer_id: 450,
+  product_id: 2521,
   quantity: 1,
   amount: 80.99,
-  referenceDate: '2024-01-15',
+  reference_date: '2024-01-15',
   notes: 'Venda avulsa'
 )
 
 # Find sale
 sale = Conexa::Sale.find(1234)
-sale.status        # => "notBilled"
-sale.amount        # => 80.99
-sale.editable?     # => true (if notBilled)
+sale.status   # => "notBilled"
+sale.amount   # => 80.99
 
 # List sales
 sales = Conexa::Sale.all(
-  customerId: [450],
+  customer_id: [450],
   status: 'notBilled',
-  referenceDateFrom: '2024-01-01',
-  referenceDateTo: '2024-01-31'
+  reference_date_from: '2024-01-01',
+  reference_date_to: '2024-01-31'
 )
 
 # Update (only if notBilled)
@@ -293,14 +305,14 @@ rs = Conexa::RecurringSale.find(555)
 
 # List recurring sales
 recurring = Conexa::RecurringSale.all(
-  contractId: [456],
+  contract_id: [456],
   status: 'active'
 )
 
 # End recurring sale
-rs.end_recurring_sale(endDate: '2024-12-31')
+rs.end_recurring_sale(end_date: '2024-12-31')
 # or
-Conexa::RecurringSale.end_recurring_sale(555, endDate: '2024-12-31')
+Conexa::RecurringSale.end_recurring_sale(555, end_date: '2024-12-31')
 ```
 
 ---
@@ -316,7 +328,7 @@ plan.name   # => "Plano Básico"
 plan.amount # => 99.90
 
 # List plans
-plans = Conexa::Plan.all(companyId: [3])
+plans = Conexa::Plan.all(company_id: [3])
 ```
 
 **Note:** Plans cannot be created/updated via API. Use Conexa dashboard.
@@ -333,7 +345,7 @@ product = Conexa::Product.find(100)
 product.name  # => "Mensalidade"
 
 # List products
-products = Conexa::Product.all(companyId: [3])
+products = Conexa::Product.all(company_id: [3])
 ```
 
 **Note:** Products cannot be created/updated via API. Use Conexa dashboard.
@@ -349,7 +361,7 @@ Read-only resource for financial bills (contas a pagar).
 bill = Conexa::Bill.find(321)
 
 # List bills
-bills = Conexa::Bill.all(companyId: [3])
+bills = Conexa::Bill.all(company_id: [3])
 ```
 
 ---
@@ -377,11 +389,11 @@ Manages suppliers (fornecedores).
 supplier = Conexa::Supplier.find(50)
 
 # List suppliers
-suppliers = Conexa::Supplier.all(companyId: [3])
+suppliers = Conexa::Supplier.all(company_id: [3])
 
 # Create supplier
 supplier = Conexa::Supplier.create(
-  companyId: 3,
+  company_id: 3,
   name: 'Fornecedor XYZ'
 )
 ```
@@ -398,7 +410,7 @@ card = Conexa::CreditCard.find(99)
 
 # Create (tokenized)
 card = Conexa::CreditCard.create(
-  customerId: 127,
+  customer_id: 127,
   token: 'card_token_from_gateway'
 )
 ```
@@ -412,12 +424,10 @@ Manages requesters (solicitantes) for a customer. Limited API access.
 ```ruby
 # Create person for customer
 person = Conexa::Person.create(
-  customerId: 127,
+  customer_id: 127,
   name: 'Maria Solicitante',
   email: 'maria@empresa.com'
 )
-
-# Note: find/all not available directly - use Customer.persons(id)
 ```
 
 ---
@@ -492,12 +502,12 @@ Common filter parameters across resources:
 ```ruby
 # Date ranges
 Conexa::Charge.all(
-  dueDateFrom: '2024-01-01',
-  dueDateTo: '2024-01-31'
+  due_date_from: '2024-01-01',
+  due_date_to: '2024-01-31'
 )
 
 # Multiple IDs
-Conexa::Customer.all(companyId: [1, 2, 3])
+Conexa::Customer.all(company_id: [1, 2, 3])
 
 # Status filters
 Conexa::Contract.all(status: 'active')
@@ -505,9 +515,9 @@ Conexa::Sale.all(status: 'notBilled')
 
 # Combined
 Conexa::Charge.all(
-  customerId: [127],
+  customer_id: [127],
   status: 'pending',
-  dueDateFrom: '2024-01-01',
+  due_date_from: '2024-01-01',
   page: 1,
   size: 100
 )
@@ -519,7 +529,7 @@ Conexa::Charge.all(
 
 | Resource | find | all | create | save | destroy | Special Methods |
 |----------|------|-----|--------|------|---------|-----------------|
-| Customer | ✅ | ✅ | ✅ | ✅ | ✅ | persons, contracts, charges |
+| Customer | ✅ | ✅ | ✅ | ✅ | ✅ | - |
 | Contract | ✅ | ✅ | ✅ | ✅ | ✅ | end_contract |
 | Charge | ✅ | ✅ | ❌ | ❌ | ❌ | settle, pix, cancel, send_email |
 | Sale | ✅ | ✅ | ✅ | ✅ | ✅ | - |
