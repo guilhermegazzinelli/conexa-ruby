@@ -3,12 +3,20 @@
 require 'spec_helper'
 
 RSpec.describe 'Pagination Edge Cases' do
-  let(:api_base) { 'https://checkbits.conexa.app' }
+  let(:api_host) { 'https://checkbits.conexa.app' }
+  let(:api_base) { "#{api_host}/index.php/api/v2" }
+
+  around(:each) do |example|
+    VCR.turned_off do
+      WebMock.enable!
+      example.run
+    end
+  end
 
   before(:each) do
     Conexa.configure do |c|
       c.api_token = 'test_token'
-      c.api_host = api_base
+      c.api_host = api_host
     end
   end
 
