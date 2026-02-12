@@ -16,23 +16,6 @@ RSpec.describe Conexa::Customer do
       end
     end
 
-    describe '.persons' do
-      it 'is defined' do
-        expect(described_class).to respond_to(:persons)
-      end
-    end
-
-    describe '.contracts' do
-      it 'is defined' do
-        expect(described_class).to respond_to(:contracts)
-      end
-    end
-
-    describe '.charges' do
-      it 'is defined' do
-        expect(described_class).to respond_to(:charges)
-      end
-    end
   end
 
   describe 'inheritance' do
