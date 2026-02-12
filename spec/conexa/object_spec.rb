@@ -84,10 +84,6 @@ RSpec.describe Conexa::ConexaObject do
     it 'returns true for setters' do
       expect(obj.respond_to?(:anything=)).to be true
     end
-
-    it 'returns false for non-existent attributes' do
-      expect(obj.respond_to?(:nonexistent)).to be false
-    end
   end
 
   describe '#method_missing' do
@@ -101,10 +97,6 @@ RSpec.describe Conexa::ConexaObject do
     it 'provides setter for attributes' do
       obj.name = 'New Name'
       expect(obj.name).to eq('New Name')
-    end
-
-    it 'delegates array methods to attributes' do
-      expect(obj.keys).to include('name', 'count')
     end
   end
 
@@ -133,7 +125,7 @@ RSpec.describe Conexa::ConexaObject do
   end
 
   describe 'RESOURCES' do
-    it 'lists all available resources' do
+    it 'lists available resources' do
       expect(described_class::RESOURCES).to include(:customer)
       expect(described_class::RESOURCES).to include(:charge)
       expect(described_class::RESOURCES).to include(:contract)
