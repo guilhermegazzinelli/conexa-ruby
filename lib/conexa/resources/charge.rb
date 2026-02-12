@@ -13,35 +13,21 @@ module Conexa
   # @example Settle (pay) a charge
   #   Conexa::Charge.settle(789)
   #
+  # @!attribute [r] charge_id
+  #   @return [Integer] Charge ID (also accessible as #id)
+  # @!attribute [r] customer_id
+  #   @return [Integer] Customer ID
+  # @!attribute [r] status
+  #   @return [String] Status: pending, paid, overdue, cancelled
+  # @!attribute [r] amount
+  #   @return [Float] Charge amount
+  # @!attribute [r] due_date
+  #   @return [String] Due date
+  # @!attribute [r] paid_at
+  #   @return [String, nil] Payment date
+  #
   class Charge < Model
-    # @return [Integer] Charge ID
-    def charge_id
-      @attributes['charge_id']
-    end
-    alias_method :chargeId, :charge_id
-    alias_method :id, :charge_id
-
-    # @return [String] Charge status
-    def status
-      @attributes['status']
-    end
-
-    # @return [Float] Charge amount
-    def amount
-      @attributes['amount']
-    end
-
-    # @return [String] Due date
-    def due_date
-      @attributes['due_date']
-    end
-    alias_method :dueDate, :due_date
-
-    # @return [Integer] Customer ID
-    def customer_id
-      @attributes['customer_id']
-    end
-    alias_method :customerId, :customer_id
+    primary_key_attribute :charge_id
 
     # Check if charge is paid
     # @return [Boolean]
@@ -70,7 +56,7 @@ module Conexa
     end
 
     # Get PIX QR Code for this charge
-    # @return [ConexaObject] PIX data including QR code
+    # @return [ConexaObject] PIX data including qr_code and qr_code_base64
     def pix
       Conexa::Request.get(self.class.show_url("pix", primary_key)).call("pix")
     end

@@ -17,107 +17,59 @@ module Conexa
   # @example List customers
   #   customers = Conexa::Customer.all(company_id: [3], is_active: true)
   #
+  # @!attribute [r] customer_id
+  #   @return [Integer] Customer ID (also accessible as #id)
+  # @!attribute [r] company_id
+  #   @return [Integer] Company/Unit ID
+  # @!attribute [r] name
+  #   @return [String] Customer name
+  # @!attribute [r] trade_name
+  #   @return [String, nil] Trade name
+  # @!attribute [r] has_login_access
+  #   @return [Boolean] Whether customer has login access
+  # @!attribute [r] is_active
+  #   @return [Boolean] Whether customer is active
+  # @!attribute [r] is_blocked
+  #   @return [Boolean] Whether customer is blocked
+  # @!attribute [r] is_juridical_person
+  #   @return [Boolean] Whether customer is a legal person (PJ)
+  # @!attribute [r] is_foreign
+  #   @return [Boolean] Whether customer is a foreigner
+  # @!attribute [r] legal_person
+  #   @return [Hash, nil] Legal person data (cnpj, foundation_date, etc.)
+  # @!attribute [r] natural_person
+  #   @return [Hash, nil] Natural person data (cpf, birth_date, etc.)
+  # @!attribute [r] created_at
+  #   @return [String, nil] Created at timestamp (W3C format)
+  #
   class Customer < Model
-    # @return [Integer] Customer ID
-    def customer_id
-      @attributes['customer_id']
-    end
-    alias_method :customerId, :customer_id
-    alias_method :id, :customer_id
+    primary_key_attribute :customer_id
 
-    # @return [Integer] Company/Unit ID
-    def company_id
-      @attributes['company_id']
-    end
-    alias_method :companyId, :company_id
-
-    # @return [String] Customer name
-    def name
-      @attributes['name']
+    # @return [Array<String>] Phone numbers (empty array if null)
+    def phones
+      @attributes['phones'] || []
     end
 
-    # @return [String, nil] Trade name
-    def trade_name
-      @attributes['trade_name']
+    # @return [Array<String>] Message emails (empty array if null)
+    def emails_message
+      @attributes['emails_message'] || []
     end
-    alias_method :tradeName, :trade_name
 
-    # @return [Boolean] Whether customer has login access
-    def has_login_access
-      @attributes['has_login_access']
+    # @return [Array<String>] Financial emails (empty array if null)
+    def emails_financial_messages
+      @attributes['emails_financial_messages'] || []
     end
-    alias_method :hasLoginAccess, :has_login_access
 
-    # @return [Boolean] Whether customer is active
-    def is_active
-      @attributes['is_active']
+    # @return [Array<Integer>] Tag IDs (empty array if null)
+    def tags_id
+      @attributes['tags_id'] || []
     end
-    alias_method :isActive, :is_active
-
-    # @return [Boolean] Whether customer is blocked
-    def is_blocked
-      @attributes['is_blocked']
-    end
-    alias_method :isBlocked, :is_blocked
-
-    # @return [Boolean] Whether customer is a legal person (PJ)
-    def is_juridical_person
-      @attributes['is_juridical_person']
-    end
-    alias_method :isJuridicalPerson, :is_juridical_person
-
-    # @return [Boolean] Whether customer is a foreigner
-    def is_foreign
-      @attributes['is_foreign']
-    end
-    alias_method :isForeign, :is_foreign
 
     # @return [Address, nil] Customer address
     def address
       return nil unless @attributes['address']
       Address.new(@attributes['address'])
     end
-
-    # @return [Hash, nil] Legal person data (CNPJ, etc.)
-    def legal_person
-      @attributes['legal_person']
-    end
-    alias_method :legalPerson, :legal_person
-
-    # @return [Hash, nil] Natural person data (CPF, etc.)
-    def natural_person
-      @attributes['natural_person']
-    end
-    alias_method :naturalPerson, :natural_person
-
-    # @return [Array<String>] Phone numbers
-    def phones
-      @attributes['phones'] || []
-    end
-
-    # @return [Array<String>] Message emails
-    def emails_message
-      @attributes['emails_message'] || []
-    end
-    alias_method :emailsMessage, :emails_message
-
-    # @return [Array<String>] Financial emails
-    def emails_financial_messages
-      @attributes['emails_financial_messages'] || []
-    end
-    alias_method :emailsFinancialMessages, :emails_financial_messages
-
-    # @return [Array<Integer>] Tag IDs
-    def tags_id
-      @attributes['tags_id'] || []
-    end
-    alias_method :tagsId, :tags_id
-
-    # @return [String, nil] Created at timestamp (W3C format)
-    def created_at
-      @attributes['created_at']
-    end
-    alias_method :createdAt, :created_at
 
     class << self
       # List persons (requesters) for a customer

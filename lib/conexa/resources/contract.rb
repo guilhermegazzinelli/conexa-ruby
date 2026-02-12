@@ -14,48 +14,27 @@ module Conexa
   # @example End a contract
   #   Conexa::Contract.end_contract(456, end_date: '2024-12-31')
   #
+  # @!attribute [r] contract_id
+  #   @return [Integer] Contract ID (also accessible as #id)
+  # @!attribute [r] customer_id
+  #   @return [Integer] Customer ID
+  # @!attribute [r] plan_id
+  #   @return [Integer, nil] Plan ID
+  # @!attribute [r] status
+  #   @return [String] Status: active, ended, cancelled
+  # @!attribute [r] start_date
+  #   @return [String] Start date
+  # @!attribute [r] end_date
+  #   @return [String, nil] End date
+  # @!attribute [r] payment_day
+  #   @return [Integer] Payment day (1-28)
+  # @!attribute [r] value
+  #   @return [Float] Contract value
+  # @!attribute [r] billing_day
+  #   @return [Integer] Billing day
+  #
   class Contract < Model
-    # @return [Integer] Contract ID
-    def contract_id
-      @attributes['contract_id']
-    end
-    alias_method :contractId, :contract_id
-    alias_method :id, :contract_id
-
-    # @return [String] Contract status
-    def status
-      @attributes['status']
-    end
-
-    # @return [Integer] Customer ID
-    def customer_id
-      @attributes['customer_id']
-    end
-    alias_method :customerId, :customer_id
-
-    # @return [Integer, nil] Plan ID
-    def plan_id
-      @attributes['plan_id']
-    end
-    alias_method :planId, :plan_id
-
-    # @return [String] Start date
-    def start_date
-      @attributes['start_date']
-    end
-    alias_method :startDate, :start_date
-
-    # @return [String, nil] End date
-    def end_date
-      @attributes['end_date']
-    end
-    alias_method :endDate, :end_date
-
-    # @return [Integer] Payment day (1-28)
-    def payment_day
-      @attributes['payment_day']
-    end
-    alias_method :paymentDay, :payment_day
+    primary_key_attribute :contract_id
 
     # Check if contract is active
     # @return [Boolean]

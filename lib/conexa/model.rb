@@ -1,5 +1,53 @@
 module Conexa
+  # Base class for all API resources (Customer, Charge, Contract, etc.)
+  #
+  # == Attribute Access
+  # 
+  # Attributes are automatically accessible via method_missing:
+  #   customer.name           # => "Empresa ABC"
+  #   customer.company_id     # => 3
+  #   customer.is_active      # => true
+  #
+  # The API returns camelCase (companyId), ConexaObject converts to snake_case
+  # (company_id), and method_missing handles the lookup transparently.
+  #
+  # == Primary Key
+  #
+  # Each resource needs primary_key_attribute for :id alias and operations
+  # that require the resource ID (destroy, save, fetch, etc.):
+  #
+  #   class Charge < Model
+  #     primary_key_attribute :charge_id
+  #   end
+  #
+  #   charge.id         # => 123 (alias for charge_id)
+  #   charge.charge_id  # => 123
+  #   charge.chargeId   # => 123 (camelCase alias for backwards compat)
+  #
+  # == Why explicit primary_key_attribute?
+  #
+  # The default primary_key_name generates "classname_id" (e.g., "charge_id"),
+  # but compound names like RecurringSale would generate "recurringsale_id"
+  # instead of "recurring_sale_id". Explicit declaration ensures correctness.
+  #
   class Model < ConexaObject
+    class << self
+      # DSL for primary key attribute with :id alias
+      # @example
+      #   primary_key_attribute :charge_id
+      #   # Generates: charge_id method + chargeId alias + id alias
+      def primary_key_attribute(snake_name)
+        camel_name = Util.camelize_str(snake_name.to_s)
+
+        define_method(snake_name) do
+          @attributes[snake_name.to_s]
+        end
+
+        alias_method camel_name.to_sym, snake_name
+        alias_method :id, snake_name
+      end
+    end
+
     def create
       set_primary_key Conexa::Request.post(self.class.show_url, params: to_hash).call(class_name).attributes['id']
       fetch

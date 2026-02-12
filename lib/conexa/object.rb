@@ -1,4 +1,21 @@
 module Conexa
+  # Base class for all Conexa objects with dynamic attribute access
+  #
+  # == Attribute Access via method_missing
+  #
+  # Attributes can be accessed using either snake_case or camelCase:
+  #   customer.company_id  # => 3
+  #   customer.companyId   # => 3 (converted to snake_case internally)
+  #
+  # The API returns camelCase attributes which are stored as snake_case.
+  # method_missing automatically converts any camelCase calls to snake_case.
+  #
+  # == Attribute Assignment
+  #
+  # Attributes can be set using snake_case:
+  #   customer.name = "New Name"
+  #   customer.save
+  #
   class ConexaObject
     attr_reader :attributes
 

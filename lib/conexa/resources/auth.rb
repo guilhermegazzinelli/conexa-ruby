@@ -34,27 +34,7 @@ module Conexa
       alias_method :authenticate, :login
     end
 
-    # @return [Hash] User object with id, type, and name
-    def user
-      @attributes['user']
-    end
-
-    # @return [String] Token type (always "Bearer")
-    def token_type
-      @attributes['token_type']
-    end
-    alias_method :tokenType, :token_type
-
-    # @return [String] JWT access token
-    def access_token
-      @attributes['access_token']
-    end
-    alias_method :accessToken, :access_token
-
-    # @return [Integer] Token expiration time in seconds
-    def expires_in
-      @attributes['expires_in']
-    end
-    alias_method :expiresIn, :expires_in
+    # All attributes (user, token_type, access_token, expires_in) 
+    # are accessible via method_missing
   end
 end

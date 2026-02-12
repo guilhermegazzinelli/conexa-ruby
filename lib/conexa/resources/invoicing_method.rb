@@ -1,5 +1,7 @@
 module Conexa
   class InvoicingMethod < Model
+    primary_key_attribute :invoicing_method_id
+
     class << self
       def url(*params)
         ["/invoicingMethods", *params].join '/'
