@@ -20,6 +20,23 @@ module Conexa
   class Customer < Model
     primary_key_attribute :customer_id
 
+    # Array attributes with nil guard (API may return null)
+    def phones
+      @attributes['phones'] || []
+    end
+
+    def emails_message
+      @attributes['emails_message'] || []
+    end
+
+    def emails_financial_messages
+      @attributes['emails_financial_messages'] || []
+    end
+
+    def tags_id
+      @attributes['tags_id'] || []
+    end
+
     # @return [Address, nil] Customer address
     def address
       return nil unless @attributes['address']
