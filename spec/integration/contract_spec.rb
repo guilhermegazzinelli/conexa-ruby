@@ -3,6 +3,13 @@
 require "spec_helper"
 
 RSpec.describe "Contract Integration" do
+  around(:each) do |example|
+    VCR.turned_off do
+      WebMock.enable!
+      example.run
+    end
+  end
+
   before do
     Conexa.configure do |c|
       c.api_token = "test_token"

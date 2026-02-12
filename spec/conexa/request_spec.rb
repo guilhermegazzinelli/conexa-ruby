@@ -294,13 +294,18 @@ RSpec.describe Conexa::Request do
     context "with simple response" do
       it "returns ConexaObject for single resource" do
         request = described_class.get("/customers/1")
-        allow(request).to receive(:run).and_return(simple_response)
+        # Use customerId since Customer has alias_method :id, :customerId
+        customer_response = {
+          data: { "customerId" => 1, "name" => "Test" },
+          pagination: nil
+        }
+        allow(request).to receive(:run).and_return(customer_response)
 
         result = request.call("customer")
 
         # Single resource is converted to a model object
-        expect(result).to respond_to(:id)
-        expect(result.id).to eq(1)
+        expect(result).to respond_to(:customer_id)
+        expect(result.customer_id).to eq(1)
       end
     end
   end
