@@ -35,7 +35,7 @@ module Conexa
 
       # DSL for Auth attributes (not a Model, so define here)
       def attribute(snake_name)
-        camel_name = Util.camelize(snake_name.to_s)
+        camel_name = Util.camelize_str(snake_name.to_s)
 
         define_method(snake_name) do
           @attributes[snake_name.to_s]
