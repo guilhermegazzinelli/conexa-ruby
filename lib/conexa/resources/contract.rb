@@ -14,6 +14,25 @@ module Conexa
   # @example End a contract
   #   Conexa::Contract.end_contract(456, end_date: '2024-12-31')
   #
+  # @!attribute [r] contract_id
+  #   @return [Integer] Contract ID (also accessible as #id)
+  # @!attribute [r] customer_id
+  #   @return [Integer] Customer ID
+  # @!attribute [r] plan_id
+  #   @return [Integer, nil] Plan ID
+  # @!attribute [r] status
+  #   @return [String] Status: active, ended, cancelled
+  # @!attribute [r] start_date
+  #   @return [String] Start date
+  # @!attribute [r] end_date
+  #   @return [String, nil] End date
+  # @!attribute [r] payment_day
+  #   @return [Integer] Payment day (1-28)
+  # @!attribute [r] value
+  #   @return [Float] Contract value
+  # @!attribute [r] billing_day
+  #   @return [Integer] Billing day
+  #
   class Contract < Model
     primary_key_attribute :contract_id
 
@@ -39,11 +58,16 @@ module Conexa
 
     class << self
       # End a contract by ID
+      # @param id [Integer, String] contract ID
+      # @param params [Hash] options including :end_date, :reason
+      # @return [Contract]
       def end_contract(id, params = {})
         find(id).end_contract(params)
       end
 
       # Create contract with custom product items
+      # @param params [Hash] contract params including :items array
+      # @return [Contract]
       def create_with_products(params = {})
         create(params)
       end

@@ -17,22 +17,50 @@ module Conexa
   # @example List customers
   #   customers = Conexa::Customer.all(company_id: [3], is_active: true)
   #
+  # @!attribute [r] customer_id
+  #   @return [Integer] Customer ID (also accessible as #id)
+  # @!attribute [r] company_id
+  #   @return [Integer] Company/Unit ID
+  # @!attribute [r] name
+  #   @return [String] Customer name
+  # @!attribute [r] trade_name
+  #   @return [String, nil] Trade name
+  # @!attribute [r] has_login_access
+  #   @return [Boolean] Whether customer has login access
+  # @!attribute [r] is_active
+  #   @return [Boolean] Whether customer is active
+  # @!attribute [r] is_blocked
+  #   @return [Boolean] Whether customer is blocked
+  # @!attribute [r] is_juridical_person
+  #   @return [Boolean] Whether customer is a legal person (PJ)
+  # @!attribute [r] is_foreign
+  #   @return [Boolean] Whether customer is a foreigner
+  # @!attribute [r] legal_person
+  #   @return [Hash, nil] Legal person data (cnpj, foundation_date, etc.)
+  # @!attribute [r] natural_person
+  #   @return [Hash, nil] Natural person data (cpf, birth_date, etc.)
+  # @!attribute [r] created_at
+  #   @return [String, nil] Created at timestamp (W3C format)
+  #
   class Customer < Model
     primary_key_attribute :customer_id
 
-    # Array attributes with nil guard (API may return null)
+    # @return [Array<String>] Phone numbers (empty array if null)
     def phones
       @attributes['phones'] || []
     end
 
+    # @return [Array<String>] Message emails (empty array if null)
     def emails_message
       @attributes['emails_message'] || []
     end
 
+    # @return [Array<String>] Financial emails (empty array if null)
     def emails_financial_messages
       @attributes['emails_financial_messages'] || []
     end
 
+    # @return [Array<Integer>] Tag IDs (empty array if null)
     def tags_id
       @attributes['tags_id'] || []
     end

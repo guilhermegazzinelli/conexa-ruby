@@ -13,6 +13,19 @@ module Conexa
   # @example Settle (pay) a charge
   #   Conexa::Charge.settle(789)
   #
+  # @!attribute [r] charge_id
+  #   @return [Integer] Charge ID (also accessible as #id)
+  # @!attribute [r] customer_id
+  #   @return [Integer] Customer ID
+  # @!attribute [r] status
+  #   @return [String] Status: pending, paid, overdue, cancelled
+  # @!attribute [r] amount
+  #   @return [Float] Charge amount
+  # @!attribute [r] due_date
+  #   @return [String] Due date
+  # @!attribute [r] paid_at
+  #   @return [String, nil] Payment date
+  #
   class Charge < Model
     primary_key_attribute :charge_id
 
@@ -43,7 +56,7 @@ module Conexa
     end
 
     # Get PIX QR Code for this charge
-    # @return [ConexaObject] PIX data including QR code
+    # @return [ConexaObject] PIX data including qr_code and qr_code_base64
     def pix
       Conexa::Request.get(self.class.show_url("pix", primary_key)).call("pix")
     end
@@ -64,21 +77,30 @@ module Conexa
 
     class << self
       # Settle a charge by ID
+      # @param id [Integer, String] charge ID
+      # @param params [Hash] optional payment details
+      # @return [Charge]
       def settle(id, params = {})
         find(id).settle(params)
       end
 
       # Cancel a charge by ID
+      # @param id [Integer, String] charge ID
+      # @return [Charge]
       def cancel(id)
         find(id).cancel
       end
 
       # Send email for a charge by ID
+      # @param id [Integer, String] charge ID
+      # @return [Charge]
       def send_email(id)
         find(id).send_email
       end
 
       # Get PIX for a charge by ID
+      # @param id [Integer, String] charge ID
+      # @return [ConexaObject]
       def pix(id)
         find(id).pix
       end
