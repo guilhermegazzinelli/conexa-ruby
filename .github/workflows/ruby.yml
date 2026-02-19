@@ -23,7 +23,9 @@ jobs:
           ruby-version: ${{ matrix.ruby-version }}
 
       - name: Install dependencies
-        run: bundle install
+        run: |
+          rm -f Gemfile.lock
+          bundle install
 
       - name: Run tests
         run: bundle exec rspec --format documentation
