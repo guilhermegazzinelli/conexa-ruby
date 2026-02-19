@@ -4,21 +4,19 @@ require 'spec_helper'
 
 RSpec.describe Conexa::Person do
   describe 'class methods' do
-    describe '.all' do
-      it 'raises NoMethodError (not available)' do
-        expect { described_class.all }.to raise_error(NoMethodError)
+    describe '.url' do
+      it 'returns /persons' do
+        expect(described_class.url).to eq('/persons')
       end
     end
 
-    describe '.find_by_id' do
-      it 'raises NoMethodError (not available)' do
-        expect { described_class.find_by_id(1) }.to raise_error(NoMethodError)
+    describe '.show_url' do
+      it 'returns /person' do
+        expect(described_class.show_url).to eq('/person')
       end
-    end
 
-    describe '.find_by' do
-      it 'raises NoMethodError (not available)' do
-        expect { described_class.find_by({}) }.to raise_error(NoMethodError)
+      it 'returns /person/:id' do
+        expect(described_class.show_url(458)).to eq('/person/458')
       end
     end
   end
