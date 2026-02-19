@@ -77,7 +77,7 @@ module Conexa
     end
 
     def primary_key_name
-      class_name.downcase + "_id"
+      Util.to_snake_case(class_name) + "_id"
     end
 
     def class_name
@@ -87,6 +87,7 @@ module Conexa
     def destroy
       raise RequestError.new('Invalid ID') unless id.present?
       update Conexa::Request.delete( self.class.show_url(primary_key) ).call(class_name)
+      self
     end
 
     class << self
@@ -116,7 +117,9 @@ module Conexa
       alias :where :all
 
       def destroy id
-        self.new(id: id).destroy
+        instance = self.new
+        instance.set_primary_key(id)
+        instance.destroy
       end
 
       def url(*params)

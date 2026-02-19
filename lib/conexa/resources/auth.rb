@@ -23,12 +23,10 @@ module Conexa
       #   # Use the token for subsequent requests
       #   Conexa.configure { |c| c.api_token = auth.access_token }
       def login(username:, password:)
-        response = Conexa::Request.post('/auth', params: {
+        Conexa::Request.auth('/auth', params: {
           username: username,
           password: password
         }).call('auth')
-        
-        new(response.to_h)
       end
 
       alias_method :authenticate, :login

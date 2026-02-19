@@ -1,0 +1,28 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://test.conexa.app/index.php/api/v2/auth
+    body:
+      encoding: UTF-8
+      string: '{"username":"nonexistent_user","password":"test_password"}'
+    headers:
+      Content-Type:
+      - application/json; charset=utf8
+      Accept:
+      - application/json
+      User-Agent:
+      - conexa-ruby/0.0.7
+  response:
+    status:
+      code: 401
+      message: Unauthorized
+    headers:
+      Content-Type:
+      - application/json
+    body:
+      encoding: UTF-8
+      string: '{"message":"User \"nonexistent_user\" does not exist"}'
+    http_version:
+  recorded_at: Mon, 16 Dec 2024 19:00:00 GMT
+recorded_with: VCR 6.3.1

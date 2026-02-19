@@ -21,7 +21,6 @@ RSpec.describe 'Error Handling for All Resources' do
   end
 
   # List of resources to test - all Model subclasses
-  # Use each class's show_url method to get the correct endpoint
   resources = [
     Conexa::Customer,
     Conexa::Company,
