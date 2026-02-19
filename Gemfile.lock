@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    conexa (0.0.6)
+    conexa (0.0.7)
       jwt
       multi_json
       rest-client
@@ -72,7 +72,7 @@ GEM
     minitest (5.25.1)
     multi_json (1.19.1)
     netrc (0.11.0)
-    nokogiri (1.16.7-x86_64-linux)
+    nokogiri (1.19.1-x86_64-linux-gnu)
       racc (~> 1.4)
     parallel (1.26.3)
     parser (3.3.5.0)
