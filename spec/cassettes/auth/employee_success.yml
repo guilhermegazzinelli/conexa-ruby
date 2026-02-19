@@ -1,0 +1,30 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://test.conexa.app/index.php/api/v2/auth
+    body:
+      encoding: UTF-8
+      string: '{"username":"employee@company.com","password":"test_password"}'
+    headers:
+      Content-Type:
+      - application/json; charset=utf8
+      Accept:
+      - application/json
+      User-Agent:
+      - conexa-ruby/0.0.5
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json
+      Cache-Control:
+      - no-store, no-cache, must-revalidate
+    body:
+      encoding: UTF-8
+      string: '{"user":{"id":534,"type":"employee","name":"Han Solo"},"tokenType":"Bearer","accessToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2ODA4MDMxMzksImp0aSI6Inh3akdvaENQUURvZTBIUkE1eFhZSWxIQUIvemtna1pnbnlpYnFwVVdsU289IiwiaXNzIjoibm9tZWNsaWVudGUiLCJuYmYiOjE2ODA4MDMxMzksImV4cCI6MTY4MDgwNjczOSwiZGF0YSI6eyJpZCI6NTM0LCJ0eXBlIjoiZW1wbG95ZWUiLCJwZXJzb25DdXN0b21lcklkIjpudWxsfX0.QchE2n0ru6uUALrQU2Az6UjycaqDH4reKJ2zpp_54fo","expiresIn":28800}'
+    http_version:
+  recorded_at: Mon, 16 Dec 2024 19:00:00 GMT
+recorded_with: VCR 6.3.1
