@@ -17,18 +17,21 @@ RSpec.describe Conexa::Product do
     end
   end
 
-  describe 'instance methods' do
-    describe '#save' do
-      it 'raises NoMethodError (read-only)' do
-        product = described_class.new('id' => 1)
-        expect { product.save }.to raise_error(NoMethodError)
-      end
-    end
-  end
-
   describe 'inheritance' do
     it 'inherits from Model' do
       expect(described_class).to be < Conexa::Model
+    end
+  end
+
+  describe 'instance' do
+    let(:product) { described_class.new('productId' => 100, 'name' => 'Mensalidade') }
+
+    it 'has correct id' do
+      expect(product.id).to eq(100)
+    end
+
+    it 'accesses name' do
+      expect(product.name).to eq('Mensalidade')
     end
   end
 end

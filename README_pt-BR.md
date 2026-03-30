@@ -281,7 +281,7 @@ paginacao = pagina1.pagination
 # paginacao contém total de registros, total de páginas, etc.
 ```
 
-#### Iterando Por Todas as Páginas
+#### Iterando Por Todas as Páginas (legado — depreciado)
 
 ```ruby
 pagina = 1
@@ -300,6 +300,101 @@ loop do
   pagina += 1
 end
 ```
+
+### Nova Paginação (recomendada) — `limit`/`offset`/`hasNext`
+
+```ruby
+resultado = Conexa::Customer.all(limit: 50)
+
+resultado.data                    # Array de clientes
+resultado.pagination.limit        # => 50
+resultado.pagination.offset       # => 0
+resultado.pagination.has_next     # => true/false
+
+# Iterar por todas as páginas
+offset = 0
+loop do
+  resultado = Conexa::Customer.all(limit: 50, offset: offset)
+  resultado.data.each { |cliente| processa(cliente) }
+  break unless resultado.pagination.has_next
+  offset += 50
+end
+```
+
+### Guia de Migração: Paginação Legada → Nova
+
+A paginação legada `page`/`size` está depreciada e será removida em **01/08/2026**. Siga estes passos para migrar:
+
+#### 1. Substitua `page`/`size` por `limit`/`offset`
+
+```ruby
+# ANTES (legado — depreciado)
+resultado = Conexa::Customer.all(page: 1, size: 50)
+resultado = Conexa::Customer.all(page: 2, size: 50)
+
+# DEPOIS (novo)
+resultado = Conexa::Customer.all(limit: 50)               # offset padrão 0
+resultado = Conexa::Customer.all(limit: 50, offset: 50)   # segunda página
+```
+
+**Fórmula de conversão:** `offset = (page - 1) * size`
+
+#### 2. Atualize o acesso aos metadados de paginação
+
+```ruby
+# ANTES (legado)
+resultado.pagination  # => { "page" => 1, "size" => 50, "total" => 150 }
+total_paginas = (resultado.pagination["total"].to_f / tamanho).ceil
+
+# DEPOIS (novo)
+resultado.pagination.limit      # => 50
+resultado.pagination.offset     # => 0
+resultado.pagination.has_next   # => true/false
+```
+
+#### 3. Atualize os loops de iteração
+
+```ruby
+# ANTES (legado)
+pagina = 1
+loop do
+  resultado = Conexa::Customer.all(page: pagina, size: 100)
+  break if resultado.empty?
+  resultado.data.each { |c| processa(c) }
+  pagina += 1
+end
+
+# DEPOIS (novo)
+offset = 0
+loop do
+  resultado = Conexa::Customer.all(limit: 100, offset: offset)
+  resultado.data.each { |c| processa(c) }
+  break unless resultado.pagination.has_next
+  offset += 100
+end
+```
+
+#### 4. Remova argumentos posicionais
+
+```ruby
+# ANTES (argumentos posicionais legados)
+Conexa::Customer.all(2, 50)           # página 2, tamanho 50
+Conexa::Customer.find_by({}, 1, 20)   # página 1, tamanho 20
+
+# DEPOIS (argumentos nomeados)
+Conexa::Customer.all(limit: 50, offset: 50)
+Conexa::Customer.find_by(limit: 20)
+```
+
+#### Referência rápida
+
+| Legado | Novo |
+|---|---|
+| `page: 1, size: 50` | `limit: 50` (offset padrão 0) |
+| `page: N, size: S` | `limit: S, offset: (N-1)*S` |
+| `pagination["total"]` | `pagination.has_next` |
+| `pagination["page"]` | `pagination.offset` |
+| Posicional `(page, size)` | Nomeado `limit:`, `offset:` |
 
 ### Exemplos
 

@@ -73,10 +73,15 @@ RSpec.describe "Product Integration" do
     end
   end
 
-  describe "read-only constraints" do
-    it "cannot save a product" do
+  describe "CRUD support" do
+    before do
+      stub_request(:patch, /test\.conexa\.app.*product\/100/)
+        .to_return(status: 200, body: product_response, headers: { "Content-Type" => "application/json" })
+    end
+
+    it "can save a product" do
       product = Conexa::Product.new("productId" => 100, "name" => "Test")
-      expect { product.save }.to raise_error(NoMethodError)
+      expect { product.save }.not_to raise_error
     end
   end
 end

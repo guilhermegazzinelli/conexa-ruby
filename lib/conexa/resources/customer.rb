@@ -76,21 +76,21 @@ module Conexa
       # @param customer_id [Integer] Customer ID
       # @return [Result] List of persons
       def persons(customer_id)
-        Conexa::Person.all(customer_id: customer_id)
+        Conexa::Person.all(customer_id: customer_id, limit: 100)
       end
 
       # List contracts for a customer
       # @param customer_id [Integer] Customer ID
       # @return [Result] List of contracts
       def contracts(customer_id)
-        Conexa::Contract.all(customer_id: [customer_id])
+        Conexa::Contract.all(customer_id: [customer_id], limit: 100)
       end
 
       # List charges for a customer
       # @param customer_id [Integer] Customer ID
       # @return [Result] List of charges
       def charges(customer_id)
-        Conexa::Charge.all(customer_id: [customer_id])
+        Conexa::Charge.all(customer_id: [customer_id], limit: 100)
       end
     end
   end

@@ -3,10 +3,16 @@
 require 'spec_helper'
 
 RSpec.describe Conexa::Supplier do
+  describe 'inheritance' do
+    it 'inherits from Model' do
+      expect(described_class).to be < Conexa::Model
+    end
+  end
+
   describe 'class methods' do
     describe '.url' do
-      it 'returns supplier endpoint (singular)' do
-        expect(described_class.url).to eq('/supplier')
+      it 'returns suppliers endpoint (plural)' do
+        expect(described_class.url).to eq('/suppliers')
       end
     end
 
@@ -17,9 +23,11 @@ RSpec.describe Conexa::Supplier do
     end
   end
 
-  describe 'inheritance' do
-    it 'inherits from Model' do
-      expect(described_class).to be < Conexa::Model
+  describe 'instance' do
+    let(:supplier) { described_class.new('supplierId' => 50, 'name' => 'Fornecedor ABC') }
+
+    it 'has correct id' do
+      expect(supplier.id).to eq(50)
     end
   end
 end

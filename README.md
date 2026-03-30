@@ -120,12 +120,11 @@ customer.legal_person['cnpj']  # => "99.557.155/0001-90"
 # Update customer
 Conexa::Customer.update(127, name: 'New Name', cell_number: '11888887777')
 
-# List customers with filters
+# List customers with filters (new pagination)
 customers = Conexa::Customer.list(
   company_id: [3],
   is_active: true,
-  page: 1,
-  size: 20
+  limit: 20
 )
 ```
 
@@ -266,10 +265,75 @@ plan.price  # => 99.90
 
 ```ruby
 # List products
-products = Conexa::Product.list(company_id: [3])
+products = Conexa::Product.list(company_id: [3], limit: 50)
 
 # Retrieve product
 product = Conexa::Product.retrieve(101)
+
+# Create product
+product = Conexa::Product.create(name: 'Novo Produto', company_id: 3)
+
+# Delete product
+Conexa::Product.delete(101)
+```
+
+### Receiving Method
+
+```ruby
+methods = Conexa::ReceivingMethod.list(limit: 50)
+method = Conexa::ReceivingMethod.retrieve(11)
+method.name  # => "Cartão de Crédito"
+```
+
+### Payment Method
+
+```ruby
+methods = Conexa::PaymentMethod.list(limit: 50)
+method = Conexa::PaymentMethod.retrieve(2)
+```
+
+### Bill Category / Subcategory
+
+```ruby
+categories = Conexa::BillCategory.list(limit: 50)
+subcategories = Conexa::BillSubcategory.list(limit: 50)
+```
+
+### Cost Center
+
+```ruby
+centers = Conexa::CostCenter.list(limit: 50)
+center = Conexa::CostCenter.retrieve(11)
+```
+
+### Account
+
+```ruby
+accounts = Conexa::Account.list(limit: 50)
+account = Conexa::Account.retrieve(23)
+```
+
+### Service Category
+
+```ruby
+categories = Conexa::ServiceCategory.list(limit: 50)
+category = Conexa::ServiceCategory.retrieve(1)
+```
+
+### Room Booking
+
+```ruby
+# List bookings
+bookings = Conexa::RoomBooking.list(limit: 20)
+
+# Create booking
+booking = Conexa::RoomBooking.create(room_id: 5, customer_id: 127)
+
+# Cancel booking
+Conexa::RoomBooking.cancel(143063)
+
+# Checkin
+Conexa::RoomBooking.checkin(room_id: 5, customer_id: 127)
 ```
 
 ### Credit Card
@@ -306,24 +370,109 @@ company.document  # => "12.345.678/0001-90"
 
 ## Pagination
 
-All list endpoints return paginated results:
+### New Pagination (recommended) — `limit`/`offset`/`hasNext`
 
 ```ruby
-result = Conexa::Customer.list(page: 1, size: 20)
+result = Conexa::Customer.list(limit: 50)
 
-result.data                       # Array of customers
-result.pagination.current_page    # => 1
-result.pagination.total_pages     # => 10
-result.pagination.total_items     # => 195
-result.pagination.item_per_page   # => 20
+result.data                    # Array of customers
+result.pagination.limit        # => 50
+result.pagination.offset       # => 0
+result.pagination.has_next     # => true/false
 
-# Iterate through pages
+# Iterate through all pages
+offset = 0
 loop do
+  result = Conexa::Customer.list(limit: 50, offset: offset)
   result.data.each { |customer| process(customer) }
-  break if result.pagination.current_page >= result.pagination.total_pages
-  result = Conexa::Customer.list(page: result.pagination.current_page + 1)
+  break unless result.pagination.has_next
+  offset += 50
 end
 ```
+
+### Legacy Pagination (deprecated — will be removed 2026-08-01)
+
+```ruby
+# Still works but emits a deprecation warning
+result = Conexa::Customer.list(page: 1, size: 20)
+result.pagination.current_page    # => 1
+result.pagination.total_pages     # => 10
+```
+
+### Migration Guide: Legacy → New Pagination
+
+The legacy `page`/`size` pagination is deprecated and will be removed on **2026-08-01**. Follow these steps to migrate:
+
+#### 1. Replace `page`/`size` with `limit`/`offset`
+
+```ruby
+# BEFORE (legacy — deprecated)
+result = Conexa::Customer.list(page: 1, size: 50)
+result = Conexa::Customer.list(page: 2, size: 50)
+
+# AFTER (new)
+result = Conexa::Customer.list(limit: 50)               # offset defaults to 0
+result = Conexa::Customer.list(limit: 50, offset: 50)   # second page
+```
+
+**Conversion formula:** `offset = (page - 1) * size`
+
+#### 2. Update pagination metadata access
+
+```ruby
+# BEFORE (legacy)
+result.pagination  # => { "page" => 1, "size" => 50, "total" => 150 }
+total_pages = (result.pagination["total"].to_f / size).ceil
+
+# AFTER (new)
+result.pagination.limit      # => 50
+result.pagination.offset     # => 0
+result.pagination.has_next   # => true/false
+```
+
+#### 3. Update iteration loops
+
+```ruby
+# BEFORE (legacy)
+page = 1
+loop do
+  result = Conexa::Customer.list(page: page, size: 100)
+  break if result.empty?
+  result.data.each { |c| process(c) }
+  page += 1
+end
+
+# AFTER (new)
+offset = 0
+loop do
+  result = Conexa::Customer.list(limit: 100, offset: offset)
+  result.data.each { |c| process(c) }
+  break unless result.pagination.has_next
+  offset += 100
+end
+```
+
+#### 4. Remove positional arguments
+
+```ruby
+# BEFORE (legacy positional args)
+Conexa::Customer.all(2, 50)           # page 2, size 50
+Conexa::Customer.find_by({}, 1, 20)   # page 1, size 20
+
+# AFTER (new keyword args)
+Conexa::Customer.all(limit: 50, offset: 50)
+Conexa::Customer.find_by(limit: 20)
+```
+
+#### Quick reference
+
+| Legacy | New |
+|---|---|
+| `page: 1, size: 50` | `limit: 50` (offset defaults to 0) |
+| `page: N, size: S` | `limit: S, offset: (N-1)*S` |
+| `pagination["total"]` | `pagination.has_next` |
+| `pagination["page"]` | `pagination.offset` |
+| Positional `(page, size)` | Keyword `limit:`, `offset:` |
 
 ## Error Handling
 
@@ -360,7 +509,7 @@ end
 
 ## Rate Limiting
 
-The Conexa API has a limit of **100 requests per minute**. Response headers include:
+The Conexa API has a limit of **100 requests per minute** (changing to **60 requests per minute** on 2026-04-27). Response headers include:
 
 - `X-Rate-Limit-Limit`: Maximum requests in 60s
 - `X-Rate-Limit-Remaining`: Remaining requests in 60s

@@ -14,17 +14,25 @@ Conexa is a Brazilian SaaS platform for **recurring billing**, **subscription ma
 - **Sale** - One-time sale (not recurring)
 - **RecurringSale** - Recurring sale item within a contract
 - **Plan** - Pricing plan with products and periodicities
-- **Product** - Billable item/service
+- **Product** - Billable item/service (now supports full CRUD)
 - **InvoicingMethod** - Payment method configuration (boleto, PIX, credit card)
+- **ReceivingMethod** - Receiving method configuration (cash, transfer, card machine)
+- **PaymentMethod** - Payment method type (boleto, PIX, cartão)
+- **BillCategory** - Bill expense category
+- **BillSubcategory** - Bill expense subcategory
+- **CostCenter** - Cost center for expense allocation
+- **Account** - Bank account
+- **ServiceCategory** - Service category for plans
 - **Person** - Requester (solicitante) linked to a customer
 - **Bill** - Financial bill (conta a pagar)
 - **Supplier** - Supplier with PF/PJ data
+- **RoomBooking** - Room booking with checkin/checkout (Conexa Coworking)
 
 ## Installation
 
 ```ruby
 # Gemfile
-gem 'conexa', '~> 0.0.7'
+gem 'conexa', '~> 0.0.9'
 
 # Or install directly
 gem install conexa
@@ -694,12 +702,16 @@ product = Conexa::Product.find(100)
 product.name  # => "Mensalidade"
 
 # List products
-products = Conexa::Product.all(company_id: [3])
+products = Conexa::Product.all(company_id: [3], limit: 50)
+
+# Create product
+product = Conexa::Product.create(name: 'Novo Produto', company_id: 3)
+
+# Delete product
+Conexa::Product.destroy(100)
 ```
 
-**API endpoints:** `GET /product/:id`, `GET /products`
-
-**Note:** Products cannot be created/updated via this gem. `save` raises `NoMethodError`.
+**API endpoints:** `GET /product/:id`, `GET /products`, `POST /product`, `DELETE /product/:id`
 
 ---
 
@@ -855,7 +867,7 @@ supplier.save
 supplier.destroy
 ```
 
-**API endpoints:** `POST /supplier`, `GET /supplier/:id`, `PATCH /supplier/:id`, `DELETE /supplier/:id`, `GET /supplier` (list)
+**API endpoints:** `POST /supplier`, `GET /supplier/:id`, `PATCH /supplier/:id`, `DELETE /supplier/:id`, `GET /suppliers`
 
 **Create attributes:**
 - `name` - Supplier name (required)
@@ -1020,26 +1032,120 @@ person.destroy
 
 ### Pagination
 
-All `#all` and `#find_by` methods support pagination:
+#### New Pagination (recommended) — `limit`/`offset`/`hasNext`
+
+All `#all` and `#find_by` methods support the new pagination when `limit:` is passed:
 
 ```ruby
-# Page 1, 50 items per page
+# Page 1, 50 items
+result = Conexa::Customer.all(limit: 50)
+
+result.data           # => Array of customers
+result.pagination.limit    # => 50
+result.pagination.offset   # => 0
+result.pagination.has_next # => true/false
+result.empty?         # => false
+
+# Iterate all pages
+offset = 0
+loop do
+  result = Conexa::Customer.all(limit: 100, offset: offset)
+  break if result.empty?
+
+  result.each { |customer| process(customer) }
+  break unless result.pagination.has_next
+  offset += 100
+end
+```
+
+#### Legacy Pagination (deprecated — removed 2026-08-01)
+
+If `limit:` is NOT passed, the gem falls back to the old `page`/`size` model
+(emitting a deprecation warning):
+
+```ruby
+# Emits: DEPRECATION WARNING: O modelo antigo de paginação...
 result = Conexa::Customer.all(page: 1, size: 50)
 
 result.data        # => Array of customers
 result.pagination  # => { "page" => 1, "size" => 50, "total" => 150 }
 result.empty?      # => false
+```
 
-# Iterate all pages
+#### Migration Guide: Legacy → New Pagination
+
+The legacy `page`/`size` pagination is deprecated and will be removed on **2026-08-01**. Follow these steps to migrate:
+
+**Step 1 — Replace `page`/`size` with `limit`/`offset`:**
+
+```ruby
+# BEFORE (legacy)
+result = Conexa::Customer.all(page: 1, size: 50)
+result = Conexa::Customer.all(page: 2, size: 50)
+
+# AFTER (new)
+result = Conexa::Customer.all(limit: 50)               # offset defaults to 0
+result = Conexa::Customer.all(limit: 50, offset: 50)   # second page
+```
+
+Conversion formula: `offset = (page - 1) * size`
+
+**Step 2 — Update pagination metadata access:**
+
+```ruby
+# BEFORE
+result.pagination  # => { "page" => 1, "size" => 50, "total" => 150 }
+total_pages = (result.pagination["total"].to_f / size).ceil
+
+# AFTER
+result.pagination.limit      # => 50
+result.pagination.offset     # => 0
+result.pagination.has_next   # => true/false
+```
+
+**Step 3 — Update iteration loops:**
+
+```ruby
+# BEFORE
 page = 1
 loop do
   result = Conexa::Customer.all(page: page, size: 100)
   break if result.empty?
-
-  result.each { |customer| process(customer) }
+  result.each { |c| process(c) }
   page += 1
 end
+
+# AFTER
+offset = 0
+loop do
+  result = Conexa::Customer.all(limit: 100, offset: offset)
+  result.each { |c| process(c) }
+  break unless result.pagination.has_next
+  offset += 100
+end
 ```
+
+**Step 4 — Remove positional arguments:**
+
+```ruby
+# BEFORE
+Conexa::Customer.all(2, 50)           # page 2, size 50
+Conexa::Customer.find_by({}, 1, 20)   # page 1, size 20
+
+# AFTER
+Conexa::Customer.all(limit: 50, offset: 50)
+Conexa::Customer.find_by(limit: 20)
+```
+
+**Quick reference:**
+
+| Legacy | New |
+|---|---|
+| `page: 1, size: 50` | `limit: 50` (offset defaults to 0) |
+| `page: N, size: S` | `limit: S, offset: (N-1)*S` |
+| `pagination["total"]` | `pagination.has_next` |
+| `pagination["page"]` | `pagination.offset` |
+| Positional `(page, size)` | Keyword `limit:`, `offset:` |
 
 ### Result Object
 
@@ -1109,7 +1215,7 @@ Conexa::Charge.all(
 
 ### Rate Limiting
 
-The API enforces a limit of 100 requests per minute. Response headers:
+The API enforces a limit of 100 requests per minute (changing to **60 requests per minute** on 2026-04-27). Response headers:
 - `X-Rate-Limit-Limit` - Maximum requests per minute
 - `X-Rate-Limit-Remaining` - Remaining requests
 - `X-Rate-Limit-Reset` - Seconds until limit resets
@@ -1127,13 +1233,21 @@ The API enforces a limit of 100 requests per minute. Response headers:
 | Sale | yes | yes | yes | yes | yes | billed?, paid?, editable? |
 | RecurringSale | yes | yes | yes | yes | yes | end_recurring_sale |
 | Plan | yes | yes | yes | - | yes | - |
-| Product | yes | yes | - | - | - | - |
+| Product | yes | yes | yes | - | yes | - |
 | InvoicingMethod | yes | yes | yes | yes | yes | - |
+| ReceivingMethod | yes | yes | - | - | - | - |
+| PaymentMethod | yes | yes | - | - | - | - |
+| BillCategory | yes | yes | - | - | - | - |
+| BillSubcategory | yes | yes | - | - | - | - |
+| CostCenter | yes | yes | - | - | - | - |
+| Account | yes | yes | - | - | - | - |
+| ServiceCategory | yes | yes | - | - | - | - |
 | Bill | yes | yes | yes | - | - | - |
 | Company | yes | yes | yes | yes | yes | - |
 | Supplier | yes | yes | yes | yes | yes | - |
 | CreditCard | yes | - | yes | yes | yes | - |
 | Person | - | - | yes | yes | yes | - |
+| RoomBooking | yes | yes | yes | - | - | cancel, checkout, checkin |
 
 **Legend:** `yes` = available, `-` = not available (raises NoMethodError or not implemented)
 

@@ -111,7 +111,12 @@ module Conexa
         end
 
         if args.size == 0
-          return self[name] || self[name.to_sym]
+          if @attributes.key?(name)
+            return @attributes[name]
+          elsif @attributes.key?(name.to_sym)
+            return @attributes[name.to_sym]
+          end
+          return nil
         end
       end
 

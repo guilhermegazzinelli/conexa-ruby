@@ -12,7 +12,7 @@ module Conexa
   #   )
   #
   # @example List sales
-  #   sales = Conexa::Sale.all(customer_id: [450], status: 'notBilled')
+  #   sales = Conexa::Sale.all(customer_id: [450], status: 'notBilled', limit: 50)
   #
   # @!attribute [r] sale_id
   #   @return [Integer] Sale ID (also accessible as #id)
