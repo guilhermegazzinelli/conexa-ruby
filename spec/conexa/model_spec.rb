@@ -70,5 +70,27 @@ RSpec.describe Conexa::Model do
       expect(result[:status]).to eq('active')
       expect(result[:companyId]).to eq([3])
     end
+
+    context 'with limit (new pagination)' do
+      it 'uses limit/offset and removes page/size' do
+        result = model_class.extract_page_size_or_params(limit: 50)
+        expect(result[:limit]).to eq(50)
+        expect(result[:offset]).to eq(0)
+        expect(result).not_to have_key(:page)
+        expect(result).not_to have_key(:size)
+      end
+
+      it 'respects custom offset' do
+        result = model_class.extract_page_size_or_params(limit: 50, offset: 100)
+        expect(result[:limit]).to eq(50)
+        expect(result[:offset]).to eq(100)
+      end
+
+      it 'preserves filters with limit' do
+        result = model_class.extract_page_size_or_params(limit: 20, status: 'active')
+        expect(result[:limit]).to eq(20)
+        expect(result[:status]).to eq('active')
+      end
+    end
   end
 end

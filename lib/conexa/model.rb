@@ -104,7 +104,7 @@ module Conexa
 
       def find_by(params = Hash.new, page = nil, size = nil)
         params = extract_page_size_or_params(page, size, **params)
-        raise RequestError.new('Invalid page size') if params[:page] < 1 or params[:size] < 1
+        raise RequestError.new('Invalid page size') if (!params.key?(:limit)) && (params[:page] < 1 or params[:size] < 1)
 
         Conexa::Request.get(url, params: params).call underscored_class_name
       end
@@ -139,8 +139,28 @@ module Conexa
       end
 
       def extract_page_size_or_params(*args, **params)
-        params[:page]  ||= args[0] || 1
-        params[:size] ||= args[1] || 100
+        if args[0].is_a?(Hash)
+          params = args[0].merge(params)
+          page_val = nil
+        else
+          page_val = args[0]
+        end
+        size_val = args[1]
+
+        if params.key?(:limit)
+          params[:offset] ||= size_val if size_val.is_a?(Integer)
+          params[:offset] ||= 0
+          params.delete(:page) # Fix to ensure the api doesn't get confused
+          params.delete(:size)
+          return params
+        end
+
+        if params.key?(:page) || params.key?(:size) || page_val.is_a?(Integer)
+          warn "DEPRECATION WARNING: O modelo antigo de paginação (page/size) será removido em 01 de agosto de 2026. Utilize limit e offset."
+        end
+
+        params[:page] ||= page_val || 1
+        params[:size] ||= size_val || 100
         params
       end
     end

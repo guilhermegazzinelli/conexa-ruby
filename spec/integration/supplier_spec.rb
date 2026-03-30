@@ -54,7 +54,7 @@ RSpec.describe "Supplier Integration" do
 
   describe "listing suppliers" do
     before do
-      stub_request(:get, /test\.conexa\.app.*supplier\b/)
+      stub_request(:get, /test\.conexa\.app.*suppliers/)
         .to_return(status: 200, body: suppliers_list_response, headers: { "Content-Type" => "application/json" })
     end
 

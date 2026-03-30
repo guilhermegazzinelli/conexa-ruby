@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.9] - 2026-03-30
+
+### Added
+- **New pagination model**: `limit`/`offset`/`hasNext` — more efficient, avoids calculating total records
+  - Pass `limit:` to any `.all` or `.find_by` to use the new pagination
+  - Old `page`/`size` pagination emits deprecation warning (deadline: 2026-08-01)
+- **New resources:**
+  - `Conexa::ReceivingMethod` — Meios de Recebimento (`/receivingMethods`, `/receivingMethod/:id`)
+  - `Conexa::PaymentMethod` — Meios de Pagamento (`/paymentMethods`, `/paymentMethod/:id`)
+  - `Conexa::BillCategory` — Categorias de Despesa (`/billCategories`, `/billCategory/:id`)
+  - `Conexa::BillSubcategory` — Subcategorias de Despesa (`/billSubcategories`, `/billSubcategory/:id`)
+  - `Conexa::CostCenter` — Centros de Custo (`/costCenters`, `/costCenter/:id`)
+  - `Conexa::Account` — Contas Bancárias (`/accounts`, `/account/:id`)
+  - `Conexa::ServiceCategory` — Categorias de Serviço (`/serviceCategories`, `/serviceCategory/:id`)
+  - `Conexa::RoomBooking` — Reservas de Sala (`/room/bookings`, `/room/booking`) with cancel, checkout, checkin
+- `Product` now supports full CRUD (POST `/product`, DELETE `/product/:id`) per API v2 update
+
+### Changed
+- `Model#extract_page_size_or_params` rewritten to support dual pagination modes
+- `Customer.persons`, `Customer.contracts`, `Customer.charges` migrated to `limit: 100`
+
+### Fixed
+- `Supplier` list URL corrected from `/supplier` to `/suppliers`
+- `Supplier` now has `primary_key_attribute :supplier_id`
+- `Product` now has `primary_key_attribute :product_id`
+
 ## [0.0.8] - 2026-02-19
 
 ### Fixed

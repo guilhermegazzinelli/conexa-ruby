@@ -8,7 +8,7 @@ module Conexa
   #   charge.status  # => "pending"
   #
   # @example List charges
-  #   charges = Conexa::Charge.all(customer_id: [127], status: 'pending')
+  #   charges = Conexa::Charge.all(customer_id: [127], status: 'pending', limit: 50)
   #
   # @example Settle (pay) a charge
   #   Conexa::Charge.settle(789)
