@@ -399,6 +399,81 @@ result.pagination.current_page    # => 1
 result.pagination.total_pages     # => 10
 ```
 
+### Migration Guide: Legacy → New Pagination
+
+The legacy `page`/`size` pagination is deprecated and will be removed on **2026-08-01**. Follow these steps to migrate:
+
+#### 1. Replace `page`/`size` with `limit`/`offset`
+
+```ruby
+# BEFORE (legacy — deprecated)
+result = Conexa::Customer.list(page: 1, size: 50)
+result = Conexa::Customer.list(page: 2, size: 50)
+
+# AFTER (new)
+result = Conexa::Customer.list(limit: 50)               # offset defaults to 0
+result = Conexa::Customer.list(limit: 50, offset: 50)   # second page
+```
+
+**Conversion formula:** `offset = (page - 1) * size`
+
+#### 2. Update pagination metadata access
+
+```ruby
+# BEFORE (legacy)
+result.pagination  # => { "page" => 1, "size" => 50, "total" => 150 }
+total_pages = (result.pagination["total"].to_f / size).ceil
+
+# AFTER (new)
+result.pagination.limit      # => 50
+result.pagination.offset     # => 0
+result.pagination.has_next   # => true/false
+```
+
+#### 3. Update iteration loops
+
+```ruby
+# BEFORE (legacy)
+page = 1
+loop do
+  result = Conexa::Customer.list(page: page, size: 100)
+  break if result.empty?
+  result.data.each { |c| process(c) }
+  page += 1
+end
+
+# AFTER (new)
+offset = 0
+loop do
+  result = Conexa::Customer.list(limit: 100, offset: offset)
+  result.data.each { |c| process(c) }
+  break unless result.pagination.has_next
+  offset += 100
+end
+```
+
+#### 4. Remove positional arguments
+
+```ruby
+# BEFORE (legacy positional args)
+Conexa::Customer.all(2, 50)           # page 2, size 50
+Conexa::Customer.find_by({}, 1, 20)   # page 1, size 20
+
+# AFTER (new keyword args)
+Conexa::Customer.all(limit: 50, offset: 50)
+Conexa::Customer.find_by(limit: 20)
+```
+
+#### Quick reference
+
+| Legacy | New |
+|---|---|
+| `page: 1, size: 50` | `limit: 50` (offset defaults to 0) |
+| `page: N, size: S` | `limit: S, offset: (N-1)*S` |
+| `pagination["total"]` | `pagination.has_next` |
+| `pagination["page"]` | `pagination.offset` |
+| Positional `(page, size)` | Keyword `limit:`, `offset:` |
+
 ## Error Handling
 
 ```ruby
