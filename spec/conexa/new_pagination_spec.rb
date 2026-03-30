@@ -138,6 +138,176 @@ RSpec.describe 'New Pagination (limit/offset/hasNext)' do
     end
   end
 
+  describe 'default pagination (no params)' do
+    it 'defaults to limit/offset instead of page/size' do
+      result = Conexa::Customer.send(:extract_page_size_or_params)
+      expect(result[:limit]).to eq(100)
+      expect(result[:offset]).to eq(0)
+      expect(result).not_to have_key(:page)
+      expect(result).not_to have_key(:size)
+    end
+
+    it 'does not emit deprecation warning' do
+      expect { Conexa::Customer.send(:extract_page_size_or_params) }
+        .not_to output.to_stderr
+    end
+  end
+
+  describe '#has_next?' do
+    it 'returns true when has_next is true' do
+      stub_request(:get, "#{api_base}/customers")
+        .with(query: hash_including({ 'limit' => '10', 'offset' => '0' }))
+        .to_return(
+          status: 200,
+          body: {
+            data: [{ customerId: 1, name: 'Customer 1' }],
+            pagination: { limit: 10, offset: 0, hasNext: true }
+          }.to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      result = Conexa::Customer.all(limit: 10)
+      expect(result.has_next?).to be true
+    end
+
+    it 'returns false when has_next is false' do
+      stub_request(:get, "#{api_base}/customers")
+        .with(query: hash_including({ 'limit' => '10', 'offset' => '0' }))
+        .to_return(
+          status: 200,
+          body: {
+            data: [],
+            pagination: { limit: 10, offset: 0, hasNext: false }
+          }.to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      result = Conexa::Customer.all(limit: 10)
+      expect(result.has_next?).to be false
+    end
+  end
+
+  describe '#next_page' do
+    it 'fetches the next page with correct offset' do
+      stub_request(:get, "#{api_base}/customers")
+        .with(query: hash_including({ 'limit' => '10', 'offset' => '0' }))
+        .to_return(
+          status: 200,
+          body: {
+            data: [{ customerId: 1, name: 'Customer 1' }],
+            pagination: { limit: 10, offset: 0, hasNext: true }
+          }.to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      stub_request(:get, "#{api_base}/customers")
+        .with(query: hash_including({ 'limit' => '10', 'offset' => '10' }))
+        .to_return(
+          status: 200,
+          body: {
+            data: [{ customerId: 2, name: 'Customer 2' }],
+            pagination: { limit: 10, offset: 10, hasNext: false }
+          }.to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      page1 = Conexa::Customer.all(limit: 10)
+      page2 = page1.next_page
+
+      expect(page2).to be_a(Conexa::Result)
+      expect(page2.data.first.name).to eq('Customer 2')
+      expect(page2.pagination.offset).to eq(10)
+      expect(page2.has_next?).to be false
+    end
+
+    it 'preserves original filter params' do
+      stub_request(:get, "#{api_base}/customers")
+        .with(query: hash_including({ 'limit' => '10', 'offset' => '0', 'isActive' => 'true' }))
+        .to_return(
+          status: 200,
+          body: {
+            data: [{ customerId: 1, name: 'Customer 1' }],
+            pagination: { limit: 10, offset: 0, hasNext: true }
+          }.to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      stub_request(:get, "#{api_base}/customers")
+        .with(query: hash_including({ 'limit' => '10', 'offset' => '10', 'isActive' => 'true' }))
+        .to_return(
+          status: 200,
+          body: {
+            data: [{ customerId: 2, name: 'Customer 2' }],
+            pagination: { limit: 10, offset: 10, hasNext: false }
+          }.to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      page1 = Conexa::Customer.all(limit: 10, is_active: true)
+      page2 = page1.next_page
+
+      expect(page2.data.first.name).to eq('Customer 2')
+    end
+
+    it 'raises StopIteration when no more pages' do
+      stub_request(:get, "#{api_base}/customers")
+        .with(query: hash_including({ 'limit' => '10', 'offset' => '0' }))
+        .to_return(
+          status: 200,
+          body: {
+            data: [{ customerId: 1, name: 'Customer 1' }],
+            pagination: { limit: 10, offset: 0, hasNext: false }
+          }.to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      result = Conexa::Customer.all(limit: 10)
+      expect { result.next_page }.to raise_error(StopIteration, "No more pages")
+    end
+
+    it 'chains multiple next_page calls' do
+      stub_request(:get, "#{api_base}/customers")
+        .with(query: hash_including({ 'limit' => '5', 'offset' => '0' }))
+        .to_return(
+          status: 200,
+          body: {
+            data: [{ customerId: 1 }],
+            pagination: { limit: 5, offset: 0, hasNext: true }
+          }.to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      stub_request(:get, "#{api_base}/customers")
+        .with(query: hash_including({ 'limit' => '5', 'offset' => '5' }))
+        .to_return(
+          status: 200,
+          body: {
+            data: [{ customerId: 2 }],
+            pagination: { limit: 5, offset: 5, hasNext: true }
+          }.to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      stub_request(:get, "#{api_base}/customers")
+        .with(query: hash_including({ 'limit' => '5', 'offset' => '10' }))
+        .to_return(
+          status: 200,
+          body: {
+            data: [{ customerId: 3 }],
+            pagination: { limit: 5, offset: 10, hasNext: false }
+          }.to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      page1 = Conexa::Customer.all(limit: 5)
+      page2 = page1.next_page
+      page3 = page2.next_page
+
+      expect(page3.data.first.customer_id).to eq(3)
+      expect(page3.has_next?).to be false
+    end
+  end
+
   describe 'new resources with new pagination' do
     it 'works with ReceivingMethod' do
       stub_request(:get, "#{api_base}/receivingMethods")

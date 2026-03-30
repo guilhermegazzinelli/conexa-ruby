@@ -60,13 +60,15 @@ module Conexa
         raise Conexa::ConnectionError.new $!
     end
 
-    def call(ressource_name)
+    def call(ressource_name, query_context: nil)
       dt = run
 
       if dt[:pagination]
-        return ConexaObject.convert({
+        result = ConexaObject.convert({
           data: ConexaObject.convert(dt[:data], ressource_name),
           pagination: ConexaObject.convert(dt[:pagination], "pagination")}, "result")
+        result.instance_variable_set(:@query_context, query_context) if query_context
+        return result
       end
 
       ConexaObject.convert(dt[:data], ressource_name)

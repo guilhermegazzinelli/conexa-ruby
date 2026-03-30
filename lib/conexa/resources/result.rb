@@ -16,6 +16,25 @@ module Conexa
       @attributes["pagination"]
     end
 
+    def has_next?
+      pagination && pagination.has_next == true
+    end
+
+    def next_page
+      raise StopIteration, "No more pages" unless has_next?
+      raise "No query context available for next_page" unless @query_context
+
+      resource_class = @query_context[:resource_class]
+      next_params = @query_context[:params].dup
+
+      next_params[:limit] = pagination.limit
+      next_params[:offset] = pagination.offset + pagination.limit
+      next_params.delete(:page)
+      next_params.delete(:size)
+
+      resource_class.find_by(next_params)
+    end
+
     def respond_to?(name, include_all = false)
       return true if name.to_s.end_with? '='
 

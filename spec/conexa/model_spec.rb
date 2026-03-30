@@ -59,10 +59,12 @@ RSpec.describe Conexa::Model do
       expect(result[:size]).to eq(100)
     end
 
-    it 'defaults to page 1, size 100' do
+    it 'defaults to limit 100, offset 0 (new pagination)' do
       result = model_class.extract_page_size_or_params
-      expect(result[:page]).to eq(1)
-      expect(result[:size]).to eq(100)
+      expect(result[:limit]).to eq(100)
+      expect(result[:offset]).to eq(0)
+      expect(result).not_to have_key(:page)
+      expect(result).not_to have_key(:size)
     end
 
     it 'preserves additional params' do

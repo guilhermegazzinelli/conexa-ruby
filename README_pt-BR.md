@@ -309,14 +309,22 @@ resultado = Conexa::Customer.all(limit: 50)
 resultado.data                    # Array de clientes
 resultado.pagination.limit        # => 50
 resultado.pagination.offset       # => 0
-resultado.pagination.has_next     # => true/false
+resultado.has_next?               # => true/false
 
-# Iterar por todas as páginas
+# Iterar por todas as páginas usando next_page
+resultado = Conexa::Customer.all(limit: 50)
+loop do
+  resultado.data.each { |cliente| processa(cliente) }
+  break unless resultado.has_next?
+  resultado = resultado.next_page
+end
+
+# Ou manualmente com offset
 offset = 0
 loop do
   resultado = Conexa::Customer.all(limit: 50, offset: offset)
   resultado.data.each { |cliente| processa(cliente) }
-  break unless resultado.pagination.has_next
+  break unless resultado.has_next?
   offset += 50
 end
 ```
@@ -364,13 +372,12 @@ loop do
   pagina += 1
 end
 
-# DEPOIS (novo)
-offset = 0
+# DEPOIS (novo — usando next_page)
+resultado = Conexa::Customer.all(limit: 100)
 loop do
-  resultado = Conexa::Customer.all(limit: 100, offset: offset)
   resultado.data.each { |c| processa(c) }
-  break unless resultado.pagination.has_next
-  offset += 100
+  break unless resultado.has_next?
+  resultado = resultado.next_page
 end
 ```
 

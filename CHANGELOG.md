@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-03-30
+
+### Added
+- `Result#next_page` — automatically fetches the next page preserving original filter params
+- `Result#has_next?` — convenience method to check if more pages are available
+- Pagination migration guide added to README (EN/PT-BR) and REFERENCE.md
+
+### Changed
+- **Breaking**: Default pagination is now `limit: 100, offset: 0` (was `page: 1, size: 100`)
+  - Calling `.all` or `.find_by` without pagination params now uses the new model
+  - Legacy `page`/`size` is only used when explicitly passed (emits deprecation warning)
+
 ## [0.0.9] - 2026-03-30
 
 ### Added
@@ -87,7 +99,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Charge with settle and PIX methods
 - Pagination support
 
-[Unreleased]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.9...HEAD
+[Unreleased]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.9...v0.1.0
 [0.0.9]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.6...v0.0.7

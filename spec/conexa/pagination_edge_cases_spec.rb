@@ -226,22 +226,22 @@ RSpec.describe 'Pagination Edge Cases' do
   end
 
   describe 'Default pagination' do
-    it 'uses default page=1 and size=100 when not specified' do
+    it 'uses default limit=100 and offset=0 when not specified' do
       stub_request(:get, "#{api_base}/customers")
-        .with(query: hash_including({ 'page' => '1', 'size' => '100' }))
+        .with(query: hash_including({ 'limit' => '100', 'offset' => '0' }))
         .to_return(
           status: 200,
           body: {
             data: [],
-            pagination: { page: 1, size: 100, totalPages: 0, totalElements: 0 }
+            pagination: { limit: 100, offset: 0, hasNext: false }
           }.to_json,
           headers: { 'Content-Type' => 'application/json' }
         )
 
       result = Conexa::Customer.all
 
-      expect(result.pagination.page).to eq(1)
-      expect(result.pagination.size).to eq(100)
+      expect(result.pagination.limit).to eq(100)
+      expect(result.pagination.offset).to eq(0)
     end
   end
 

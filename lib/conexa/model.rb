@@ -106,7 +106,10 @@ module Conexa
         params = extract_page_size_or_params(page, size, **params)
         raise RequestError.new('Invalid page size') if (!params.key?(:limit)) && (params[:page] < 1 or params[:size] < 1)
 
-        Conexa::Request.get(url, params: params).call underscored_class_name
+        Conexa::Request.get(url, params: params).call(
+          underscored_class_name,
+          query_context: { resource_class: self, params: params }
+        )
       end
       alias :find_by_hash :find_by
 
@@ -147,20 +150,26 @@ module Conexa
         end
         size_val = args[1]
 
+        # Explicit new pagination (limit/offset)
         if params.key?(:limit)
           params[:offset] ||= size_val if size_val.is_a?(Integer)
           params[:offset] ||= 0
-          params.delete(:page) # Fix to ensure the api doesn't get confused
+          params.delete(:page)
           params.delete(:size)
           return params
         end
 
+        # Explicit legacy pagination (page/size) — deprecated
         if params.key?(:page) || params.key?(:size) || page_val.is_a?(Integer)
           warn "DEPRECATION WARNING: O modelo antigo de paginação (page/size) será removido em 01 de agosto de 2026. Utilize limit e offset."
+          params[:page] ||= page_val || 1
+          params[:size] ||= size_val || 100
+          return params
         end
 
-        params[:page] ||= page_val || 1
-        params[:size] ||= size_val || 100
+        # Default: new pagination
+        params[:limit] = 100
+        params[:offset] = 0
         params
       end
     end

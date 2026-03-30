@@ -378,14 +378,22 @@ result = Conexa::Customer.list(limit: 50)
 result.data                    # Array of customers
 result.pagination.limit        # => 50
 result.pagination.offset       # => 0
-result.pagination.has_next     # => true/false
+result.has_next?               # => true/false
 
-# Iterate through all pages
+# Iterate through all pages using next_page
+result = Conexa::Customer.list(limit: 50)
+loop do
+  result.data.each { |customer| process(customer) }
+  break unless result.has_next?
+  result = result.next_page
+end
+
+# Or manually with offset
 offset = 0
 loop do
   result = Conexa::Customer.list(limit: 50, offset: offset)
   result.data.each { |customer| process(customer) }
-  break unless result.pagination.has_next
+  break unless result.has_next?
   offset += 50
 end
 ```
@@ -442,13 +450,12 @@ loop do
   page += 1
 end
 
-# AFTER (new)
-offset = 0
+# AFTER (new — using next_page)
+result = Conexa::Customer.list(limit: 100)
 loop do
-  result = Conexa::Customer.list(limit: 100, offset: offset)
   result.data.each { |c| process(c) }
-  break unless result.pagination.has_next
-  offset += 100
+  break unless result.has_next?
+  result = result.next_page
 end
 ```
 
