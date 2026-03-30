@@ -32,7 +32,7 @@ Conexa is a Brazilian SaaS platform for **recurring billing**, **subscription ma
 
 ```ruby
 # Gemfile
-gem 'conexa', '~> 0.0.7'
+gem 'conexa', '~> 0.0.9'
 
 # Or install directly
 gem install conexa
