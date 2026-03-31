@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Conexa
   class RecurringSale < Model
     primary_key_attribute :recurring_sale_id

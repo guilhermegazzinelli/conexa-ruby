@@ -46,13 +46,13 @@ Conexa.configure do |config|
 end
 
 # List customers
-customers = Conexa::Customer.list
+customers = Conexa::Customer.all
 customers.data.each do |customer|
   puts "#{customer.customer_id}: #{customer.name}"
 end
 
 # Get a specific customer
-customer = Conexa::Customer.retrieve(127)
+customer = Conexa::Customer.find(127)
 puts customer.name
 puts customer.address.city
 ```
@@ -110,7 +110,7 @@ customer = Conexa::Customer.create(
 )
 
 # Retrieve customer
-customer = Conexa::Customer.retrieve(127)
+customer = Conexa::Customer.find(127)
 customer.name           # => "Empresa ABC Ltda"
 customer.company_id     # => 3
 customer.is_active      # => true
@@ -118,10 +118,13 @@ customer.address.city   # => "Campinas"
 customer.legal_person['cnpj']  # => "99.557.155/0001-90"
 
 # Update customer
-Conexa::Customer.update(127, name: 'New Name', cell_number: '11888887777')
+customer = Conexa::Customer.find(127)
+customer.name = 'New Name'
+customer.cell_number = '11888887777'
+customer.save
 
 # List customers with filters (new pagination)
-customers = Conexa::Customer.list(
+customers = Conexa::Customer.all(
   company_id: [3],
   is_active: true,
   limit: 20
@@ -152,7 +155,7 @@ contract = Conexa::Contract.create_with_products(
 )
 
 # Retrieve contract
-contract = Conexa::Contract.retrieve(456)
+contract = Conexa::Contract.find(456)
 
 # Cancel contract
 Conexa::Contract.cancel(456, cancel_date: '2024-12-31')
@@ -174,13 +177,13 @@ sale = Conexa::Sale.create(
 puts sale.id  # => 188481
 
 # Retrieve sale
-sale = Conexa::Sale.retrieve(188510)
+sale = Conexa::Sale.find(188510)
 sale.status         # => "notBilled"
 sale.amount         # => 80.99
 sale.discount_value # => 69.21
 
 # List sales
-sales = Conexa::Sale.list(
+sales = Conexa::Sale.all(
   customer_id: [450, 216],
   status: 'notBilled',
   date_from: '2024-01-01',
@@ -190,10 +193,13 @@ sales = Conexa::Sale.list(
 )
 
 # Update sale
-Conexa::Sale.update(188510, quantity: 2, amount: 150.00)
+sale = Conexa::Sale.find(188510)
+sale.quantity = 2
+sale.amount = 150.00
+sale.save
 
 # Delete sale (only if not billed)
-Conexa::Sale.delete(188510)
+Conexa::Sale.destroy(188510)
 ```
 
 ### Recurring Sale
@@ -208,20 +214,20 @@ recurring = Conexa::RecurringSale.create(
 )
 
 # List recurring sales for a contract
-Conexa::RecurringSale.list(contract_id: 456)
+Conexa::RecurringSale.all(contract_id: 456)
 ```
 
 ### Charge
 
 ```ruby
 # Retrieve charge
-charge = Conexa::Charge.retrieve(789)
+charge = Conexa::Charge.find(789)
 charge.status     # => "paid"
 charge.amount     # => 299.90
 charge.due_date   # => "2024-02-10"
 
 # List charges
-charges = Conexa::Charge.list(
+charges = Conexa::Charge.all(
   customer_id: [127],
   status: 'pending',
   due_date_from: '2024-01-01',
@@ -239,10 +245,10 @@ Conexa::Charge.send_email(789)
 
 ```ruby
 # Retrieve bill
-bill = Conexa::Bill.retrieve(101)
+bill = Conexa::Bill.find(101)
 
 # List bills
-bills = Conexa::Bill.list(
+bills = Conexa::Bill.all(
   customer_id: [127],
   page: 1,
   size: 50
@@ -253,10 +259,10 @@ bills = Conexa::Bill.list(
 
 ```ruby
 # List plans
-plans = Conexa::Plan.list(company_id: [3])
+plans = Conexa::Plan.all(company_id: [3])
 
 # Retrieve plan
-plan = Conexa::Plan.retrieve(5)
+plan = Conexa::Plan.find(5)
 plan.name   # => "Plano Básico"
 plan.price  # => 99.90
 ```
@@ -265,66 +271,66 @@ plan.price  # => 99.90
 
 ```ruby
 # List products
-products = Conexa::Product.list(company_id: [3], limit: 50)
+products = Conexa::Product.all(company_id: [3], limit: 50)
 
 # Retrieve product
-product = Conexa::Product.retrieve(101)
+product = Conexa::Product.find(101)
 
 # Create product
 product = Conexa::Product.create(name: 'Novo Produto', company_id: 3)
 
 # Delete product
-Conexa::Product.delete(101)
+Conexa::Product.destroy(101)
 ```
 
 ### Receiving Method
 
 ```ruby
-methods = Conexa::ReceivingMethod.list(limit: 50)
-method = Conexa::ReceivingMethod.retrieve(11)
+methods = Conexa::ReceivingMethod.all(limit: 50)
+method = Conexa::ReceivingMethod.find(11)
 method.name  # => "Cartão de Crédito"
 ```
 
 ### Payment Method
 
 ```ruby
-methods = Conexa::PaymentMethod.list(limit: 50)
-method = Conexa::PaymentMethod.retrieve(2)
+methods = Conexa::PaymentMethod.all(limit: 50)
+method = Conexa::PaymentMethod.find(2)
 ```
 
 ### Bill Category / Subcategory
 
 ```ruby
-categories = Conexa::BillCategory.list(limit: 50)
-subcategories = Conexa::BillSubcategory.list(limit: 50)
+categories = Conexa::BillCategory.all(limit: 50)
+subcategories = Conexa::BillSubcategory.all(limit: 50)
 ```
 
 ### Cost Center
 
 ```ruby
-centers = Conexa::CostCenter.list(limit: 50)
-center = Conexa::CostCenter.retrieve(11)
+centers = Conexa::CostCenter.all(limit: 50)
+center = Conexa::CostCenter.find(11)
 ```
 
 ### Account
 
 ```ruby
-accounts = Conexa::Account.list(limit: 50)
-account = Conexa::Account.retrieve(23)
+accounts = Conexa::Account.all(limit: 50)
+account = Conexa::Account.find(23)
 ```
 
 ### Service Category
 
 ```ruby
-categories = Conexa::ServiceCategory.list(limit: 50)
-category = Conexa::ServiceCategory.retrieve(1)
+categories = Conexa::ServiceCategory.all(limit: 50)
+category = Conexa::ServiceCategory.find(1)
 ```
 
 ### Room Booking
 
 ```ruby
 # List bookings
-bookings = Conexa::RoomBooking.list(limit: 20)
+bookings = Conexa::RoomBooking.all(limit: 20)
 
 # Create booking
 booking = Conexa::RoomBooking.create(room_id: 5, customer_id: 127)
@@ -350,20 +356,20 @@ card = Conexa::CreditCard.create(
 )
 
 # List customer's cards
-cards = Conexa::CreditCard.list(customer_id: 127)
+cards = Conexa::CreditCard.all(customer_id: 127)
 
 # Delete card
-Conexa::CreditCard.delete(card_id)
+Conexa::CreditCard.destroy(card_id)
 ```
 
 ### Company (Unit)
 
 ```ruby
 # List companies/units
-companies = Conexa::Company.list
+companies = Conexa::Company.all
 
 # Retrieve company
-company = Conexa::Company.retrieve(3)
+company = Conexa::Company.find(3)
 company.name      # => "Matriz"
 company.document  # => "12.345.678/0001-90"
 ```
@@ -373,7 +379,7 @@ company.document  # => "12.345.678/0001-90"
 ### New Pagination (recommended) — `limit`/`offset`/`hasNext`
 
 ```ruby
-result = Conexa::Customer.list(limit: 50)
+result = Conexa::Customer.all(limit: 50)
 
 result.data                    # Array of customers
 result.pagination.limit        # => 50
@@ -381,7 +387,7 @@ result.pagination.offset       # => 0
 result.has_next?               # => true/false
 
 # Iterate through all pages using next_page
-result = Conexa::Customer.list(limit: 50)
+result = Conexa::Customer.all(limit: 50)
 loop do
   result.data.each { |customer| process(customer) }
   break unless result.has_next?
@@ -391,7 +397,7 @@ end
 # Or manually with offset
 offset = 0
 loop do
-  result = Conexa::Customer.list(limit: 50, offset: offset)
+  result = Conexa::Customer.all(limit: 50, offset: offset)
   result.data.each { |customer| process(customer) }
   break unless result.has_next?
   offset += 50
@@ -402,7 +408,7 @@ end
 
 ```ruby
 # Still works but emits a deprecation warning
-result = Conexa::Customer.list(page: 1, size: 20)
+result = Conexa::Customer.all(page: 1, size: 20)
 result.pagination.current_page    # => 1
 result.pagination.total_pages     # => 10
 ```
@@ -415,12 +421,12 @@ The legacy `page`/`size` pagination is deprecated and will be removed on **2026-
 
 ```ruby
 # BEFORE (legacy — deprecated)
-result = Conexa::Customer.list(page: 1, size: 50)
-result = Conexa::Customer.list(page: 2, size: 50)
+result = Conexa::Customer.all(page: 1, size: 50)
+result = Conexa::Customer.all(page: 2, size: 50)
 
 # AFTER (new)
-result = Conexa::Customer.list(limit: 50)               # offset defaults to 0
-result = Conexa::Customer.list(limit: 50, offset: 50)   # second page
+result = Conexa::Customer.all(limit: 50)               # offset defaults to 0
+result = Conexa::Customer.all(limit: 50, offset: 50)   # second page
 ```
 
 **Conversion formula:** `offset = (page - 1) * size`
@@ -444,14 +450,14 @@ result.pagination.has_next   # => true/false
 # BEFORE (legacy)
 page = 1
 loop do
-  result = Conexa::Customer.list(page: page, size: 100)
+  result = Conexa::Customer.all(page: page, size: 100)
   break if result.empty?
   result.data.each { |c| process(c) }
   page += 1
 end
 
 # AFTER (new — using next_page)
-result = Conexa::Customer.list(limit: 100)
+result = Conexa::Customer.all(limit: 100)
 loop do
   result.data.each { |c| process(c) }
   break unless result.has_next?
@@ -488,29 +494,22 @@ begin
   customer = Conexa::Customer.create(name: '')
 rescue Conexa::ValidationError => e
   # Field validation errors (400)
-  e.errors.each do |error|
-    puts "#{error['field']}: #{error['messages'].join(', ')}"
-  end
-rescue Conexa::AuthenticationError => e
-  # Authentication required (401)
   puts e.message
-rescue Conexa::AuthorizationError => e
-  # Not authorized (403)
-  puts e.message
-rescue Conexa::NotFoundError => e
+rescue Conexa::NotFound => e
   # Resource not found (404)
   puts e.message
-rescue Conexa::UnprocessableError => e
-  # Business logic error (422)
-  e.errors.each do |error|
-    puts "#{error['code']}: #{error['message']}"
-  end
-rescue Conexa::RateLimitError => e
-  # Too many requests (429)
-  puts "Rate limit exceeded. Retry after #{e.retry_after} seconds"
-rescue Conexa::ApiError => e
-  # Generic API error
-  puts "Error #{e.status}: #{e.message}"
+rescue Conexa::ResponseError => e
+  # API response error (4xx/5xx)
+  puts e.message
+rescue Conexa::RequestError => e
+  # Request-level error (invalid params, etc.)
+  puts e.message
+rescue Conexa::ConnectionError => e
+  # Network/connection error
+  puts e.message
+rescue Conexa::ConexaError => e
+  # Generic Conexa error (catch-all)
+  puts e.message
 end
 ```
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Conexa
   class ConexaError < StandardError
   end
@@ -38,11 +40,11 @@ module Conexa
 
     def initialize(response)
       @response = response
-      @errors   = response['message']&.map do |message|
-        params = error.values_at('message', 'parameter_name', 'type', 'url')
+      @errors   = response['message']&.map do |msg|
+        params = msg.values_at('message', 'parameter_name', 'type', 'url')
         ParamError.new(*params)
       end
-      super @errors&.map(&:message).join(', ')
+      super @errors&.map(&:message)&.join(', ')
     end
 
     def to_h

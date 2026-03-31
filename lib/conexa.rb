@@ -9,7 +9,7 @@ require_relative "conexa/core_ext"
 require_relative "conexa/errors"
 require_relative "conexa/util"
 require_relative "conexa/configuration"
-require_relative "conexa/order_commom"
+require_relative "conexa/order_common"
 require_relative "conexa/token_manager"
 
 
