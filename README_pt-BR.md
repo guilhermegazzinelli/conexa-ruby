@@ -73,25 +73,27 @@ Cada recurso segue um conjunto consistente de padrões de métodos:
 
 ### Paginação
 
-A API utiliza os parâmetros `page` e `size` para paginação com os seguintes valores padrão:
-
-- **page**: Número da página atual (padrão: `1`)
-- **size**: Quantidade de itens por página (padrão: `100`)
+A gem utiliza por padrão `limit: 100, offset: 0` (nova paginação). O modelo legado `page`/`size` ainda funciona mas emite um aviso de depreciação.
 
 #### Chamando com Paginação
 
 ```ruby
-# Paginação padrão (página 1, 100 itens)
+# Paginação padrão (limit: 100, offset: 0)
 Conexa::Customer.all
 
-# Argumentos posicionais (página, tamanho)
-Conexa::Customer.all(2, 50)  # página 2, 50 itens por página
+# Com limite customizado
+Conexa::Customer.all(limit: 50)
 
-# Parâmetros nomeados
-Conexa::Customer.all(page: 3, size: 25)
+# Com offset
+Conexa::Customer.all(limit: 50, offset: 100)
 
-# Usando o alias `where`
-Conexa::Customer.where(page: 2, size: 10)
+# Iteração automática com next_page
+resultado = Conexa::Customer.all(limit: 50)
+loop do
+  resultado.data.each { |cliente| processa(cliente) }
+  break unless resultado.has_next?
+  resultado = resultado.next_page
+end
 ```
 
 ### Objeto Result
@@ -309,14 +311,22 @@ resultado = Conexa::Customer.all(limit: 50)
 resultado.data                    # Array de clientes
 resultado.pagination.limit        # => 50
 resultado.pagination.offset       # => 0
-resultado.pagination.has_next     # => true/false
+resultado.has_next?               # => true/false
 
-# Iterar por todas as páginas
+# Iterar por todas as páginas usando next_page
+resultado = Conexa::Customer.all(limit: 50)
+loop do
+  resultado.data.each { |cliente| processa(cliente) }
+  break unless resultado.has_next?
+  resultado = resultado.next_page
+end
+
+# Ou manualmente com offset
 offset = 0
 loop do
   resultado = Conexa::Customer.all(limit: 50, offset: offset)
   resultado.data.each { |cliente| processa(cliente) }
-  break unless resultado.pagination.has_next
+  break unless resultado.has_next?
   offset += 50
 end
 ```
@@ -364,13 +374,12 @@ loop do
   pagina += 1
 end
 
-# DEPOIS (novo)
-offset = 0
+# DEPOIS (novo — usando next_page)
+resultado = Conexa::Customer.all(limit: 100)
 loop do
-  resultado = Conexa::Customer.all(limit: 100, offset: offset)
   resultado.data.each { |c| processa(c) }
-  break unless resultado.pagination.has_next
-  offset += 100
+  break unless resultado.has_next?
+  resultado = resultado.next_page
 end
 ```
 

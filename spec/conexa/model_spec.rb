@@ -59,10 +59,12 @@ RSpec.describe Conexa::Model do
       expect(result[:size]).to eq(100)
     end
 
-    it 'defaults to page 1, size 100' do
+    it 'defaults to limit 100, offset 0 (new pagination)' do
       result = model_class.extract_page_size_or_params
-      expect(result[:page]).to eq(1)
-      expect(result[:size]).to eq(100)
+      expect(result[:limit]).to eq(100)
+      expect(result[:offset]).to eq(0)
+      expect(result).not_to have_key(:page)
+      expect(result).not_to have_key(:size)
     end
 
     it 'preserves additional params' do
@@ -91,6 +93,36 @@ RSpec.describe Conexa::Model do
         expect(result[:limit]).to eq(20)
         expect(result[:status]).to eq('active')
       end
+
+      it 'raises on non-positive limit' do
+        expect { model_class.extract_page_size_or_params(limit: 0) }
+          .to raise_error(Conexa::RequestError, /limit must be a positive integer/)
+      end
+
+      it 'raises on negative limit' do
+        expect { model_class.extract_page_size_or_params(limit: -5) }
+          .to raise_error(Conexa::RequestError, /limit must be a positive integer/)
+      end
+
+      it 'raises on non-integer limit' do
+        expect { model_class.extract_page_size_or_params(limit: 'abc') }
+          .to raise_error(Conexa::RequestError, /limit must be a positive integer/)
+      end
+
+      it 'raises on negative offset' do
+        expect { model_class.extract_page_size_or_params(limit: 10, offset: -1) }
+          .to raise_error(Conexa::RequestError, /offset must be a non-negative integer/)
+      end
+    end
+  end
+
+  describe '.class_name' do
+    it 'returns lowerCamelCase for compound names' do
+      expect(Conexa::RecurringSale.class_name).to eq('recurringSale')
+    end
+
+    it 'returns lowercase for simple names' do
+      expect(model_class.class_name).to eq('customer')
     end
   end
 end

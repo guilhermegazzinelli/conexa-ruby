@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Conexa
 
   #
@@ -19,7 +21,7 @@ module Conexa
         when Array
           tokens = Conexa.credentials
         when Hash
-          tokens = [ShiConexa.credentials]
+          tokens = [Conexa.credentials]
         end
       else
         tokens = [{

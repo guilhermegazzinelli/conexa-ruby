@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Conexa
   class Configuration
     attr_accessor :api_token, :api_host

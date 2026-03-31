@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module Conexa
   # Base class for all API resources (Customer, Charge, Contract, etc.)
   #
   # == Attribute Access
-  # 
+  #
   # Attributes are automatically accessible via method_missing:
   #   customer.name           # => "Empresa ABC"
   #   customer.company_id     # => 3
@@ -31,28 +33,10 @@ module Conexa
   # instead of "recurring_sale_id". Explicit declaration ensures correctness.
   #
   class Model < ConexaObject
-    class << self
-      # DSL for primary key attribute with :id alias
-      # @example
-      #   primary_key_attribute :charge_id
-      #   # Generates: charge_id method + chargeId alias + id alias
-      def primary_key_attribute(snake_name)
-        camel_name = Util.camelize_str(snake_name.to_s)
-
-        define_method(snake_name) do
-          @attributes[snake_name.to_s]
-        end
-
-        alias_method camel_name.to_sym, snake_name
-        alias_method :id, snake_name
-      end
-    end
-
     def create
       set_primary_key Conexa::Request.post(self.class.show_url, params: to_hash).call(class_name).attributes['id']
       fetch
     end
-
 
     def save
       update Conexa::Request.patch(self.class.show_url(primary_key), params: unsaved_attributes).call(class_name)
@@ -86,11 +70,26 @@ module Conexa
 
     def destroy
       raise RequestError.new('Invalid ID') unless id.present?
-      update Conexa::Request.delete( self.class.show_url(primary_key) ).call(class_name)
+      update Conexa::Request.delete(self.class.show_url(primary_key)).call(class_name)
       self
     end
 
     class << self
+      # DSL for primary key attribute with :id alias
+      # @example
+      #   primary_key_attribute :charge_id
+      #   # Generates: charge_id method + chargeId alias + id alias
+      def primary_key_attribute(snake_name)
+        camel_name = Util.camelize_str(snake_name.to_s)
+
+        define_method(snake_name) do
+          @attributes[snake_name.to_s]
+        end
+
+        alias_method camel_name.to_sym, snake_name
+        alias_method :id, snake_name
+      end
+
       def create(*args)
         self.new(*args).create
       end
@@ -101,18 +100,19 @@ module Conexa
       end
       alias :find :find_by_id
 
-
       def find_by(params = Hash.new, page = nil, size = nil)
         params = extract_page_size_or_params(page, size, **params)
         raise RequestError.new('Invalid page size') if (!params.key?(:limit)) && (params[:page] < 1 or params[:size] < 1)
 
-        Conexa::Request.get(url, params: params).call underscored_class_name
+        Conexa::Request.get(url, params: params).call(
+          underscored_class_name,
+          query_context: { resource_class: self, params: params }
+        )
       end
       alias :find_by_hash :find_by
 
       def all(*args, **params)
-        params = extract_page_size_or_params(*args, **params)
-        find_by params
+        find_by(params, *args)
       end
       alias :where :all
 
@@ -131,7 +131,8 @@ module Conexa
       end
 
       def class_name
-        self.name.split('::').last.downcase
+        name = self.name.split('::').last
+        name[0].downcase + name[1..]
       end
 
       def underscored_class_name
@@ -147,20 +148,35 @@ module Conexa
         end
         size_val = args[1]
 
+        # Explicit new pagination (limit/offset)
         if params.key?(:limit)
+          unless params[:limit].is_a?(Integer) && params[:limit].positive?
+            raise RequestError, "limit must be a positive integer"
+          end
+
           params[:offset] ||= size_val if size_val.is_a?(Integer)
           params[:offset] ||= 0
-          params.delete(:page) # Fix to ensure the api doesn't get confused
+
+          unless params[:offset].is_a?(Integer) && params[:offset] >= 0
+            raise RequestError, "offset must be a non-negative integer"
+          end
+
+          params.delete(:page)
           params.delete(:size)
           return params
         end
 
+        # Explicit legacy pagination (page/size) — deprecated
         if params.key?(:page) || params.key?(:size) || page_val.is_a?(Integer)
           warn "DEPRECATION WARNING: O modelo antigo de paginação (page/size) será removido em 01 de agosto de 2026. Utilize limit e offset."
+          params[:page] ||= page_val || 1
+          params[:size] ||= size_val || 100
+          return params
         end
 
-        params[:page] ||= page_val || 1
-        params[:size] ||= size_val || 100
+        # Default: new pagination
+        params[:limit] = 100
+        params[:offset] = 0
         params
       end
     end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Conexa
   class CreditCard < Model
     primary_key_attribute :credit_card_id

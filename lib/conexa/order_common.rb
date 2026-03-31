@@ -1,9 +1,9 @@
-module Conexa
-  class OrderCommom < Model
+# frozen_string_literal: true
 
-    # def self.url(*params)
-    #   ["/#{ CGI.escape underscored_class_name }", *params].join '/'
-    # end
+module Conexa
+  class OrderCommon < Model
+    # Keep old name as alias for backwards compatibility
+    OrderCommom = self
 
     #
     # Request refund to Conexa api for this order

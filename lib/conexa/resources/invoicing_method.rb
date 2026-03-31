@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Conexa
   class InvoicingMethod < Model
     primary_key_attribute :invoicing_method_id

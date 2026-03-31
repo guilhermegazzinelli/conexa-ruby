@@ -32,7 +32,7 @@ Conexa is a Brazilian SaaS platform for **recurring billing**, **subscription ma
 
 ```ruby
 # Gemfile
-gem 'conexa', '~> 0.0.9'
+gem 'conexa', '~> 0.1.0'
 
 # Or install directly
 gem install conexa
@@ -1034,7 +1034,7 @@ person.destroy
 
 #### New Pagination (recommended) — `limit`/`offset`/`hasNext`
 
-All `#all` and `#find_by` methods support the new pagination when `limit:` is passed:
+All `#all` and `#find_by` methods use `limit`/`offset` by default. When no pagination params are passed, the gem defaults to `limit: 100, offset: 0`.
 
 ```ruby
 # Page 1, 50 items
@@ -1043,24 +1043,35 @@ result = Conexa::Customer.all(limit: 50)
 result.data           # => Array of customers
 result.pagination.limit    # => 50
 result.pagination.offset   # => 0
-result.pagination.has_next # => true/false
+result.has_next?      # => true/false
 result.empty?         # => false
 
-# Iterate all pages
+# Iterate all pages using next_page
+result = Conexa::Customer.all(limit: 100)
+loop do
+  result.each { |customer| process(customer) }
+  break unless result.has_next?
+  result = result.next_page
+end
+
+# Or manually with offset
 offset = 0
 loop do
   result = Conexa::Customer.all(limit: 100, offset: offset)
   break if result.empty?
-
   result.each { |customer| process(customer) }
-  break unless result.pagination.has_next
+  break unless result.has_next?
   offset += 100
 end
 ```
 
+**`next_page`** — Fetches the next page automatically, preserving all original filter params. Raises `StopIteration` when there are no more pages.
+
+**`has_next?`** — Returns `true` if more pages are available.
+
 #### Legacy Pagination (deprecated — removed 2026-08-01)
 
-If `limit:` is NOT passed, the gem falls back to the old `page`/`size` model
+If `page:` or `size:` is explicitly passed, the gem uses the old pagination model
 (emitting a deprecation warning):
 
 ```ruby
@@ -1115,13 +1126,12 @@ loop do
   page += 1
 end
 
-# AFTER
-offset = 0
+# AFTER (using next_page)
+result = Conexa::Customer.all(limit: 100)
 loop do
-  result = Conexa::Customer.all(limit: 100, offset: offset)
   result.each { |c| process(c) }
-  break unless result.pagination.has_next
-  offset += 100
+  break unless result.has_next?
+  result = result.next_page
 end
 ```
 

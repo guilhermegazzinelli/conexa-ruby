@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-03-31
+
+### Added
+- `Result#next_page` — automatically fetches the next page preserving original filter params
+- `Result#has_next?` — convenience method to check if more pages are available
+- Pagination migration guide added to README (EN/PT-BR) and REFERENCE.md
+- Validation for `limit` (must be positive integer) and `offset` (must be non-negative integer) parameters
+- `frozen_string_literal: true` pragma added to all Ruby source files
+- ActiveSupport compatibility guard for `blank?`/`present?` monkey-patches
+- `respond_to_missing?` implemented in `ConexaObject` and `Result` (Ruby best practice)
+- Integration tests for all new API v2 resources (24 specs)
+- Unit tests for pagination validation and `class_name` camelCase preservation (6 specs)
+- Total: 502 specs
+
+### Changed
+- **Breaking**: Default pagination is now `limit: 100, offset: 0` (was `page: 1, size: 100`)
+  - Calling `.all` or `.find_by` without pagination params now uses the new model
+  - Legacy `page`/`size` is only used when explicitly passed (emits deprecation warning)
+- `Model.all` simplified — delegates directly to `find_by` without double param extraction
+- `Model.class_name` now returns proper lowerCamelCase (e.g. `recurringSale` instead of `recurringsale`)
+- `OrderCommom` renamed to `OrderCommon` (backwards-compatible alias kept)
+- `Bill#save` now raises `NoMethodError` with descriptive message
+- README updated: all examples now use correct method names (`.all`, `.find`, `.destroy`)
+- README error handling section rewritten with actual exception classes
+
+### Fixed
+- **Concurrency bug**: `DEFAULT_HEADERS` constant was mutated on every request; now uses `.dup`
+- **Boolean false bug**: `Result#method_missing` skipped `false` attribute values due to `||` operator
+- **ValidationError crash**: undefined variable `error` in block scope — fixed to use `msg`
+- **TokenManager typo**: `ShiConexa` → `Conexa` in credentials handling
+- **Singularize**: `SINGULARS` patterns were stored as strings, never used as regex — rewritten with proper `Regexp` objects
+- **Deep copy**: `Result#next_page` now uses `Marshal.load(Marshal.dump(...))` to prevent param mutation between pages
+- Stray `-` character removed from `util.rb`
+- Removed dead code: `Hash#except_nested` monkey-patch, commented-out `to_s` method
+
 ## [0.0.9] - 2026-03-30
 
 ### Added
@@ -87,7 +122,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Charge with settle and PIX methods
 - Pagination support
 
-[Unreleased]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.9...HEAD
+[Unreleased]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.9...v0.1.0
 [0.0.9]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.6...v0.0.7

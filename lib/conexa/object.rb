@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Conexa
   # Base class for all Conexa objects with dynamic attribute access
   #
@@ -24,8 +26,6 @@ module Conexa
     end
 
     def initialize(response = {})
-      # raise MissingCredentialsError.new("Missing :client_key for extra options #{options}") if options && !options[:client_key]
-
       @attributes = Hash.new
       @unsaved_attributes = Set.new
 
@@ -57,20 +57,12 @@ module Conexa
       end]
     end
 
-    def respond_to?(name, include_all = false)
-      return true if name.to_s.end_with? '='
+    def respond_to_missing?(name, include_private = false)
+      name_str = Util.to_snake_case(name.to_s)
+      return true if name_str.end_with?('=')
 
-      @attributes.has_key?(name.to_s) || super
+      @attributes.key?(name_str) || @attributes.key?(name_str.to_sym) || super
     end
-
-    # def to_s
-    #   attributes_str = ''
-    #   (attributes.keys - ['id', 'object']).sort.each do |key|
-    #     attributes_str += " \033[1;33m#{key}:\033[0m#{self[key].inspect}" unless self[key].nil?
-    #   end
-    #   "\033[1;31m#<#{self.class.name}:\033[0;32m#{id}#{attributes_str}\033[0m\033[0m\033[1;31m>\033[0;32m"
-    # end
-    # # alias :inspect :to_s
 
     protected
     def update(attributes)
@@ -127,7 +119,6 @@ module Conexa
       super name, *args, &block
     end
 
-
     class << self
       def convert(response, resource_name = nil, client_key=nil)
         case response
@@ -154,7 +145,6 @@ module Conexa
 
       def capitalize_name(name)
         name.split('_').collect(&:capitalize).join
-        # name.gsub(/(\A\w|\_\w)/){ |str| str.gsub('_', '').upcase }
       end
     end
   end
