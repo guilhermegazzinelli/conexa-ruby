@@ -1,9 +1,9 @@
 ---
 type: Runbook
 title: Running the spec suite
-description: bundle exec rspec fails on this machine because the debug gem's io-console dependency will not compile — use the workaround Gemfile.
+description: rake, rake spec:all across every supported Ruby, and why there is a .rubocop_todo.yml and no committed Gemfile.lock.
 tags: [testing, release]
-timestamp: 2026-08-11T18:40:00Z
+timestamp: 2026-08-11T19:20:00Z
 ---
 
 # Overview
@@ -25,12 +25,21 @@ bundle exec rspec
 # Every supported Ruby
 
 ```bash
-claude_scripts/multi_ruby_specs/run.sh          # 3.1.7, 3.2.9, 3.3.10, 3.4.7
-claude_scripts/multi_ruby_specs/run.sh --lint   # plus rubocop
+rake spec:all   # 3.1.7, 3.2.9, 3.3.10, 3.4.7 via mise
+rake ci         # the above, then rubocop — mirrors the CI pipeline
 ```
 
-One `BUNDLE_PATH` per version: native extensions are not portable across Ruby
-versions, and sharing `vendor/bundle` makes each run clobber the last.
+`SUPPORTED_RUBIES` in the `Rakefile` is the single list; keep it in step with
+`.github/workflows/ruby.yml` and the gemspec's `required_ruby_version`.
+
+One `BUNDLE_PATH` per version (`vendor/bundle-3.1.7`, ...): native extensions are
+not portable across Ruby versions, and sharing `vendor/bundle` makes each run
+clobber the last.
+
+**`Gemfile.lock` is not committed**, which is the convention for a gem and the
+thing that makes this matrix meaningful — each version resolves the range the
+gemspec allows instead of one pinned set. CI used to `rm -f` the lockfile before
+`bundle install` for exactly this reason.
 
 # If `bundle install` fails on io-console
 
@@ -64,13 +73,25 @@ BUNDLE_WITHOUT=development bundle exec rspec
 
 The multi-Ruby script sets that automatically.
 
-# RuboCop is not clean, by long standing
+# RuboCop, and why there is a todo file
 
-`bundle exec rubocop` reports ~2000 offences, of which ~1540 are
-`Style/StringLiterals` — the codebase mixes quote styles and the config enforces
-double quotes. CI runs lint with `continue-on-error: true`, which is the honest
-reflection of that. Autocorrecting is a separate piece of work: doing it inside a
-behavioural release would bury the actual fixes in a repo-wide diff.
+`rake` runs `spec` then `rubocop`, and until 0.2.0 it **failed**: ~2000
+pre-existing offences, ~1540 of them `Style/StringLiterals` from a codebase that
+mixes quote styles under a config enforcing double quotes. A default task that
+always fails is a default task nobody runs, which is why CI carried
+`continue-on-error: true` on lint.
+
+`.rubocop_todo.yml` (generated, committed) grandfathers those offences per file.
+The effect is that **new** code is genuinely linted while the backlog stays
+visible, `rake` passes, and CI gates on lint for real. Autocorrecting the backlog
+is separate work — doing it inside a behavioural release would bury the fixes in
+a repo-wide diff.
+
+Regenerate after clearing a batch:
+
+```bash
+bundle exec rubocop --auto-gen-config --no-exclude-limit
+```
 
 # HTTP is blocked by default
 

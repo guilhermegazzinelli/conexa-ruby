@@ -91,6 +91,19 @@ published documentation, and is now enforced by
 - The gemspec's development dependencies move to bundler's `:test` group, and
   `debug`/`byebug` to an optional `:development` group, so a native-extension
   failure in `io-console` can no longer stop `bundle exec rspec`.
+- **The packaged gem is 48 KB, down from 163 KB.** `spec.files` shipped the whole
+  repository — including `docs/postman-collection.json` (1.7 MB) — against 58 KB
+  of library code. It now ships `lib/` and the documentation only.
+- **`Gemfile.lock` is no longer committed**, as is conventional for a gem: a
+  pinned lockfile defeats testing against the range the gemspec allows, and CI
+  had been working around it by deleting the file before `bundle install`.
+- **`rake` passes again.** The default task is `spec` + `rubocop`, and RuboCop's
+  ~2000 pre-existing offences made it fail, which is why CI ran lint with
+  `continue-on-error`. A generated `.rubocop_todo.yml` grandfathers them, so new
+  code is genuinely linted and CI can gate on it.
+- `rake spec:all` runs the suite across every supported Ruby via mise, replacing
+  an ad-hoc shell script; `rake ci` mirrors the CI pipeline. CI uses
+  `bundler-cache: true`.
 
 ### Removed
 - **Breaking**: `Conexa::Client`, `Conexa::Authenticator`, `Conexa::TokenManager`

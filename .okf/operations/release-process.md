@@ -1,14 +1,14 @@
 ---
 type: Runbook
 title: Cutting a release
-description: Version bump, changelog, tag, build, push — plus the two build warnings this gem emits every time and what they actually mean.
+description: Version bump through gem push, what the gem actually packages, and the build warnings that 0.2.0 cleared.
 tags: [release]
-timestamp: 2026-08-11T13:23:00Z
+timestamp: 2026-08-11T19:20:00Z
 ---
 
 # Overview
 
-Releases are manual. Current version: **0.1.1** (`lib/conexa/version.rb`), the
+Releases are manual. Current version: **0.2.0** (`lib/conexa/version.rb`), the
 single source — `conexa.gemspec` reads it.
 
 # Steps
@@ -20,31 +20,44 @@ single source — `conexa.gemspec` reads it.
 3. Update `README.md`, `README_pt-BR.md` and `REFERENCE.md` if the public surface
    changed. All three must move together; they have drifted before — see
    [the README quick-start defect](../defects/readme-quickstart-uses-nonexistent-subdomain.md).
-4. Run the suite — [Running the spec suite](running-the-suite.md).
+4. `rake ci` — the suite on every supported ruby, then rubocop. See
+   [Running the spec suite](running-the-suite.md).
 5. Commit, tag `vx.y.z`, `gem build conexa.gemspec`.
 6. Push the branch and the tag; publish with `gem push conexa-x.y.z.gem`.
 
-Built `.gem` files are currently committed at the repo root (`conexa-0.0.8`
-through `conexa-0.1.1`). That is unusual — they are build artifacts and belong in
-a release attachment or `.gitignore`, not in git.
+Built `.gem` files sit at the repo root but are ignored by `*.gitignore:1` — they
+were never actually committed.
 
-# Build warnings that recur
+## What ships
 
-`gem build` emits the same two every release. Neither blocks the build; one is
-a real bug.
-
-**Open-ended dependencies.** `jwt`, `rest-client` and `multi_json` are declared
-with no version constraint, so any future major release of any of them is
-accepted. `multi_json`'s adapter behaviour is load-bearing here — the whole
-[empty-body defect](../defects/empty-body-nomethoderror.md) turns on Oj returning
-`nil` instead of raising. Pin at least a major.
-
-**File permissions.** `lib/conexa/resources/supplier.rb` is mode `0600`. Packaged
-that way, the file is unreadable to anyone but the installing user, and
-`require "conexa"` fails for everyone else on a shared install. Fix it:
+Since 0.2.0 `spec.files` is an explicit allowlist: `lib/` plus the documentation.
+Before that it packaged the whole repository, so the published gem carried
+`docs/postman-collection.json` (1.7 MB) against 58 KB of library code — 0.1.1 is
+163 KB, 0.2.0 is 48 KB. Check after any change to the file list:
 
 ```bash
-chmod 0644 lib/conexa/resources/supplier.rb
+gem build conexa.gemspec && tar xf conexa-*.gem -O data.tar.gz | tar tzf -
+```
+
+# Build warnings, resolved in 0.2.0
+
+`gem build` used to emit the same set every release; it is now clean. Kept here
+because both are easy to reintroduce.
+
+**Open-ended dependencies.** `jwt`, `rest-client` and `multi_json` had no version
+constraint, accepting any future major. `jwt` went with
+[the legacy auth removal](../defects/dead-legacy-token-manager.md); the other two
+are pinned to a major. That pin matters more than it looks: `multi_json`'s
+adapter behaviour is load-bearing — the whole
+[empty-body defect](../defects/empty-body-nomethoderror.md) turns on Oj returning
+`nil` instead of raising. The development dependencies are bounded too.
+
+**File permissions.** `lib/conexa/resources/supplier.rb` was mode `0600`. Packaged
+that way the file is unreadable to anyone but the installing user, and
+`require "conexa"` fails for everyone else on a shared install. Guard with:
+
+```bash
+find lib -type f ! -perm 644
 ```
 
 The gemspec also specifies duplicate URI metadata (`homepage_uri` and

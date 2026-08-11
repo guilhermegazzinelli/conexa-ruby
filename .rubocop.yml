@@ -1,5 +1,14 @@
+# .rubocop_todo.yml grandfathers the offences that predate this config, so `rake`
+# passes and *new* code is actually linted. Regenerate with
+# `bundle exec rubocop --auto-gen-config --no-exclude-limit` after clearing a batch.
+inherit_from: .rubocop_todo.yml
+
 AllCops:
   TargetRubyVersion: 3.1
+  SuggestExtensions: false
+  Exclude:
+    - 'vendor/**/*'
+    - 'spec/cassettes/**/*'
 
 Style/StringLiterals:
   Enabled: true

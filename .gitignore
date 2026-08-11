@@ -26,8 +26,13 @@
 ## Environment normalization:
 /.bundle/
 /vendor/bundle
-# One bundle path per ruby version — see claude_scripts/multi_ruby_specs/
+# One bundle path per ruby version — see `rake spec:all`
 /vendor/bundle-*
+
+# A gem does not commit its lockfile: it pins dependency versions and defeats
+# testing against the range the gemspec actually allows. CI used to `rm -f` it
+# before `bundle install` for exactly this reason.
+/Gemfile.lock
 /lib/bundler/man/
 
 # for a library or gem, you might want to ignore these files since the code is
