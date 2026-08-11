@@ -48,10 +48,21 @@ module Conexa
     end
 
     # Settle (pay) this charge
-    # @param params [Hash] optional payment details
+    #
+    # Moves money and, on a configured tenant, issues an NF-e. Not safe to retry
+    # blindly: a second attempt on a settled charge answers 422 CHARGE_11.
+    #
+    # The API answers 204 with an empty body on success.
+    #
+    # @param params [Hash] settlement details
+    # @option params [String] :settlement_date required, yyyy-MM-dd
+    # @option params [Hash] :receiving_method required, {id:, installments_quantity:}
+    # @option params [Integer] :account_id required
+    # @option params [Float] :paid_amount defaults to the charge amount, without interest
+    # @option params [Boolean] :send_email defaults to false
     # @return [self]
     def settle(params = {})
-      Conexa::Request.post(self.class.show_url("settle", primary_key), params: params).call(class_name)
+      Conexa::Request.patch(self.class.show_url("settle", primary_key), params: params).call(class_name)
       self
     end
 

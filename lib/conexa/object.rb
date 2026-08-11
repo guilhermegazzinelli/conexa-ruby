@@ -120,7 +120,7 @@ module Conexa
     end
 
     class << self
-      def convert(response, resource_name = nil, client_key=nil)
+      def convert(response, resource_name = nil)
         case response
         when Array
           response.map{ |i| convert i, resource_name }

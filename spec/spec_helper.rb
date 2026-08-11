@@ -6,6 +6,8 @@ require "vcr"
 require "factory_bot"
 require "faker"
 
+Dir[File.expand_path("support/**/*.rb", __dir__)].sort.each { |f| require f }
+
 VCR.configure do |config|
   config.cassette_library_dir = "spec/cassettes"
   config.hook_into :webmock
@@ -31,7 +33,15 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
+  # Without this, `allow(Conexa).to receive(:secret_key)` happily stubs a method
+  # that does not exist — which is how the TokenManager specs stayed green over
+  # code that raises NoMethodError in any real use.
+  config.mock_with :rspec do |mocks|
+    mocks.verify_partial_doubles = true
+  end
+
   config.include FactoryBot::Syntax::Methods
+  config.include RequestCapture
 
   config.before(:suite) do
     FactoryBot.find_definitions

@@ -48,21 +48,57 @@ module Conexa
       status == 'ended' || status == 'cancelled'
     end
 
-    # End/terminate this contract
-    # @param params [Hash] options including :end_date, :reason
+    # Set this contract's end date — closing it, or amending an existing closure.
+    #
+    # The endpoint is documented as "encerra um contrato ativo **ou atualiza a
+    # data de encerramento**": it both closes and amends, and a future date on an
+    # already-closed contract **reopens** it. `end_contract` is kept as an alias,
+    # but the name understates what the call does.
+    #
+    # A contract cannot be closed retroactively past a day that already has
+    # invoiced sales (422 CONTRACT_RECURRING_SALE_23).
+    #
+    # The API may answer with an empty body on success.
+    #
+    # @param params [Hash]
+    # @option params [String] :date required, yyyy-MM-dd — the closing date
+    # @option params [Integer] :reason_id closing-reason id, from
+    #   Listagem de Contratos > Outros Cadastros > Motivo de Encerramento de Contrato
+    # @option params [Boolean] :unlink_customer unlinks DDRs, mailboxes, extensions
+    #   and recurring sales. Requires date <= today and no other active contracts;
+    #   ends *all* the customer's recurring sales and cancels their uninvoiced sales.
+    # @option params [String] :end_date deprecated alias for +:date+
     # @return [self]
-    def end_contract(params = {})
-      Conexa::Request.post(self.class.show_url("end", primary_key), params: params).call(class_name)
+    def set_end_date(params = {})
+      params = self.class.normalize_end_params(params)
+      Conexa::Request.patch(self.class.show_url("end", primary_key), params: params).call(class_name)
       self
     end
+    alias_method :end_contract, :set_end_date
 
     class << self
-      # End a contract by ID
+      # Set a contract's end date by ID
+      # @see #set_end_date
       # @param id [Integer, String] contract ID
-      # @param params [Hash] options including :end_date, :reason
       # @return [Contract]
-      def end_contract(id, params = {})
-        find(id).end_contract(params)
+      def set_end_date(id, params = {})
+        find(id).set_end_date(params)
+      end
+      alias_method :end_contract, :set_end_date
+
+      # The documented field is `date`; the gem used to send `end_date`, which
+      # camelizes to `endDate` and is rejected: "endDate field does not exist or
+      # is not available in the company".
+      # @api private
+      def normalize_end_params(params)
+        params = params.dup
+        legacy = params.delete(:end_date) || params.delete("end_date")
+        return params unless legacy
+
+        warn "DEPRECATION WARNING: `end_date:` foi renomeado para `date:` em conexa 0.2.0 " \
+             "(a API v2 rejeita `endDate`). O alias será removido em 0.3.0."
+        params[:date] ||= legacy
+        params
       end
 
       # Create contract with custom product items

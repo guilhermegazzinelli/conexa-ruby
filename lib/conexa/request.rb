@@ -23,11 +23,30 @@ module Conexa
         @auth       = options[:auth]        || false
     end
 
+    # Verbs allowed while Conexa.read_only? — GET, plus authentication, without
+    # which read-only mode could not obtain a token in the first place.
+    READ_METHODS = %w(GET).freeze
+
     def run
+      enforce_read_only!
+
       response = RestClient::Request.execute request_params
 
-      response = MultiJson.decode response.body
-      return {data: response.dig("data") || response, pagination: response.dig("pagination")}
+      # A successful write may answer with no body at all: PATCH /charge/settle/:id
+      # documents 204 + empty body as its success response, and
+      # PATCH /contract/end/:id answers 200 with one. With the Oj adapter,
+      # MultiJson.decode("") returns nil *without* raising ParseError, so the
+      # nil has to be caught here rather than in a rescue.
+      body = response.body.to_s
+      return {} if body.strip.empty?
+
+      decoded = MultiJson.decode(body)
+      return {} if decoded.nil?
+
+      # A top-level array (some list endpoints) has no #dig(String).
+      return {data: decoded, pagination: nil} unless decoded.is_a?(Hash)
+
+      {data: decoded["data"] || decoded, pagination: decoded["pagination"]}
 
       rescue RestClient::Exception => error
         begin
@@ -50,13 +69,25 @@ module Conexa
           raise Conexa::ResponseError.new(request_params, error)
         end
       rescue MultiJson::ParseError
-        return {} if response.code == 204
-
+        # Only genuinely malformed JSON reaches here — empty and null bodies are
+        # handled above, for every status.
         raise Conexa::ResponseError.new(request_params, response)
       rescue SocketError
         raise Conexa::ConnectionError.new $!
       rescue RestClient::ServerBrokeConnection
         raise Conexa::ConnectionError.new $!
+    end
+
+    # @raise [Conexa::ReadOnlyError] when a mutating verb is attempted while
+    #   Conexa.read_only? — checked before the request is executed, so nothing
+    #   reaches the tenant.
+    def enforce_read_only!
+      return unless Conexa.read_only?
+      return if @auth || READ_METHODS.include?(method.to_s.upcase)
+
+      raise Conexa::ReadOnlyError,
+            "Conexa is in read-only mode: refusing #{method.to_s.upcase} #{full_api_url}. " \
+            "Unset config.read_only (or CONEXA_READ_ONLY) to allow writes."
     end
 
     def call(resource_name, query_context: nil)

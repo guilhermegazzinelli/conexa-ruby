@@ -87,7 +87,14 @@ module Conexa
         end
 
         alias_method camel_name.to_sym, snake_name
-        alias_method :id, snake_name
+
+        # Not an alias: #id has to keep Model#id's documented fallback to a plain
+        # "id" attribute. Write endpoints answer with {"id": N} rather than the
+        # resource's own key — Model#create depends on exactly that — so aliasing
+        # #id straight to #charge_id silently made the fallback dead code.
+        define_method(:id) do
+          @attributes[snake_name.to_s] || @attributes["id"]
+        end
       end
 
       def create(*args)

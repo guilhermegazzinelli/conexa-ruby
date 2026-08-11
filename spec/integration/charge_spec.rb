@@ -126,7 +126,7 @@ RSpec.describe "Charge Integration" do
       stub_request(:get, /test\.conexa\.app.*charge\/123/)
         .to_return(status: 200, body: charge_response, headers: { "Content-Type" => "application/json" })
 
-      stub_request(:post, /test\.conexa\.app.*charge\/settle\/123/)
+      stub_request(:patch, /test\.conexa\.app.*charge\/settle\/123/)
         .to_return(status: 200, body: settled_response, headers: { "Content-Type" => "application/json" })
     end
 

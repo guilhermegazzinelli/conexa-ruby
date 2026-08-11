@@ -31,10 +31,10 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # Uncomment to register a new dependency of your gem
-  spec.add_dependency "jwt"
-  spec.add_dependency "rest-client"
-  spec.add_dependency "multi_json"
+  spec.add_dependency "rest-client", "~> 2.1"
+  # multi_json's adapter behaviour is load-bearing: with Oj, decoding an empty
+  # body returns nil rather than raising, which Request#run has to guard for.
+  spec.add_dependency "multi_json", "~> 1.15"
 
   # Only what the suite itself needs. REPL/debugger tooling lives in the Gemfile's
   # :development group — `debug` pulls irb -> reline -> io-console, whose native

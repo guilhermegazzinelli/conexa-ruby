@@ -8,7 +8,7 @@ module Conexa
     # @param params [Hash] optional parameters (e.g., endDate)
     # @return [self]
     def end_recurring_sale(params = {})
-      Conexa::Request.post(self.class.show_url("end", primary_key), params: params).call(class_name)
+      Conexa::Request.patch(self.class.show_url("end", primary_key), params: params).call(class_name)
       self
     end
 

@@ -16,14 +16,31 @@ module Conexa
   class RequestError < ConexaError
   end
 
+  # Raised instead of performing a mutating request while Conexa.read_only?.
+  # The request never reaches the network.
+  class ReadOnlyError < ConexaError
+  end
+
   class ResponseError < ConexaError
     attr_reader :request_params, :error
 
     def initialize(request_params, error, message=nil)
       @request_params, @error = request_params, error
-      msg = @error.message
+      msg = describe_error(error)
       msg +=  " => " + message if message
       super msg
+    end
+
+    private
+
+    # `error` is usually a RestClient::Exception, but the malformed-body path
+    # hands us a RestClient::Response, which has no #message — that used to raise
+    # NoMethodError from inside the error constructor itself.
+    def describe_error(error)
+      return error.message if error.respond_to?(:message) && error.message
+      return "HTTP #{error.code}: #{error.body.to_s[0, 200]}" if error.respond_to?(:code)
+
+      error.to_s
     end
   end
 
