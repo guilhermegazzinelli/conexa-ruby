@@ -24,21 +24,21 @@ RSpec.describe 'Pagination Edge Cases' do
     context 'page 0' do
       it 'raises RequestError for page 0' do
         expect { Conexa::Customer.all(page: 0, size: 10) }
-          .to raise_error(Conexa::RequestError, 'Invalid page size')
+          .to raise_error(Conexa::RequestError, /page must be a positive integer/)
       end
     end
 
     context 'negative page' do
       it 'raises RequestError for negative page' do
         expect { Conexa::Customer.all(page: -1, size: 10) }
-          .to raise_error(Conexa::RequestError, 'Invalid page size')
+          .to raise_error(Conexa::RequestError, /page must be a positive integer/)
       end
     end
 
     context 'page -100' do
       it 'raises RequestError for large negative page' do
         expect { Conexa::Customer.all(page: -100, size: 10) }
-          .to raise_error(Conexa::RequestError, 'Invalid page size')
+          .to raise_error(Conexa::RequestError, /page must be a positive integer/)
       end
     end
   end
@@ -47,21 +47,21 @@ RSpec.describe 'Pagination Edge Cases' do
     context 'size 0' do
       it 'raises RequestError for size 0' do
         expect { Conexa::Customer.all(page: 1, size: 0) }
-          .to raise_error(Conexa::RequestError, 'Invalid page size')
+          .to raise_error(Conexa::RequestError, /size must be a positive integer/)
       end
     end
 
     context 'negative size' do
       it 'raises RequestError for negative size' do
         expect { Conexa::Customer.all(page: 1, size: -1) }
-          .to raise_error(Conexa::RequestError, 'Invalid page size')
+          .to raise_error(Conexa::RequestError, /size must be a positive integer/)
       end
     end
 
     context 'size -50' do
       it 'raises RequestError for large negative size' do
         expect { Conexa::Customer.all(page: 1, size: -50) }
-          .to raise_error(Conexa::RequestError, 'Invalid page size')
+          .to raise_error(Conexa::RequestError, /size must be a positive integer/)
       end
     end
   end
@@ -69,7 +69,7 @@ RSpec.describe 'Pagination Edge Cases' do
   describe 'Page greater than total_pages' do
     it 'returns empty result when page exceeds total' do
       stub_request(:get, "#{api_base}/customers")
-        .with(query: hash_including({ 'page' => '999', 'size' => '10' }))
+        .with(query: hash_including({ 'limit' => '10', 'offset' => '9980' }))
         .to_return(
           status: 200,
           body: {
@@ -84,7 +84,7 @@ RSpec.describe 'Pagination Edge Cases' do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      result = Conexa::Customer.all(page: 999, size: 10)
+      result = Conexa::Customer.all(limit: 10, offset: 9980)
 
       expect(result).to be_a(Conexa::Result)
       expect(result.empty?).to be true
@@ -95,7 +95,7 @@ RSpec.describe 'Pagination Edge Cases' do
   describe 'Empty response' do
     it 'handles response with no data' do
       stub_request(:get, "#{api_base}/customers")
-        .with(query: hash_including({ 'page' => '1', 'size' => '10' }))
+        .with(query: hash_including({ 'limit' => '10', 'offset' => '0' }))
         .to_return(
           status: 200,
           body: {
@@ -110,7 +110,7 @@ RSpec.describe 'Pagination Edge Cases' do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      result = Conexa::Customer.all(page: 1, size: 10)
+      result = Conexa::Customer.all(limit: 10, offset: 0)
 
       expect(result).to be_a(Conexa::Result)
       expect(result.empty?).to be true
@@ -120,7 +120,7 @@ RSpec.describe 'Pagination Edge Cases' do
 
     it 'handles response with nil data' do
       stub_request(:get, "#{api_base}/customers")
-        .with(query: hash_including({ 'page' => '1', 'size' => '10' }))
+        .with(query: hash_including({ 'limit' => '10', 'offset' => '0' }))
         .to_return(
           status: 200,
           body: {
@@ -135,7 +135,7 @@ RSpec.describe 'Pagination Edge Cases' do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      result = Conexa::Customer.all(page: 1, size: 10)
+      result = Conexa::Customer.all(limit: 10, offset: 0)
 
       expect(result).to be_a(Conexa::Result)
       expect(result.empty?).to be true
@@ -145,7 +145,7 @@ RSpec.describe 'Pagination Edge Cases' do
   describe 'Response with 1 item' do
     it 'handles single item response correctly' do
       stub_request(:get, "#{api_base}/customers")
-        .with(query: hash_including({ 'page' => '1', 'size' => '10' }))
+        .with(query: hash_including({ 'limit' => '10', 'offset' => '0' }))
         .to_return(
           status: 200,
           body: {
@@ -160,7 +160,7 @@ RSpec.describe 'Pagination Edge Cases' do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      result = Conexa::Customer.all(page: 1, size: 10)
+      result = Conexa::Customer.all(limit: 10, offset: 0)
 
       expect(result).to be_a(Conexa::Result)
       expect(result.empty?).to be false
@@ -175,7 +175,7 @@ RSpec.describe 'Pagination Edge Cases' do
       customers = (1..10).map { |i| { id: "cust-#{i}", name: "Customer #{i}" } }
 
       stub_request(:get, "#{api_base}/customers")
-        .with(query: hash_including({ 'page' => '1', 'size' => '10' }))
+        .with(query: hash_including({ 'limit' => '10', 'offset' => '0' }))
         .to_return(
           status: 200,
           body: {
@@ -190,7 +190,7 @@ RSpec.describe 'Pagination Edge Cases' do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      result = Conexa::Customer.all(page: 1, size: 10)
+      result = Conexa::Customer.all(limit: 10, offset: 0)
 
       expect(result).to be_a(Conexa::Result)
       expect(result.empty?).to be false
@@ -203,7 +203,7 @@ RSpec.describe 'Pagination Edge Cases' do
   describe 'Large page size' do
     it 'handles very large size parameter' do
       stub_request(:get, "#{api_base}/customers")
-        .with(query: hash_including({ 'page' => '1', 'size' => '10000' }))
+        .with(query: hash_including({ 'limit' => '10000', 'offset' => '0' }))
         .to_return(
           status: 200,
           body: {
@@ -218,7 +218,7 @@ RSpec.describe 'Pagination Edge Cases' do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      result = Conexa::Customer.all(page: 1, size: 10000)
+      result = Conexa::Customer.all(limit: 10000, offset: 0)
 
       expect(result.data.size).to eq(1)
       expect(result.pagination.size).to eq(10000)
@@ -248,7 +248,7 @@ RSpec.describe 'Pagination Edge Cases' do
   describe 'Pagination info access' do
     it 'provides access to all pagination attributes' do
       stub_request(:get, "#{api_base}/customers")
-        .with(query: hash_including({ 'page' => '2', 'size' => '25' }))
+        .with(query: hash_including({ 'limit' => '25', 'offset' => '25' }))
         .to_return(
           status: 200,
           body: {
@@ -263,7 +263,7 @@ RSpec.describe 'Pagination Edge Cases' do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      result = Conexa::Customer.all(page: 2, size: 25)
+      result = Conexa::Customer.all(limit: 25, offset: 25)
 
       expect(result.pagination.page).to eq(2)
       expect(result.pagination.size).to eq(25)
@@ -275,7 +275,7 @@ RSpec.describe 'Pagination Edge Cases' do
   describe 'find_by with pagination' do
     it 'respects pagination in find_by' do
       stub_request(:get, "#{api_base}/customers")
-        .with(query: hash_including({ 'page' => '3', 'size' => '5', 'status' => 'active' }))
+        .with(query: hash_including({ 'limit' => '5', 'offset' => '10', 'status' => 'active' }))
         .to_return(
           status: 200,
           body: {

@@ -5,8 +5,10 @@ require 'spec_helper'
 RSpec.describe Conexa::Company do
   describe 'class methods' do
     describe '.url' do
+      # Was asserted as '/companys' — the naive Model#url pluralizer — which is
+      # what the API 404s on. The documented path is /companies.
       it 'returns companies endpoint' do
-        expect(described_class.url).to eq('/companys')
+        expect(described_class.url).to eq('/companies')
       end
     end
 

@@ -24,11 +24,52 @@ module Conexa
   class ResponseError < ConexaError
     attr_reader :request_params, :error
 
-    def initialize(request_params, error, message=nil)
+    # The decoded error body, when the API returned one.
+    # @return [Hash]
+    attr_reader :api_response
+
+    def initialize(request_params, error, message=nil, api_response=nil)
       @request_params, @error = request_params, error
+      @api_response = api_response.is_a?(Hash) ? api_response : {}
       msg = describe_error(error)
       msg +=  " => " + message if message
       super msg
+    end
+
+    # The API's errors, normalised across its two shapes.
+    #
+    # Field validation answers `{"field": …, "messages": [...]}`; business rules
+    # answer `{"code": …, "message": …}`. Consumers that only handled the first
+    # rendered business-rule errors as blank strings — which is how
+    # CONTRACT_RECURRING_SALE_10 stayed invisible through eight attempts.
+    #
+    # @return [Array<Hash{Symbol=>String,nil}>] entries of {field:, code:, message:}
+    def api_errors
+      Array(api_response["errors"]).filter_map do |entry|
+        next unless entry.is_a?(Hash)
+
+        { field:   entry["field"],
+          code:    entry["code"],
+          message: entry["message"] || Array(entry["messages"]).join("; ") }
+      end
+    end
+
+    # Documented business-rule codes, e.g. "CHARGE_11" or
+    # "CONTRACT_RECURRING_SALE_10". These are what a caller branches on — for
+    # instance to tell an already-settled charge from a real settlement failure.
+    #
+    # @return [Array<String>]
+    def api_error_codes
+      api_errors.filter_map { |entry| entry[:code] }
+    end
+
+    # One readable line per error, whichever shape it arrived in.
+    # @return [Array<String>]
+    def api_error_messages
+      api_errors.map do |entry|
+        label = entry[:field] || entry[:code]
+        label ? "#{label}: #{entry[:message]}" : entry[:message]
+      end
     end
 
     private
@@ -48,7 +89,7 @@ module Conexa
     attr_reader :response
     def initialize(response, request_params, error)
       @response = response
-      super request_params, error, response&.dig('message')
+      super request_params, error, response&.dig('message'), response
     end
   end
 

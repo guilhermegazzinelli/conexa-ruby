@@ -108,8 +108,9 @@ module Conexa
       alias :find :find_by_id
 
       def find_by(params = Hash.new, page = nil, size = nil)
+        # extract_page_size_or_params always returns limit/offset now, and
+        # validates them, so there is no page/size left here to guard.
         params = extract_page_size_or_params(page, size, **params)
-        raise RequestError.new('Invalid page size') if (!params.key?(:limit)) && (params[:page] < 1 or params[:size] < 1)
 
         Conexa::Request.get(url, params: params).call(
           underscored_class_name,
@@ -173,11 +174,31 @@ module Conexa
           return params
         end
 
-        # Explicit legacy pagination (page/size) — deprecated
+        # Legacy pagination (page/size) — deprecated, and broken upstream.
+        #
+        # The API validates `page` and then ignores it, always returning the
+        # first page with offset 0 and hasNext true, so a loop over `page` never
+        # terminates and silently re-yields the same batch. Converting to
+        # limit/offset fixes existing callers instead of leaving them with
+        # plausible wrong answers.
         if params.key?(:page) || params.key?(:size) || page_val.is_a?(Integer)
-          warn "DEPRECATION WARNING: O modelo antigo de paginação (page/size) será removido em 01 de agosto de 2026. Utilize limit e offset."
-          params[:page] ||= page_val || 1
-          params[:size] ||= size_val || 100
+          page = params.delete(:page) || page_val || 1
+          size = params.delete(:size) || size_val || 100
+
+          unless page.is_a?(Integer) && page.positive?
+            raise RequestError, "page must be a positive integer"
+          end
+          unless size.is_a?(Integer) && size.positive?
+            raise RequestError, "size must be a positive integer"
+          end
+
+          warn "DEPRECATION WARNING: page/size foi substituído por limit/offset e será " \
+               "removido em conexa 0.3.0. A API v2 valida `page` e depois o ignora, " \
+               "devolvendo sempre a primeira página; os valores foram convertidos para " \
+               "limit=#{size}, offset=#{(page - 1) * size}."
+
+          params[:limit]  = size
+          params[:offset] = (page - 1) * size
           return params
         end
 

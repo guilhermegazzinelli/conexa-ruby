@@ -52,20 +52,25 @@ module Conexa
       end
 
 
+      # Convert a payload's keys to the camelCase the API expects, all the way
+      # down. Arrays of objects matter as much as nested hashes: ten documented
+      # endpoints take them (complementaryServices, productQuotas, devices,
+      # extraFields, bookingModels, visitors, costCenters, ...), and a snake_case
+      # key inside one is rejected outright.
       def camelize_hash(hash)
         return {} if hash.nil?
 
-        new_hash = {}
-
-        hash.each do |key, value|
-          if value.is_a?(Hash)
-            new_hash[camel_case_lower(key).to_sym] = camelize_hash(value)
-          else
-            new_hash[camel_case_lower(key).to_sym] = value
-          end
+        hash.each_with_object({}) do |(key, value), new_hash|
+          new_hash[camel_case_lower(key).to_sym] = camelize_value(value)
         end
+      end
 
-        new_hash
+      def camelize_value(value)
+        case value
+        when Hash  then camelize_hash(value)
+        when Array then value.map { |element| camelize_value(element) }
+        else value
+        end
       end
 
       def camelize_str(str)

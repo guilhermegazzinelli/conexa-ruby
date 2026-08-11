@@ -60,7 +60,7 @@ module Conexa
             end
           else
             if parsed_error['message']
-              raise Conexa::ResponseError.new(request_params, error, parsed_error['message'] + "=> Erros: "+ parsed_error['errors'].to_s)
+              raise Conexa::ResponseError.new(request_params, error, parsed_error['message'] + "=> Erros: "+ parsed_error['errors'].to_s, parsed_error)
             else
               raise Conexa::ValidationError.new parsed_error
             end

@@ -6,7 +6,7 @@ RSpec.describe "Customer Integration", :vcr do
   describe "CRUD operations" do
     describe "listing customers", vcr: { cassette_name: "customer" } do
       it "returns a list of customers with pagination" do
-        result = Conexa::Customer.all(page: 1, size: 100)
+        result = Conexa::Customer.all(limit: 100)
 
         expect(result).to respond_to(:data)
         expect(result).to respond_to(:pagination)
@@ -15,7 +15,7 @@ RSpec.describe "Customer Integration", :vcr do
       end
 
       it "returns customer objects with attributes" do
-        result = Conexa::Customer.all(page: 1, size: 100)
+        result = Conexa::Customer.all(limit: 100)
         customer = result.data.first
 
         expect(customer).to respond_to(:name)

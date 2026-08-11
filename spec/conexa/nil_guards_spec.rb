@@ -223,14 +223,14 @@ RSpec.describe 'Nil Guards' do
   describe 'Model.all with nil filters' do
     it 'handles nil in filter hash values' do
       stub_request(:get, "#{api_base}/customers")
-        .with(query: hash_including({ 'page' => '1', 'size' => '100' }))
+        .with(query: hash_including({ 'limit' => '100', 'offset' => '0' }))
         .to_return(
           status: 200,
           body: { data: [], pagination: { page: 1, size: 100, totalPages: 0, totalElements: 0 } }.to_json,
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      result = Conexa::Customer.all(page: 1, size: 100, status: nil)
+      result = Conexa::Customer.all(limit: 100, offset: 0, status: nil)
       expect(result).to be_a(Conexa::Result)
     end
   end

@@ -177,7 +177,7 @@ http_interactions:
   recorded_at: Fri, 18 Oct 2024 16:17:03 GMT
 - request:
     method: get
-    uri: https://test.conexa.app/index.php/api/v2/customers?page=1&size=100
+    uri: https://test.conexa.app/index.php/api/v2/customers?limit=100&offset=0
     body:
       encoding: US-ASCII
       string: ''
