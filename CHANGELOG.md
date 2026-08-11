@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-03-31
+
+### Added
+- Instance methods `Customer#persons`, `Customer#contracts`, `Customer#charges` for idiomatic Ruby usage
+  - `customer = Conexa::Customer.find(127); customer.persons` — fetches persons for the loaded customer
+- Class methods `Customer.persons(id)`, `Customer.contracts(id)`, `Customer.charges(id)` remain available
+  - Useful to save a request when you don't need the customer data itself
+
+### Changed
+- Customer sub-resource methods now available in both class and instance forms
+
 ## [0.1.0] - 2026-03-31
 
 ### Added
@@ -122,7 +133,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Charge with settle and PIX methods
 - Pagination support
 
-[Unreleased]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.9...v0.1.0
 [0.0.9]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.7...v0.0.8

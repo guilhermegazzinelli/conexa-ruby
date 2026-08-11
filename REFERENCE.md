@@ -32,7 +32,7 @@ Conexa is a Brazilian SaaS platform for **recurring billing**, **subscription ma
 
 ```ruby
 # Gemfile
-gem 'conexa', '~> 0.1.0'
+gem 'conexa', '~> 0.1.1'
 
 # Or install directly
 gem install conexa
@@ -211,7 +211,13 @@ customer.destroy
 # or
 Conexa::Customer.destroy(127)
 
-# Sub-resources
+# Sub-resources (instance methods — requires fetching customer first)
+customer = Conexa::Customer.find(127)
+customer.persons    # List persons for this customer
+customer.contracts  # List contracts for this customer
+customer.charges    # List charges for this customer
+
+# Sub-resources (class methods — saves a request, no need to fetch customer)
 Conexa::Customer.persons(127)    # List persons for customer
 Conexa::Customer.contracts(127)  # List contracts for customer
 Conexa::Customer.charges(127)    # List charges for customer
@@ -1265,6 +1271,10 @@ The API enforces a limit of 100 requests per minute (changing to **60 requests p
 
 ## Version History
 
+- **v0.1.1** - Add instance methods for Customer sub-resources (persons, contracts, charges)
+- **v0.1.0** - Default new pagination, Result#next_page, code review fixes, 502 specs
+- **v0.0.9** - New pagination model (limit/offset), new API v2 resources
+- **v0.0.8** - Fix Auth.login, integration tests, REFERENCE.md rewrite
 - **v0.0.7** - Add Auth resource, fix Auth.login, add test suite with VCR
 - **v0.0.6** - Fix nil guard in camelize_hash, fix Result#empty? delegation
 - **v0.0.5** - Initial public release

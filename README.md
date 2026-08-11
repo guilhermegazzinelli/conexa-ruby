@@ -129,6 +129,17 @@ customers = Conexa::Customer.all(
   is_active: true,
   limit: 20
 )
+
+# Sub-resources (instance methods)
+customer = Conexa::Customer.find(127)
+customer.persons     # => persons for this customer
+customer.contracts   # => contracts for this customer
+customer.charges     # => charges for this customer
+
+# Sub-resources (class methods — saves a request)
+Conexa::Customer.persons(127)
+Conexa::Customer.contracts(127)
+Conexa::Customer.charges(127)
 ```
 
 ### Contract

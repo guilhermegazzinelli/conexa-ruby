@@ -452,6 +452,21 @@ cliente.destroy
 clientes = Conexa::Customer.find({ name: 'João Silva' }, 1, 20)
 ```
 
+##### Sub-recursos do Cliente
+
+```ruby
+# Via instância (quando já possui o customer carregado)
+cliente = Conexa::Customer.find(127)
+cliente.persons     # => Lista de persons deste cliente
+cliente.contracts   # => Lista de contratos deste cliente
+cliente.charges     # => Lista de cobranças deste cliente
+
+# Via classe (economiza um request, não precisa buscar o customer)
+Conexa::Customer.persons(127)
+Conexa::Customer.contracts(127)
+Conexa::Customer.charges(127)
+```
+
 #### Faturas (Bills)
 
 ##### Criando uma Fatura
