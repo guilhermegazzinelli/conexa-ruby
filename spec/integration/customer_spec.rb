@@ -30,7 +30,7 @@ RSpec.describe "Customer Integration", :vcr do
 
         expect(customer).to respond_to(:customer_id)
         expect(customer.customer_id).to eq(3)
-        expect(customer.name).to eq("ROTULA METALURGICA LTDA")
+        expect(customer.name).to eq("LUMEN S.A.")
       end
 
       it "includes nested address data" do
@@ -45,7 +45,7 @@ RSpec.describe "Customer Integration", :vcr do
 
         expect(customer.is_juridical_person).to eq(true)
         expect(customer.legal_person).to respond_to(:cnpj)
-        expect(customer.legal_person.cnpj).to include("33.871.336")
+        expect(customer.legal_person.cnpj).to include("13.103.103")
       end
     end
   end

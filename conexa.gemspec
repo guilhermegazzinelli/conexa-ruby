@@ -36,9 +36,12 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rest-client"
   spec.add_dependency "multi_json"
 
+  # Only what the suite itself needs. REPL/debugger tooling lives in the Gemfile's
+  # :development group — `debug` pulls irb -> reline -> io-console, whose native
+  # extension fails to build on some ruby/gcc combinations and would otherwise
+  # block a contributor from running the specs at all.
   spec.add_development_dependency 'vcr'
   spec.add_development_dependency 'webmock'
-  spec.add_development_dependency 'debug'
   spec.add_development_dependency 'faker'
   spec.add_development_dependency 'factory_bot'
 

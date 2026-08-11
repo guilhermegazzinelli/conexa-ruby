@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 RSpec.describe 'New API v2 Resources' do
-  let(:api_host) { 'https://checkbits.conexa.app' }
+  let(:api_host) { 'https://test.conexa.app' }
   let(:api_base) { "#{api_host}/index.php/api/v2" }
 
   around(:each) do |example|
