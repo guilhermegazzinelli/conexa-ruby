@@ -37,7 +37,37 @@ Conexa.configure do |config|
 end
 ```
 
-Certifique-se de que as variáveis de ambiente `API_TOKEN` e `API_HOST` estejam configuradas com seu token e URL da API Conexa.
+Certifique-se de que as variáveis de ambiente `API_TOKEN` e `API_HOST` estejam configuradas com seu token e URL da API Conexa. O `api_host` é o subdomínio do seu tenant, por exemplo `https://minhaempresa.conexa.app`.
+
+### Modo somente-leitura
+
+Esta gem conversa com um sistema de cobrança: quitar uma cobrança movimenta
+dinheiro e pode emitir NF-e. Quando a intenção é apenas consultar — auditoria,
+relatório, investigação — desligue a escrita e deixe a gem recusar, em vez de
+confiar na própria atenção.
+
+```ruby
+Conexa.configure { |config| config.read_only = true }
+
+Conexa::Charge.all(status: 'pending')   # ok
+Conexa::Charge.settle(789)              # levanta Conexa::ReadOnlyError
+```
+
+Defina `CONEXA_READ_ONLY=1` no ambiente para ligar por padrão — útil em CI, ou em
+qualquer shell onde você prefira não descobrir que estava apontando para
+produção.
+
+Para um trecho específico, sem reconfigurar o cliente:
+
+```ruby
+Conexa.read_only do
+  relatorio = Conexa::Charge.all(limit: 100)   # tudo aqui dentro é leitura
+end
+```
+
+A verificação acontece antes de a requisição sair do processo, então uma chamada
+bloqueada nunca chega ao seu tenant. `GET` é permitido, e a autenticação também —
+sem ela o modo leitura não conseguiria obter token.
 
 ## Uso
 

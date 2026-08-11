@@ -14,7 +14,9 @@ Gem::Specification.new do |spec|
   spec.description = "Gem para integração com a Conexa"
   spec.homepage = "https://github.com/guilhermegazzinelli/conexa-ruby"
 
-  spec.required_ruby_version = ">= 2.6.0"
+  # Matches the CI matrix. Everything below 3.1 is EOL, and the suite has never
+  # been run against it.
+  spec.required_ruby_version = ">= 3.1.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/guilhermegazzinelli/conexa-ruby"
@@ -40,10 +42,10 @@ Gem::Specification.new do |spec|
   # :development group — `debug` pulls irb -> reline -> io-console, whose native
   # extension fails to build on some ruby/gcc combinations and would otherwise
   # block a contributor from running the specs at all.
-  spec.add_development_dependency 'vcr'
-  spec.add_development_dependency 'webmock'
-  spec.add_development_dependency 'faker'
-  spec.add_development_dependency 'factory_bot'
+  spec.add_development_dependency 'vcr', '~> 6.0'
+  spec.add_development_dependency 'webmock', '~> 3.0'
+  spec.add_development_dependency 'faker', '~> 3.0'
+  spec.add_development_dependency 'factory_bot', '~> 6.0'
 
 
 

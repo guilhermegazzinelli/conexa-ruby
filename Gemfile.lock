@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    conexa (0.1.1)
+    conexa (0.2.0)
       multi_json (~> 1.15)
       rest-client (~> 2.1)
 
@@ -163,14 +163,14 @@ DEPENDENCIES
   byebug
   conexa!
   debug
-  factory_bot
-  faker
+  factory_bot (~> 6.0)
+  faker (~> 3.0)
   rake (~> 13.0)
   rspec (~> 3.0)
   rubocop (~> 1.21)
   standard
-  vcr
-  webmock
+  vcr (~> 6.0)
+  webmock (~> 3.0)
 
 BUNDLED WITH
    2.6.9

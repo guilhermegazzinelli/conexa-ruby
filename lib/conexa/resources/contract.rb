@@ -3,16 +3,62 @@
 module Conexa
   # Contract resource for recurring billing contracts
   #
-  # @example Create a contract
-  #   contract = Conexa::Contract.create(
-  #     customer_id: 127,
-  #     plan_id: 5,
-  #     start_date: '2024-01-01',
-  #     payment_day: 10
+  # == Creating a contract
+  #
+  # Required: +plan_id+, +customer_id+, +payment_frequency+ (+monthly+,
+  # +bimonthly+, +quarterly+, +semester+ or +yearly+) and +start_date+.
+  #
+  #   Conexa::Contract.create(
+  #     plan_id: 5, customer_id: 127,
+  #     payment_frequency: 'monthly', start_date: '2026-01-01'
   #   )
   #
+  # === +due_day+ is conditionally required *and* conditionally forbidden
+  #
+  # Required on a customer's **first** contract (or when they use automatic
+  # invoicing); **rejected** on every later one, which inherits the customer's
+  # +defaultDueDay+:
+  #
+  #   422 CONTRACT_RECURRING_SALE_10
+  #   "The due day can not be informed for customers who already have a contract"
+  #
+  # Code that always sends +due_day+ works at onboarding and fails forever after.
+  # Read the code off the exception rather than the message:
+  #
+  #   rescue Conexa::ResponseError => e
+  #     retry_without_due_day if e.api_error_codes.include?('CONTRACT_RECURRING_SALE_10')
+  #   end
+  #
+  # === Creating, charging and settling in one call
+  #
+  # +generate_sales: 'firstOccurrenceSettleRetroactive'+ also generates *and
+  # settles* retroactive charges, and then requires +expense_settlement+. It
+  # replaces a three-call sequence in which each step can fail on its own.
+  #
+  #   Conexa::Contract.create(
+  #     plan_id: 5, customer_id: 127,
+  #     payment_frequency: 'monthly', start_date: '2026-01-01',
+  #     generate_sales: 'firstOccurrenceSettleRetroactive',
+  #     expense_settlement: { receiving_method_id: 53, account_id: 1 }
+  #   )
+  #
+  # Other documented values: +firstOccurrence+ (default), +currentOccurrence+,
+  # +nextOccurrence+.
+  #
+  # === Other documented fields
+  #
+  # +end_date+, +first_due_date+ (required when the customer uses automatic
+  # invoicing), +fidelity_date+, +amount+, +discount_value+, +seller_id+,
+  # +contract_summary+, +notes+, +membership_fee+, +nfse_description+,
+  # +prorata_type+ (+startOfMonth+ / +notCalculate+ / +perDueDate+), +refund+
+  # (an explicit +nil+ opts out even when the plan configures one),
+  # +complementary_services+ (array), +extra_fields+ (array).
+  #
+  # +cost_center_id+ is *not* accepted on create — it 400s — even though it is
+  # present when the contract is read back.
+  #
   # @example End a contract
-  #   Conexa::Contract.end_contract(456, end_date: '2024-12-31')
+  #   Conexa::Contract.set_end_date(456, date: '2026-12-31')
   #
   # @!attribute [r] contract_id
   #   @return [Integer] Contract ID (also accessible as #id)

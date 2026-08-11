@@ -42,13 +42,34 @@ gem install conexa
 
 ```ruby
 Conexa.configure do |config|
-  config.api_host = 'https://api.conexa.com.br'  # or sandbox URL
+  config.api_host  = 'https://mycompany.conexa.app'  # your tenant subdomain
   config.api_token = 'your_api_token_here'
+  config.read_only = false                           # see below
 end
 
 # Rails: use generator
 rails generate conexa:install
 # Creates config/initializers/conexa.rb
+```
+
+| Setting | Default | Purpose |
+|---------|---------|---------|
+| `api_host` | `''` | Tenant base URL. `/index.php/api/v2` is appended automatically. |
+| `api_token` | `''` | Application Token — Config > Integrações > API / Token. |
+| `read_only` | `ENV['CONEXA_READ_ONLY']` | Refuse every non-GET request. |
+
+### Read-only mode
+
+Any request other than `GET` raises `Conexa::ReadOnlyError` before it leaves the
+process. Authentication (`POST /auth`) stays allowed, since read-only mode would
+otherwise be unable to obtain a token.
+
+```ruby
+Conexa.configure { |c| c.read_only = true }   # or CONEXA_READ_ONLY=1
+
+Conexa.read_only do                            # block-scoped, thread-local
+  Conexa::Charge.all(status: 'pending')
+end
 ```
 
 ## Convention: snake_case

@@ -25,8 +25,8 @@ gem install conexa
 
 ```ruby
 Conexa.configure do |config|
-  config.subdomain = 'YOUR_SUBDOMAIN'  # your-company.conexa.app
-  config.api_token = 'YOUR_API_TOKEN'  # Application Token from Conexa
+  config.api_host  = 'https://your-company.conexa.app'  # your tenant
+  config.api_token = 'YOUR_API_TOKEN'                   # Application Token from Conexa
 end
 ```
 
@@ -35,13 +35,41 @@ end
 1. **Application Token** (recommended): Created in Conexa at **Config > Integrações > API / Token**
 2. **Username/Password**: Use the `/auth` endpoint to get a JWT token
 
+### Read-only mode
+
+This gem talks to a billing system: settling a charge moves money and can issue
+an NF-e. When you only mean to read — auditing, reporting, investigating — turn
+writing off and let the gem refuse instead of trusting yourself to be careful.
+
+```ruby
+Conexa.configure { |config| config.read_only = true }
+
+Conexa::Charge.all(status: 'pending')   # fine
+Conexa::Charge.settle(789)              # raises Conexa::ReadOnlyError
+```
+
+Set `CONEXA_READ_ONLY=1` in the environment to default it on — useful in CI, or
+in any shell where you would rather not discover you were pointed at production.
+
+For a single block, without reconfiguring the client:
+
+```ruby
+Conexa.read_only do
+  report = Conexa::Charge.all(limit: 100)   # anything here is read-only
+end
+```
+
+The guard runs before the request leaves the process, so a blocked call never
+reaches your tenant. `GET` is allowed, and so is authentication — without it
+read-only mode could not obtain a token.
+
 ## Quick Start
 
 ```ruby
 require 'conexa'
 
 Conexa.configure do |config|
-  config.subdomain = 'mycompany'
+  config.api_host  = 'https://mycompany.conexa.app'
   config.api_token = ENV['CONEXA_API_TOKEN']
 end
 
