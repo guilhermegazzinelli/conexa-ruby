@@ -3,12 +3,12 @@ type: Runbook
 title: Running the spec suite
 description: rake, rake spec:all across every supported Ruby, and why there is a .rubocop_todo.yml and no committed Gemfile.lock.
 tags: [testing, release]
-timestamp: 2026-08-12T18:30:00Z
+timestamp: 2026-08-13T00:30:00Z
 ---
 
 # Overview
 
-Expected result: **615 examples, 0 failures** (gem v0.2.0), on every supported
+Expected result: **640 examples, 0 failures** (gem v0.2.0), on every supported
 Ruby.
 
 Since 0.2.0 the suite also checks the gem against the published API contract, not
@@ -86,6 +86,10 @@ The effect is that **new** code is genuinely linted while the backlog stays
 visible, `rake` passes, and CI gates on lint for real. Autocorrecting the backlog
 is separate work — doing it inside a behavioural release would bury the fixes in
 a repo-wide diff.
+
+`.rubocop.yml` sets `inherit_mode: merge` for `Exclude`. Without it, an `Exclude`
+there **replaces** the todo's list for the same cop instead of adding to it,
+silently un-grandfathering everything — that bit twice while this was set up.
 
 Regenerate after clearing a batch:
 

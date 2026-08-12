@@ -11,20 +11,24 @@ require "spec_helper"
 #
 # It is the CI form of the sweep that found `Conexa::Company.url == "/companys"`.
 RSpec.describe "API v2 contract" do
-  # Paths the gem uses that the collection does not document. These are NOT
-  # assumed wrong — the collection is incomplete for several read endpoints, and
-  # some of these were built from observed production responses. They are
-  # unverified, and listing them explicitly is what makes a *new* undocumented
-  # path fail this spec instead of slipping through.
+  # Paths the gem uses that the collection does not document. The collection is
+  # incomplete for several read endpoints, so absence here is not evidence of
+  # breakage — listing them explicitly is what makes a *new* undocumented path
+  # fail this spec instead of slipping through.
   #
-  # See .okf/architecture/resource-catalog.md for the per-path rationale.
+  # A read-only probe of the production tenant on 2026-08-12 confirmed that
+  # /accounts, /suppliers and /serviceCategories return real data, and that the
+  # /creditCard reads do NOT exist (404). See
+  # .okf/architecture/resource-catalog.md for the per-path rationale.
   UNDOCUMENTED = [
     ["GET",  "/accounts"],             # only GET /account/:id is documented
     ["GET",  "/suppliers"],            # only POST /supplier is documented
     ["GET",  "/supplier/:id"],
     ["GET",  "/serviceCategories"],
     ["GET",  "/serviceCategory/:id"],
-    ["GET",  "/creditCard"],           # only POST /creditCard is documented
+    # Verified absent from the API, not just from the collection. Kept here so the
+    # spec passes, but CreditCard.all/.find are dead surface — see the catalogue.
+    ["GET",  "/creditCard"],
     ["GET",  "/creditCard/:id"],
     ["POST", "/charge/cancel/:id"],
     ["POST", "/charge/sendEmail/:id"]

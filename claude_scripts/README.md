@@ -9,4 +9,5 @@ Para rodar a suíte em todas as versões de Ruby suportadas use `rake spec:all` 
 
 | Pasta | O que faz |
 |-------|-----------|
+| [probe_api_shapes/](probe_api_shapes/) | Pergunta à API real qual a forma das respostas. Só leitura, só imprime forma — nunca valores. |
 | [sanitize_cassettes/](sanitize_cassettes/) | Anonimiza cassettes do VCR: substitui token, host e dados pessoais por valores sintéticos. |

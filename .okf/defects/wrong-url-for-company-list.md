@@ -1,13 +1,15 @@
 ---
 type: Defect
-title: Company.all requests /companys
-description: The naive class-name pluralizer emits /companys where the API documents /companies — and a unit spec asserts the wrong URL as correct.
+title: Company.all requested /companys, which is undocumented but works
+description: The naive pluralizer emits /companys where the collection documents /companies — the live API happens to route both, so this was an inconsistency rather than the breakage it was first reported as.
 status: resolved
 tags: [http, api-contract, testing]
 timestamp: 2026-08-11T18:40:00Z
 ---
 
-> **Resolved in 0.2.0.** `Company` overrides `url`/`show_url` to `/companies` and `/company`. The unit spec that asserted `/companys` now asserts the documented path.
+> **Resolved in 0.2.0**, and **downgraded**. `Company` overrides `url`/`show_url` to `/companies` and `/company`, and the unit spec that asserted `/companys` now asserts the documented path.
+>
+> But the original claim here — that `Company.all` could not work against a live tenant — was **wrong**, and it was wrong because it was inferred from the collection instead of tested. Probing the production tenant on 2026-08-12 showed the API routes **both** spellings.
 >
 > Kept because it explains why the code and specs look the way they do, and what to watch for if the area is touched again.
 
@@ -21,8 +23,22 @@ timestamp: 2026-08-11T18:40:00Z
 Conexa::Company.url   # => "/companys"
 ```
 
-The API documents `GET /companies`. `Conexa::Company.all` cannot work against a
-live tenant.
+The collection documents `GET /companies`, so this looked like a guaranteed 404.
+It is not. Verified against the live tenant, 2026-08-12:
+
+```
+GET /companies?limit=1  -> 200, {data, pagination}
+GET /companys?limit=1   -> 200, identical
+```
+
+The API is not merely permissive — `/companyzzz` and `/naoExiste` both 404 — so
+`/companys` is a real route, presumably a lenient alias. What the gem had was an
+undocumented path that happens to work, not a broken one.
+
+The override still stands: matching the documented path is the right default, and
+an alias nobody documents can disappear without notice. But the severity was
+overstated, and the lesson is the one this whole release is about — a claim
+derived from a document is a hypothesis until something answers it.
 
 Resources with irregular plurals are expected to override `url`/`show_url` —
 `RoomBooking`, `Account`, `ServiceCategory` and `RecurringSale` all do.

@@ -4,7 +4,7 @@ title: Conexa API v2
 description: The upstream REST API this gem wraps — a per-tenant subdomain, a Bearer application token, and 68 documented operations.
 resource: https://{tenant}.conexa.app/index.php/api/v2
 tags: [api-contract, http]
-timestamp: 2026-08-11T13:23:00Z
+timestamp: 2026-08-12T23:59:00Z
 ---
 
 # Overview
@@ -29,6 +29,27 @@ The `/index.php` segment is not incidental — it is hard-coded in
 | Singular/plural | Read-one and write endpoints are singular (`/charge/:id`); list endpoints are plural (`/charges`) — but the plural is the **English** plural, not `+s`. `/companies`, not `/companys`. |
 | Actions | Sub-path plus a verb: `PATCH /contract/end/:id`, `PATCH /charge/settle/:id`. Actions are consistently `PATCH`, never `POST`. |
 | Errors | Two shapes — see [Error model](../architecture/error-model.md). |
+
+## Verified against the live tenant, 2026-08-12
+
+A read-only probe (36 documented GETs, no writes) settled several things the
+0.2.0 work had only inferred from the collection:
+
+| Question | Answer |
+|----------|--------|
+| Envelope on every list endpoint | `{data, pagination: {hasNext, limit, offset}}`, uniform — no exceptions found |
+| Does any list answer with a **top-level array**? | **No.** The gem handles that shape defensively; it was a hypothesis, never observed |
+| `/companys` vs `/companies` | **Both route.** The API is not permissive in general (`/companyzzz` 404s), so this is a real alias |
+| `/accounts`, `/suppliers`, `/serviceCategories` | Exist and return data, despite being absent from the collection |
+| `/creditCard` reads | **Do not exist.** Only `POST /creditCard` is real |
+| Error shapes | `400 {message, errors:[{field, messages}]}` and `404 {message}`, exactly as documented |
+
+Still unverified, because answering it requires a write: whether a successful
+write ever answers `200 {}` rather than `204` with no body. The gem handles both.
+
+**Rate limit: 60 requests per minute** (`x-rate-limit-limit`). List endpoints
+return full objects, so fetch the index and join locally rather than issuing a
+`GET /resource/:id` per row.
 
 ## Behaviours that are not in the reference tables
 

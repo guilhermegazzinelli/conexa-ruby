@@ -3,7 +3,7 @@ type: Reference
 title: Resource catalogue — gem classes vs documented endpoints
 description: Every Model subclass, the URL it emits, and whether the published collection documents it — the audit table that surfaced the URL and verb defects, now enforced in CI.
 tags: [api-contract, http]
-timestamp: 2026-08-12T14:00:00Z
+timestamp: 2026-08-12T23:59:00Z
 ---
 
 # Overview
@@ -24,7 +24,7 @@ the same sweep on every CI run and fails on a mismatch — see
 
 | Class | Emits | Documented? |
 |-------|-------|-------------|
-| `Account` | `GET /accounts` | not documented (only `GET /account/:id`) |
+| `Account` | `GET /accounts` | not documented, **verified to exist** (2026-08-12) |
 | `Account` | `GET /account/:id` | ok |
 | `Bill` | `GET /bills`, `GET /bill/:id` | ok |
 | `BillCategory` | `GET /billCategories`, `GET /billCategory/:id` | ok |
@@ -33,7 +33,7 @@ the same sweep on every CI run and fails on a mismatch — see
 | `Company` | `GET /companies`, `GET /company/:id` | ok |
 | `Contract` | `GET /contracts`, `GET /contract/:id` | ok |
 | `CostCenter` | `GET /costCenters`, `GET /costCenter/:id` | ok |
-| `CreditCard` | `GET /creditCard`, `GET /creditCard/:id` | not documented (collection has only `POST /creditCard`) |
+| `CreditCard` | `GET /creditCard`, `GET /creditCard/:id` | **verified NOT to exist** (2026-08-12) — see below |
 | `Customer` | `GET /customers`, `GET /customer/:id` | ok |
 | `InvoicingMethod` | `GET /invoicingMethods`, `GET /invoicingMethod/:id` | ok |
 | `PaymentMethod` | `GET /paymentMethods`, `GET /paymentMethod/:id` | ok |
@@ -44,20 +44,28 @@ the same sweep on every CI run and fails on a mismatch — see
 | `RecurringSale` | `GET /recurringSales`, `GET /recurringSale/:id` | ok |
 | `RoomBooking` | `GET /room/bookings`, `GET /room/booking/:id` | ok |
 | `Sale` | `GET /sales`, `GET /sale/:id` | ok |
-| `ServiceCategory` | `GET /serviceCategories`, `GET /serviceCategory/:id` | not documented |
-| `Supplier` | `GET /suppliers`, `GET /supplier/:id` | not documented (collection has only `POST /supplier`) |
+| `ServiceCategory` | `GET /serviceCategories`, `GET /serviceCategory/:id` | not documented, **verified to exist** (2026-08-12) |
+| `Supplier` | `GET /suppliers`, `GET /supplier/:id` | not documented, **verified to exist** (2026-08-12) |
 
-`Company` was the one confirmed defect —
-[it emitted `/companys`](../defects/wrong-url-for-company-list.md), fixed in
-0.2.0 with an explicit `url`/`show_url` override. Resources with irregular
-English plurals must override; `RoomBooking`, `Account`, `ServiceCategory`,
+`Company` emitted `/companys` and now emits the documented `/companies` — but the
+live API [routes both](../defects/wrong-url-for-company-list.md), so this was an
+inconsistency, not the 404 it was first reported as. Resources with irregular
+English plurals override anyway; `RoomBooking`, `Account`, `ServiceCategory`,
 `RecurringSale` and now `Company` do.
 
-The "not documented" rows are **not** bugs. The collection is incomplete for
-several read endpoints, and some of these were built from observed production
-responses. They are *unverified*, and they are listed as an explicit allowlist in
-the contract spec — which is what makes a **new** undocumented path fail instead
-of slipping through.
+**`CreditCard` reads do not exist.** Verified 2026-08-12: `GET /creditCard` answers
+`404 Unable to resolve the request` and `GET /creditCard/:id` answers `404 unable
+to find the requested action "view"`. The collection documents only
+`POST /creditCard`, and the API agrees. `CreditCard.all`/`.find` are therefore
+dead surface — a caller gets `Conexa::NotFound`, which is at least an honest
+answer, but the methods should not be advertised.
+
+The "not documented" rows are **not** bugs — the collection is incomplete for
+several read endpoints. As of 2026-08-12 they are no longer merely assumed: a
+read-only probe against the production tenant confirmed `/accounts`,
+`/suppliers` and `/serviceCategories` return real data, and that `/creditCard`
+does not. They stay on the contract spec's explicit allowlist, which is what makes
+a **new** undocumented path fail instead of slipping through.
 
 `OrderCommon` was in this table until 0.2.0, targeting `/order/:id` and
 `/order/:id/refund`. **API v2 documents no `/order` endpoint at all**, which is

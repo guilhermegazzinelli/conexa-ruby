@@ -55,11 +55,19 @@ published documentation, and is now enforced by
 - **Error bodies that are not JSON objects no longer raise `TypeError`.** An
   array or scalar error body reached `parsed_error['message']` and blew up inside
   the error handler.
+- **`Request#run` tolerates a top-level array or scalar body.** Defensive: every
+  list endpoint probed on 2026-08-12 used the `{data, pagination}` envelope, so
+  this shape has not been observed in the wild — it removes a crash class rather
+  than fixing a seen failure.
 - **Action endpoints use the documented verb.** `Charge#settle`,
   `Contract#end_contract` and `RecurringSale#end_recurring_sale` send `PATCH`;
   `POST` 404s.
-- **`Conexa::Company.all` requests `/companies`.** `Model#url` pluralizes by
-  appending `"s"`, which produced `/companys`.
+- **`Conexa::Company.all` requests the documented `/companies`.** `Model#url`
+  pluralizes by appending `"s"`, which produced `/companys`. A read-only probe of
+  a live tenant on 2026-08-12 showed the API routes **both** spellings, so this
+  was an undocumented path that worked rather than the 404 first reported — the
+  override stands because an undocumented alias can vanish without notice, but
+  nothing was broken by it.
 - **Nested arrays are camelized.** `Util.camelize_hash` treated an `Array` as a
   scalar, so snake_case keys inside arrays of objects were sent untouched and
   rejected. Affects `complementaryServices`, `productQuotas`, `devices`,

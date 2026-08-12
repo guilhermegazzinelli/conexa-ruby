@@ -3,6 +3,13 @@
 # `bundle exec rubocop --auto-gen-config --no-exclude-limit` after clearing a batch.
 inherit_from: .rubocop_todo.yml
 
+# Without this, an `Exclude` here REPLACES the todo's list for the same cop
+# instead of adding to it, silently un-grandfathering everything the todo had
+# listed. That bit twice while setting this up.
+inherit_mode:
+  merge:
+    - Exclude
+
 AllCops:
   TargetRubyVersion: 3.1
   SuggestExtensions: false
@@ -23,11 +30,28 @@ Layout/LineLength:
 
 # A policy, not a backlog item: RSpec describe blocks, gemspecs, rake tasks and
 # one-off dev scripts are long by construction, and the todo file was listing 51
-# spec files one by one. Note this Exclude replaces the inherited one rather than
-# merging, so it has to name every case.
+# spec files one by one.
 Metrics/BlockLength:
   Exclude:
     - 'spec/**/*'
     - 'claude_scripts/**/*'
     - '**/*.gemspec'
     - 'Rakefile'
+
+# One-off dev scripts are not library code: they are read top-to-bottom, not
+# maintained as an API, and holding them to the same size and documentation
+# metrics buys nothing. Correctness cops still apply to them.
+Metrics/AbcSize:
+  Exclude:
+    - 'claude_scripts/**/*'
+    - 'spec/**/*'
+
+Metrics/MethodLength:
+  Exclude:
+    - 'claude_scripts/**/*'
+    - 'spec/**/*'
+
+Style/Documentation:
+  Exclude:
+    - 'claude_scripts/**/*'
+    - 'spec/**/*'
