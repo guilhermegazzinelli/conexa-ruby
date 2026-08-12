@@ -20,12 +20,23 @@ published documentation, and is now enforced by
 `spec/contract/api_contract_spec.rb`.
 
 ### Fixed
-- **Empty response bodies no longer raise.** `Request#run` returns `{}` for an
-  empty, whitespace or `null` body at any status. With the Oj adapter
+- **Empty response bodies no longer raise, anywhere.** `Request#run` returns `{}`
+  for an empty, whitespace or `null` body at any status. With the Oj adapter
   `MultiJson.decode("")` returns `nil` without raising, so the previous
   `rescue MultiJson::ParseError` / `204` guard never fired — even a documented
   `204` success (`PATCH /charge/settle/:id`) raised `NoMethodError`, which is not
   a `Conexa::ConexaError` and escaped `rescue Conexa::ConexaError`.
+
+  `ConexaObject#update` now treats a `nil` argument as "nothing to merge", and
+  `Model#create` returns the local object when the response carries no id. Fixing
+  `Request#run` alone was not enough: `Model#save` and `#destroy` fed the
+  resulting `nil` straight into `update`, so **every** resource's generic CRUD
+  still raised `NoMethodError` on a documented `204` — `DELETE /sale/:id` among
+  them. Only the three action methods were safe, and only because they discard
+  their return value.
+- **Error bodies that are not JSON objects no longer raise `TypeError`.** An
+  array or scalar error body reached `parsed_error['message']` and blew up inside
+  the error handler.
 - **Action endpoints use the documented verb.** `Charge#settle`,
   `Contract#end_contract` and `RecurringSale#end_recurring_sale` send `PATCH`;
   `POST` 404s.
@@ -71,10 +82,18 @@ published documentation, and is now enforced by
 
 ### Added
 - **Read-only mode.** `config.read_only = true`, `CONEXA_READ_ONLY=1`, or a
-  thread-local `Conexa.read_only { ... }` block. Any non-`GET` request raises
-  `Conexa::ReadOnlyError` before it leaves the process; authentication stays
-  allowed. Settling a charge moves money and can issue an NF-e, so this is a
-  guard worth having when you only mean to read.
+  `Conexa.read_only { ... }` block. Any non-`GET` request raises
+  `Conexa::ReadOnlyError` before it leaves the process. Settling a charge moves
+  money and can issue an NF-e, so this is a guard worth having when you only mean
+  to read.
+
+  The exemption for `POST /auth` is matched on the **path**, not on the caller's
+  `auth:` flag — `Request.auth` is public, so keying it off the flag would have
+  let any write opt out of the guard. `CONEXA_READ_ONLY` is consulted at each
+  check rather than captured at configure time, and an unrecognised value warns
+  instead of silently failing open. The block form is fiber-local and does not
+  reach a `Thread` or `Fiber` spawned inside it — documented in the READMEs; use
+  `config.read_only` for concurrent work.
 - **`ResponseError#api_errors`, `#api_error_codes`, `#api_error_messages`,
   `#api_response`** — normalise the API's two error shapes (`{field, messages}`
   and `{code, message}`). Consumers that only handled the first rendered

@@ -36,7 +36,14 @@ module Conexa
   #
   class Model < ConexaObject
     def create
-      set_primary_key Conexa::Request.post(self.class.show_url, params: to_hash).call(class_name).attributes['id']
+      created = Conexa::Request.post(self.class.show_url, params: to_hash).call(class_name)
+
+      # A create that answers with no body leaves us nothing to identify the new
+      # record by, so there is nothing to re-fetch. Returning the local object is
+      # honest; raising NoMethodError from `nil.attributes` was not.
+      return self if created.nil?
+
+      set_primary_key created.attributes['id']
       fetch
     end
 

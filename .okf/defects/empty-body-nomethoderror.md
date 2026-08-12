@@ -4,7 +4,7 @@ title: Empty response body raises NoMethodError after a successful write
 description: A 2xx with an empty or null body decodes to nil and Request#run calls .dig on it — so a completed settlement is reported to the caller as a crash.
 status: resolved
 tags: [errors, charge, http, issue-20]
-timestamp: 2026-08-11T18:40:00Z
+timestamp: 2026-08-12T21:00:00Z
 ---
 
 > **Resolved in 0.2.0.** Request#run now returns `{}` for an empty, whitespace or `null` body at any status, and handles a top-level array. Covered by `spec/conexa/empty_response_spec.rb`.
@@ -68,6 +68,21 @@ Conexa::Request.patch("/charge/settle/555", params: {}).run   # NoMethodError
 stub_request(:delete, "#{BASE}/contract/789").to_return(status: 204, body: "")
 Conexa::Request.delete("/contract/789").run                   # NoMethodError — the 204 guard does not fire
 ```
+
+# It was not enough to fix `Request#run`
+
+The first fix landed in `Request#run` only, and the three action methods
+(`settle`, `set_end_date`, `end_recurring_sale`) looked fine because they discard
+their return value. But `Request#call` returns `nil` for an empty body, and
+`Model#save`/`#destroy` feed that straight into `ConexaObject#update`, which
+called `nil.to_hash`. So **every** resource's generic CRUD still raised
+`NoMethodError` on a documented `204` — `DELETE /sale/:id` among them — with the
+release notes claiming the opposite.
+
+Closed in 0.2.0 by making `update` treat `nil` as "nothing to merge" and
+`Model#create` return the local object when the response carries no id. The
+lesson generalises: a fix at the transport layer is not a fix until you follow
+the new return value to every caller.
 
 # Suggested fix
 

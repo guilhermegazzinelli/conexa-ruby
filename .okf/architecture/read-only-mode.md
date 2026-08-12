@@ -3,7 +3,7 @@ type: Component
 title: Read-only mode
 description: A hard guard at Request#run that refuses every non-GET request, for the many cases where the gem is used to look rather than to change.
 tags: [auth, http, errors]
-timestamp: 2026-08-11T18:40:00Z
+timestamp: 2026-08-12T21:00:00Z
 ---
 
 # Overview
@@ -43,13 +43,18 @@ be careful.
 |----------|-----|
 | Guard lives in `Request#run` | The [single choke point](request-pipeline.md) every verb passes through — one condition instead of a check per resource. |
 | Raises before `RestClient::Request.execute` | A blocked call must not reach the tenant at all, not even to be rejected there. |
-| Authentication is exempt | `POST /auth` is not a mutation, and without the exemption read-only mode could not obtain a token. |
-| Block form is thread-local | `Conexa.read_only { }` must not relax or tighten another thread's state, and must restore on exception. |
+| The auth exemption matches the **path** | `Request.auth` is public, so keying the exemption off the caller's `auth:` flag let any write opt out with `Request.auth("/charge/settle/1", …)`. |
+| Block form is fiber-local | It restores on exception and cannot tighten another fiber's state — but it also does **not reach** a `Thread` or `Fiber` spawned inside it. For a safety guard that is the dangerous direction, so it is documented and `config.read_only` (global) is the answer for concurrent work. |
 | `ReadOnlyError < ConexaError` | Callers that already rescue the gem's base error see it; it is not a surprise `RuntimeError`. |
 
 The block form composes with the global setting rather than replacing it — a
-thread-local `nil` falls through to `configuration.read_only`, so a block only
+fiber-local `nil` falls through to `configuration.read_only`, so a block only
 overrides for its own duration.
+
+`CONEXA_READ_ONLY` is consulted on every check rather than captured in
+`Configuration#initialize` — setting it after `Conexa.configure` used to be a
+silent no-op. An unrecognised value warns rather than failing open, since a typo
+while trying to turn the guard **on** is the dangerous case.
 
 # What it does not do
 

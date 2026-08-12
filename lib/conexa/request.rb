@@ -27,6 +27,11 @@ module Conexa
     # which read-only mode could not obtain a token in the first place.
     READ_METHODS = %w(GET).freeze
 
+    # The authentication exemption is tied to these paths, not to the caller's
+    # `auth:` flag. `Request.auth` is public, so trusting the flag alone let any
+    # write opt out of the guard with `Request.auth("/charge/settle/1", …)`.
+    AUTH_PATHS = %w(/auth).freeze
+
     def run
       enforce_read_only!
 
@@ -64,8 +69,11 @@ module Conexa
       rescue RestClient::Exception => error
         begin
           # nil for an error carrying no body; MultiJson.decode(nil) returns nil
-          # rather than raising, so the guard has to be here.
-          parsed_error = MultiJson.decode(error.http_body.to_s) || {}
+          # rather than raising, so the guard has to be here. An error body that
+          # decodes to an array or a scalar has no #[](String) either, and used
+          # to raise TypeError from inside this handler.
+          parsed_error = MultiJson.decode(error.http_body.to_s)
+          parsed_error = {} unless parsed_error.is_a?(Hash)
 
           if error.is_a? RestClient::ResourceNotFound
             if parsed_error['message']
@@ -94,7 +102,8 @@ module Conexa
     #   reaches the tenant.
     def enforce_read_only!
       return unless Conexa.read_only?
-      return if @auth || READ_METHODS.include?(method.to_s.upcase)
+      return if READ_METHODS.include?(method.to_s.upcase)
+      return if @auth && AUTH_PATHS.include?(path)
 
       # Deliberately `path`, not `full_api_url`: the latter validates the URL and
       # can raise RequestError, which would win over this one purely because the

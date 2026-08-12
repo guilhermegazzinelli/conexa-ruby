@@ -66,6 +66,12 @@ module Conexa
 
     protected
     def update(attributes)
+      # A successful write may answer with no body, in which case Request#call
+      # yields nil. "The server told us nothing" means "there is nothing to
+      # merge", not a crash — this used to raise NoMethodError from every
+      # Model#save/#destroy against a documented 204.
+      return self if attributes.nil?
+
       removed_attributes = @attributes.keys - attributes.to_hash.keys
 
       removed_attributes.each do |key|

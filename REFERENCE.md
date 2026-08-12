@@ -61,8 +61,15 @@ rails generate conexa:install
 ### Read-only mode
 
 Any request other than `GET` raises `Conexa::ReadOnlyError` before it leaves the
-process. Authentication (`POST /auth`) stays allowed, since read-only mode would
-otherwise be unable to obtain a token.
+process. `POST /auth` stays allowed — matched on the path, not on a caller flag —
+since read-only mode would otherwise be unable to obtain a token.
+
+`Conexa.read_only { }` is fiber-local: it does not reach a `Thread` or `Fiber`
+spawned inside the block. Use `config.read_only` for concurrent work.
+
+`CONEXA_READ_ONLY` is read at each check, so it applies even when set after
+`Conexa.configure`. Recognised: `1/true/yes/on` and `0/false/no/off`; anything
+else warns and is treated as off.
 
 ```ruby
 Conexa.configure { |c| c.read_only = true }   # or CONEXA_READ_ONLY=1

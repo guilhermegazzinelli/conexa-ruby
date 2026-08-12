@@ -131,10 +131,15 @@ RSpec.describe 'Nil Guards' do
   end
 
   describe 'ConexaObject with nil attributes' do
-    it 'handles initialization with nil by raising NoMethodError' do
-      # ConexaObject.new expects a hash; nil.to_hash and nil.each will fail
-      # This documents the current behavior - nil is not a valid input
-      expect { Conexa::ConexaObject.new(nil) }.to raise_error(NoMethodError)
+    # Used to raise NoMethodError from `nil.to_hash`. Since 0.2.0 #update treats
+    # nil as "nothing to merge", so that a write answering with an empty body
+    # yields an unchanged object instead of a crash — the same guard makes
+    # constructing from nil produce an empty object.
+    it 'handles initialization with nil as an empty object' do
+      obj = Conexa::ConexaObject.new(nil)
+
+      expect(obj.attributes).to eq({})
+      expect(obj.empty?).to be true
     end
 
     it 'handles initialization with empty hash' do

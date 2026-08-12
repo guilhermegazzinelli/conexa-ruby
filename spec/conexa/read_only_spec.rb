@@ -100,10 +100,24 @@ RSpec.describe "read-only mode" do
       expect(Conexa.read_only { 42 }).to eq(42)
     end
 
-    it "does not leak into another thread" do
-      other = nil
-      Conexa.read_only { other = Thread.new { Conexa.read_only? }.value }
-      expect(other).to be(false)
+    # The block form is fiber-local, so it does NOT reach a Thread or Fiber
+    # spawned inside it. For a safety guard that is the dangerous direction —
+    # protection is lost, not over-applied. This documents the limitation rather
+    # than endorsing it; use `config.read_only`, which is global, for anything
+    # concurrent. See the note in the READMEs.
+    it "is fiber-local and does not reach a thread spawned inside it" do
+      inside = nil
+      Conexa.read_only { inside = Thread.new { Conexa.read_only? }.value }
+
+      expect(inside).to be(false)
+    end
+
+    it "the global setting does reach other threads" do
+      Conexa.configuration.read_only = true
+      inside = Thread.new { Conexa.read_only? }.value
+      Conexa.configuration.read_only = false
+
+      expect(inside).to be(true)
     end
   end
 

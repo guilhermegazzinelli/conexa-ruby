@@ -61,14 +61,21 @@ module Conexa
       # @return [Hash] a copy with end_date folded into date
       def normalize_end_date_param(params)
         params = params.dup
-        legacy = [params.delete(:end_date), params.delete("end_date")].compact.first
-        return params unless legacy
 
-        warn "DEPRECATION WARNING: `end_date:` foi renomeado para `date:` em conexa 0.2.0 " \
-             "(a API v2 rejeita `endDate`). O alias será removido em 0.3.0."
+        # Collapse both spellings of each key up front. Leaving one behind would
+        # let camelize_hash fold two `date` keys into one, last-write-wins — which
+        # is how the deprecated value once silently replaced the real one.
+        legacy   = [params.delete(:end_date), params.delete("end_date")].compact.first
+        explicit = [params.delete(:date), params.delete("date")].compact.first
 
-        # An explicit date, under either spelling, always wins over the alias.
-        params[:date] = legacy unless params.key?(:date) || params.key?("date")
+        if legacy
+          warn "DEPRECATION WARNING: `end_date:` foi renomeado para `date:` em conexa 0.2.0 " \
+               "(a API v2 rejeita `endDate`). O alias será removido em 0.3.0."
+        end
+
+        # An explicit date wins; a key present with a nil value is not one.
+        date = explicit || legacy
+        params[:date] = date unless date.nil?
         params
       end
 

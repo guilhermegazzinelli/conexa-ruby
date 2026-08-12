@@ -66,8 +66,12 @@ end
 ```
 
 A verificação acontece antes de a requisição sair do processo, então uma chamada
-bloqueada nunca chega ao seu tenant. `GET` é permitido, e a autenticação também —
-sem ela o modo leitura não conseguiria obter token.
+bloqueada nunca chega ao seu tenant. `GET` é permitido, e o `POST /auth` também —
+sem ele o modo leitura não conseguiria obter token.
+
+**O bloco é fiber-local.** Ele não alcança uma `Thread` ou `Fiber` criada lá
+dentro, nem iteração externa de `Enumerator`. Para qualquer coisa concorrente use
+`config.read_only` (ou `CONEXA_READ_ONLY`), que é global.
 
 ## Uso
 

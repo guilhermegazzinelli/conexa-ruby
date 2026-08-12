@@ -60,8 +60,12 @@ end
 ```
 
 The guard runs before the request leaves the process, so a blocked call never
-reaches your tenant. `GET` is allowed, and so is authentication — without it
+reaches your tenant. `GET` is allowed, and so is `POST /auth` — without it
 read-only mode could not obtain a token.
+
+**The block form is fiber-local.** It does not reach a `Thread` or `Fiber`
+spawned inside it, nor external iteration on an `Enumerator`. For anything
+concurrent use `config.read_only` (or `CONEXA_READ_ONLY`), which is global.
 
 ## Quick Start
 
