@@ -57,7 +57,17 @@ module Conexa
     end
 
     def fetch
-      update self.class.find(primary_key)
+      fetched = self.class.find(primary_key)
+
+      # #update ignores anything with no attributes, which is right for a write
+      # that answers with no body — but a *refresh* that comes back empty must
+      # not quietly leave stale values in place reporting success.
+      unless fetched.respond_to?(:attributes)
+        raise ResponseError.new({ url: self.class.show_url(primary_key) }, nil,
+                                "a API respondeu sem corpo: nada para atualizar")
+      end
+
+      update fetched
       self
     end
 
@@ -130,10 +140,17 @@ module Conexa
         # validates them, so there is no page/size left here to guard.
         params = extract_page_size_or_params(page, size, **params)
 
-        Conexa::Request.get(url, params: params).call(
+        result = Conexa::Request.get(url, params: params).call(
           underscored_class_name,
           query_context: { resource_class: self, params: params }
         )
+
+        # A listing always answers with a Result, as the READMEs promise. Without
+        # this, an empty body yielded nil and a bare-array body yielded an Array,
+        # so `.data` / `.pagination` / `.next_page` blew up far from the cause.
+        return result if result.is_a?(Conexa::Result)
+
+        Conexa::Result.new("data" => Array(result), "pagination" => nil)
       end
       alias :find_by_hash :find_by
 

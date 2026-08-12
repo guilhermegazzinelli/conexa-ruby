@@ -27,7 +27,8 @@ RSpec.describe 'Error Handling for All Resources' do
     Conexa::Bill,
     Conexa::Charge,
     Conexa::Contract,
-    Conexa::CreditCard,
+    # CreditCard is write-only: API v2 exposes no GET for it, so the read-path
+    # error cases below do not apply. See lib/conexa/resources/credit_card.rb.
     Conexa::Person,
     Conexa::Plan,
     Conexa::Product,

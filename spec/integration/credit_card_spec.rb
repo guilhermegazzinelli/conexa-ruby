@@ -2,6 +2,17 @@
 
 require "spec_helper"
 
+# This file used to stub `GET /creditCard/:id`, `PATCH /creditCard/:id` and
+# `DELETE /creditCard/:id` and assert they worked. None of those endpoints
+# exist — the stubs invented them, and the suite was green over an API surface
+# that is not there. Probing a live tenant on 2026-08-12 settled it:
+#
+#   GET /creditCard      => 404 "Unable to resolve the request"
+#   GET /creditCard/:id  => 404 "unable to find the requested action \"view\""
+#
+# The collection documents `POST /creditCard` and nothing else, which is
+# consistent: the number and CVC live encrypted at Cielo, so there is nothing to
+# read back.
 RSpec.describe "CreditCard Integration" do
   around(:each) do |example|
     VCR.turned_off do
@@ -17,88 +28,61 @@ RSpec.describe "CreditCard Integration" do
     end
   end
 
-  let(:credit_card_response) do
-    {
-      "creditCardId" => 99,
-      "customerId" => 127,
-      "brand" => "visa",
-      "lastFourDigits" => "1111",
-      "name" => "JOAO DA SILVA",
-      "expirationDate" => "12/2026",
-      "default" => true,
-      "enableRecurring" => true
-    }.to_json
-  end
-
-  describe "finding a credit card" do
-    before do
-      stub_request(:get, /test\.conexa\.app.*creditCard\/99/)
-        .to_return(status: 200, body: credit_card_response, headers: { "Content-Type" => "application/json" })
+  describe "registering a card" do
+    let!(:create_stub) do
+      stub_request(:post, "https://test.conexa.app/index.php/api/v2/creditCard")
+        .to_return(status: 201, body: { "id" => 99 }.to_json,
+                   headers: { "Content-Type" => "application/json" })
     end
 
-    it "returns a credit card by id" do
-      card = Conexa::CreditCard.find(99)
-      expect(card).to be_a(Conexa::CreditCard)
-      expect(card.credit_card_id).to eq(99)
-      expect(card.customer_id).to eq(127)
-      expect(card.brand).to eq("visa")
-      expect(card.name).to eq("JOAO DA SILVA")
-      expect(card.default).to be true
-    end
-  end
-
-  describe "creating a credit card" do
-    before do
-      stub_request(:post, /test\.conexa\.app.*creditCard/)
-        .to_return(status: 200, body: { "id" => 99 }.to_json, headers: { "Content-Type" => "application/json" })
-
-      stub_request(:get, /test\.conexa\.app.*creditCard\/99/)
-        .to_return(status: 200, body: credit_card_response, headers: { "Content-Type" => "application/json" })
-    end
-
-    it "creates a credit card" do
-      card = Conexa::CreditCard.create(
+    it "posts the documented fields, camelized" do
+      Conexa::CreditCard.create(
         customer_id: 127,
         number: "4111111111111111",
         name: "JOAO DA SILVA",
-        expiration_date: "12/2026",
+        expiration_date: "12/26",
         cvc: "123",
         brand: "visa",
         default: true,
         enable_recurring: true
       )
+
+      documented = %w[brand customerId cvc default enableRecurring
+                      expirationDate name number].sort
+
+      expect(create_stub).to have_been_requested
+      expect(WebMock).to(have_requested(:post, %r{/creditCard})
+        .with { |request| JSON.parse(request.body).keys.sort == documented })
+    end
+
+    it "keeps the id the API returns" do
+      card = Conexa::CreditCard.create(customer_id: 127, number: "4111", cvc: "1",
+                                       expiration_date: "12/26", name: "J")
+
       expect(card).to be_a(Conexa::CreditCard)
-      expect(card.credit_card_id).to eq(99)
-      expect(card.brand).to eq("visa")
+      expect(card.id).to eq(99)
+    end
+
+    # Model#create re-fetches to pick up server-side defaults. Here that would
+    # hit the read that does not exist, so CreditCard overrides it.
+    it "does not try to read the card back" do
+      Conexa::CreditCard.create(customer_id: 127, number: "4111", cvc: "1",
+                                expiration_date: "12/26", name: "J")
+
+      expect(WebMock).not_to have_requested(:get, %r{/creditCard})
     end
   end
 
-  describe "updating a credit card" do
-    before do
-      stub_request(:get, /test\.conexa\.app.*creditCard\/99/)
-        .to_return(status: 200, body: credit_card_response, headers: { "Content-Type" => "application/json" })
+  describe "reading" do
+    it "refuses instead of requesting an endpoint that does not exist" do
+      expect { Conexa::CreditCard.find(99) }
+        .to raise_error(Conexa::RequestError, /não expõe leitura/)
 
-      stub_request(:patch, /test\.conexa\.app.*creditCard\/99/)
-        .to_return(status: 200, body: credit_card_response, headers: { "Content-Type" => "application/json" })
+      expect(WebMock).not_to have_requested(:get, %r{/creditCard})
     end
 
-    it "updates a credit card" do
-      card = Conexa::CreditCard.find(99)
-      card.default = false
-      result = card.save
-      expect(result).to be_a(Conexa::CreditCard)
-    end
-  end
-
-  describe "deleting a credit card" do
-    before do
-      stub_request(:delete, /test\.conexa\.app.*creditCard\/99/)
-        .to_return(status: 200, body: credit_card_response, headers: { "Content-Type" => "application/json" })
-    end
-
-    it "deletes a credit card" do
-      result = Conexa::CreditCard.destroy(99)
-      expect(result).to be_a(Conexa::CreditCard)
+    it "refuses to list" do
+      expect { Conexa::CreditCard.all }.to raise_error(Conexa::RequestError)
     end
   end
 end

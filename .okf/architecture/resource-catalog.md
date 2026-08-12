@@ -3,7 +3,7 @@ type: Reference
 title: Resource catalogue — gem classes vs documented endpoints
 description: Every Model subclass, the URL it emits, and whether the published collection documents it — the audit table that surfaced the URL and verb defects, now enforced in CI.
 tags: [api-contract, http]
-timestamp: 2026-08-12T23:59:00Z
+timestamp: 2026-08-13T02:00:00Z
 ---
 
 # Overview
@@ -56,9 +56,11 @@ English plurals override anyway; `RoomBooking`, `Account`, `ServiceCategory`,
 **`CreditCard` reads do not exist.** Verified 2026-08-12: `GET /creditCard` answers
 `404 Unable to resolve the request` and `GET /creditCard/:id` answers `404 unable
 to find the requested action "view"`. The collection documents only
-`POST /creditCard`, and the API agrees. `CreditCard.all`/`.find` are therefore
-dead surface — a caller gets `Conexa::NotFound`, which is at least an honest
-answer, but the methods should not be advertised.
+`POST /creditCard`, and the API agrees. `CreditCard` is therefore **write-only** in 0.2.0: `all`/`find`/`find_by` and
+their aliases raise `Conexa::RequestError` explaining that the API has no read,
+and `#create` skips the re-fetch `Model#create` normally does. `#save`/`#destroy`
+are left alone — undocumented and, unlike the reads, *unverified*, because
+probing them means writing.
 
 The "not documented" rows are **not** bugs — the collection is incomplete for
 several read endpoints. As of 2026-08-12 they are no longer merely assumed: a

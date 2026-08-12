@@ -106,6 +106,23 @@ published documentation, and is now enforced by
 - `lib/conexa/resources/supplier.rb` shipped as `0600`, breaking `require` on a
   shared install.
 
+- **`Conexa::CreditCard` is write-only.** API v2 exposes no read for it: `GET
+  /creditCard` answers "Unable to resolve the request" and `GET /creditCard/:id`
+  "unable to find the requested action" — neither is the permission wording the
+  API uses for a resource an account cannot see. `all`/`find`/`find_by` and their
+  aliases now raise `Conexa::RequestError` explaining that, instead of a bare
+  `NotFound` reading as "no such card", and `#create` skips `Model#create`'s
+  re-fetch. The integration spec that asserted those reads worked — against
+  stubs of endpoints that do not exist — was rewritten.
+- **Listings always answer with a `Conexa::Result`.** An empty body yielded `nil`
+  and a bare-array body an `Array`, so `.data`/`.pagination`/`.next_page` failed
+  far from the cause.
+- **`Model#fetch` raises instead of silently keeping stale attributes** when the
+  refresh comes back with no body. The nil-guard that makes an empty *write*
+  response harmless must not make an empty *read* look successful.
+- **`Result#has_next?` returns a boolean**, not `nil`, when there is no
+  pagination at all.
+
 ### Added
 - **Read-only mode.** `config.read_only = true`, `CONEXA_READ_ONLY=1`, or a
   `Conexa.read_only { ... }` block. Any non-`GET` request raises

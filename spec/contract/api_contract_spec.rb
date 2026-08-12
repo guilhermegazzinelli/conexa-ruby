@@ -39,6 +39,8 @@ RSpec.describe "API v2 contract" do
   # stay honest; the last example in this file proves nothing was added without
   # being listed here.
   ACTIONS = [
+    # Overrides Model#create to skip the re-fetch: there is no read endpoint.
+    { file: "credit_card.rb",    method: "CreditCard#create",                verb: "POST",   path: "/creditCard" },
     { file: "charge.rb",         method: "Charge#settle",                    verb: "PATCH",  path: "/charge/settle/:id" },
     { file: "charge.rb",         method: "Charge#pix",                       verb: "GET",    path: "/charge/pix/:id" },
     { file: "charge.rb",         method: "Charge#cancel",                    verb: "POST",   path: "/charge/cancel/:id" },

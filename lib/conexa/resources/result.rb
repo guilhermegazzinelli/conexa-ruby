@@ -18,8 +18,11 @@ module Conexa
       @attributes["pagination"]
     end
 
+    # @return [Boolean] always a boolean — it used to yield nil when there was no
+    #   pagination at all, which is falsy but not `false`, and leaks out of any
+    #   caller that serialises or compares the result.
     def has_next?
-      pagination && pagination.has_next == true
+      pagination.respond_to?(:has_next) && pagination.has_next == true
     end
 
     def next_page
