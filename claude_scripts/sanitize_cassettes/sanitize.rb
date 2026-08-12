@@ -3,10 +3,9 @@
 #
 # Anonymises VCR cassettes that were recorded against a real Conexa tenant.
 #
-# spec/cassettes/customer.yml was recorded on 2024-10-18 against the production
-# tenant checkbits.conexa.app and committed to a public repository: it carried a
-# live Bearer token plus ~120 real customers (names, CNPJ/CPF, emails, phones,
-# street addresses).
+# Recording against a real tenant bakes everything the request carried into the
+# fixture: the Authorization header, the host, and whatever customer data came
+# back in the response body.
 #
 # This script rewrites a cassette in place, keeping the exact JSON shape — same
 # keys, same types, same nulls, same ids — so the specs keep exercising the same

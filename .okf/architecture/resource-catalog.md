@@ -3,7 +3,7 @@ type: Reference
 title: Resource catalogue — gem classes vs documented endpoints
 description: Every Model subclass, the URL it emits, and whether the published collection documents it — the audit table that surfaced the URL and verb defects, now enforced in CI.
 tags: [api-contract, http]
-timestamp: 2026-08-11T18:40:00Z
+timestamp: 2026-08-12T14:00:00Z
 ---
 
 # Overview
@@ -59,9 +59,11 @@ responses. They are *unverified*, and they are listed as an explicit allowlist i
 the contract spec — which is what makes a **new** undocumented path fail instead
 of slipping through.
 
-`OrderCommon` was in this table until 0.2.0. It was a legacy PDV-era class that
-did not target API v2 at all and depended on
-[the removed JWT auth path](authentication.md).
+`OrderCommon` was in this table until 0.2.0, targeting `/order/:id` and
+`/order/:id/refund`. **API v2 documents no `/order` endpoint at all**, which is
+why it went — not because it was broken: unlike
+[the JWT auth classes removed alongside it](../defects/dead-legacy-token-manager.md),
+it executed and issued a real `DELETE`.
 
 # Action endpoints
 

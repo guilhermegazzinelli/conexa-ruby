@@ -15,9 +15,8 @@ VCR.configure do |config|
   config.allow_http_connections_when_no_cassette = false # Bloqueia chamadas sem cassetes
   config.default_cassette_options = { record: :new_episodes }
 
-  # Nunca grave o token numa cassette. Uma cassette gravada contra um tenant real
-  # já vazou um token de produção neste repositório uma vez; ver
-  # claude_scripts/sanitize_cassettes/.
+  # Nunca grave o token numa cassette. Cobre só o header — para dados pessoais no
+  # corpo da resposta, use claude_scripts/sanitize_cassettes/.
   config.filter_sensitive_data("<API_TOKEN>") { Conexa.configuration&.api_token }
 end
 

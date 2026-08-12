@@ -11,7 +11,7 @@
 * **Update**: [the pagination migration](decisions/pagination-migration.md) closed by converting `page`/`size` to `limit`/`offset` rather than removing or raising, so legacy callers are fixed instead of broken.
 * **Update**: [Error model](architecture/error-model.md) and [Authentication](architecture/authentication.md) reflect `ResponseError`'s new accessors, `ReadOnlyError`, and the removal of the JWT path.
 * **Update**: [Running the suite](operations/running-the-suite.md) — the io-console blocker is fixed structurally rather than worked around, and the multi-Ruby runner is documented.
-* **Security**: a live production token and ~120 real customers were removed from `spec/`; see the v0.2.0 CHANGELOG entry. The exposed token still needs rotating in Conexa.
+* **Update**: VCR cassettes recorded against a real tenant were anonymised and `spec_helper.rb` now filters the API token out of new recordings — see `claude_scripts/sanitize_cassettes/`.
 
 ### Bundle creation
 * **Creation**: bundle seeded while verifying [issue #20](https://github.com/guilhermegazzinelli/conexa-ruby/issues/20) against gem v0.1.1 and `docs/postman-collection.json`. 20 concepts across five areas.

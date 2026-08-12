@@ -106,19 +106,26 @@ published documentation, and is now enforced by
   `bundler-cache: true`.
 
 ### Removed
-- **Breaking**: `Conexa::Client`, `Conexa::Authenticator`, `Conexa::TokenManager`
-  and `Conexa::OrderCommon`. They referenced five `Conexa` module methods that
-  never existed, so any real use raised `NoMethodError`; their specs passed only
-  because they stubbed those methods into being. The `jwt` dependency goes with
-  them — `Conexa::Auth` (the v2 `/auth` resource) is unaffected.
+- **Breaking**: `Conexa::Client`, `Conexa::Authenticator` and
+  `Conexa::TokenManager`. They referenced five `Conexa` module methods that never
+  existed (`credentials`, `secret_key`, `access_key`, `client_id`,
+  `default_client_key`), so any real use raised `NoMethodError`; their specs
+  passed only because they stubbed those methods into being. The `jwt` dependency
+  goes with them — `Conexa::Auth` (the v2 `/auth` resource) is unaffected.
+- **Breaking**: `Conexa::OrderCommon`. Unlike the three above, this one *ran* —
+  it built `/order/:id` and `/order/:id/refund` and issued a real `DELETE`. It is
+  removed because **API v2 documents no `/order` endpoint at all**: nothing in
+  the gem used it, no spec covered it, and it targets a surface that no longer
+  exists. Note that its documented backwards-compatible alias never worked:
+  `OrderCommom = self` inside the class body defines
+  `Conexa::OrderCommon::OrderCommom`, not `Conexa::OrderCommom`, so the pre-0.1.0
+  name has raised `NameError` since the rename.
 
-### Security
-- A live Bearer token for a production tenant was committed in
-  `spec/spec_helper.rb`, and `spec/cassettes/customer.yml` was recorded against
-  that tenant with ~120 real customers (names, CNPJ/CPF, emails, phones,
-  addresses). Both are removed and the cassette anonymised;
-  `claude_scripts/sanitize_cassettes/` holds the sanitiser and VCR now filters
-  the token from new recordings. **The exposed token must be rotated in Conexa.**
+### Testing
+- VCR cassettes recorded against a real tenant are anonymised, and
+  `spec_helper.rb` filters the API token out of new recordings. The
+  `claude_scripts/sanitize_cassettes/` script does the anonymisation in place,
+  keeping the JSON shape so the specs still exercise the same structure.
 
 ## [0.1.1] - 2026-03-31
 

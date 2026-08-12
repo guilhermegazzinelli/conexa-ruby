@@ -9,4 +9,4 @@ Para rodar a suíte em todas as versões de Ruby suportadas use `rake spec:all` 
 
 | Pasta | O que faz |
 |-------|-----------|
-| [sanitize_cassettes/](sanitize_cassettes/) | Anonimiza cassettes do VCR gravadas contra um tenant real (token + PII de clientes). |
+| [sanitize_cassettes/](sanitize_cassettes/) | Anonimiza cassettes do VCR: substitui token, host e dados pessoais por valores sintéticos. |

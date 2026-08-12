@@ -4,16 +4,13 @@ Anonimiza cassettes do VCR que foram gravadas contra um tenant real do Conexa.
 
 ## Por que existe
 
-`spec/cassettes/customer.yml` foi gravada em 2024-10-18 contra o tenant de
-**produção** `checkbits.conexa.app` e commitada num repositório **público**. Ela
-carregava:
+Gravar uma cassette apontando para um tenant real embute na fixture tudo que
+passou pela requisição: o token do header `Authorization`, o host, e os dados
+cadastrais que vieram na resposta. Foi o que aconteceu com
+`spec/cassettes/customer.yml`.
 
-- um Bearer token de API válido (3 ocorrências);
-- ~120 clientes reais — razão social, CNPJ/CPF, e-mails, telefones e endereços.
-
-O token foi rotacionado e a cassette saneada. Este script é o que fez o saneamento
-e fica versionado para poder ser rodado de novo caso alguém regrave uma cassette
-contra dados reais.
+Este script faz a limpeza e fica versionado para poder ser rodado de novo sempre
+que alguém regravar uma cassette contra dados reais.
 
 ## Uso
 
@@ -43,5 +40,6 @@ estrutura de resposta, só que sobre dados sintéticos.
 
 `spec/spec_helper.rb` agora tem
 `config.filter_sensitive_data("<API_TOKEN>") { Conexa.configuration&.api_token }`
-no bloco do VCR, para que gravações futuras não repitam o vazamento do token.
-Isso não cobre PII do corpo da resposta — para isso, rode este script.
+no bloco do VCR, então o token nunca chega a ser gravado numa cassette nova.
+Isso cobre só o header — dados pessoais no corpo da resposta continuam por conta
+deste script.
