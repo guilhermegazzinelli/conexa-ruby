@@ -3,12 +3,12 @@ type: Runbook
 title: Running the spec suite
 description: rake, rake spec:all across every supported Ruby, and why there is a .rubocop_todo.yml and no committed Gemfile.lock.
 tags: [testing, release]
-timestamp: 2026-08-11T19:20:00Z
+timestamp: 2026-08-12T18:30:00Z
 ---
 
 # Overview
 
-Expected result: **594 examples, 0 failures** (gem v0.2.0), on every supported
+Expected result: **615 examples, 0 failures** (gem v0.2.0), on every supported
 Ruby.
 
 Since 0.2.0 the suite also checks the gem against the published API contract, not
@@ -26,7 +26,7 @@ bundle exec rspec
 
 ```bash
 rake spec:all   # 3.1.7, 3.2.9, 3.3.10, 3.4.7 via mise
-rake ci         # the above, then rubocop — mirrors the CI pipeline
+rake ci         # the above, then rubocop
 ```
 
 `SUPPORTED_RUBIES` in the `Rakefile` is the single list; keep it in step with

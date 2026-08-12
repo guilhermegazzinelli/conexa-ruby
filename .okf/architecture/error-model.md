@@ -3,7 +3,7 @@ type: Component
 title: Error model
 description: The exception taxonomy raised by Request#run, and how the API's two different error shapes land in it.
 tags: [errors, http]
-timestamp: 2026-08-11T13:23:00Z
+timestamp: 2026-08-12T18:30:00Z
 ---
 
 # Overview
@@ -20,9 +20,10 @@ own.
 | `Conexa::NotFound` | HTTP 404 with a decodable body | the parsed response, request params |
 | `Conexa::ResponseError` | any other HTTP error **with** a `message` key; also any undecodable error body | request params, the RestClient error, a composed message |
 | `Conexa::ValidationError` | an HTTP error body **without** a `message` key | a list of `ParamError` built from `response['message']` |
-| `Conexa::ConnectionError` | `SocketError`, `RestClient::ServerBrokeConnection` | the underlying error |
-| `Conexa::RequestError` | client-side guard failures (blank id, bad `limit`/`offset`) | — |
-| `Conexa::MissingCredentialsError` | `TokenManager` cannot find a key | — |
+| `Conexa::ConnectionError` | failures to *reach* the API: `SocketError`, `RestClient::ServerBrokeConnection`, `RestClient::SSLCertificateNotVerified`, `RestClient::Exceptions::Timeout` | the underlying error |
+| `Conexa::RequestError` | client-side guard failures, before anything is sent: blank id, bad `limit`/`offset`/`page`/`size`, a path that will not parse as a URL | — |
+| `Conexa::ReadOnlyError` | a mutating verb while [read-only mode](read-only-mode.md) is on | — |
+| `Conexa::MissingCredentialsError` | nothing, since 0.2.0 — kept for compatibility after the JWT auth path was removed | — |
 
 `ValidationError`'s branch is close to unreachable in practice: it triggers only
 when the body has no `message`, yet its constructor then maps over

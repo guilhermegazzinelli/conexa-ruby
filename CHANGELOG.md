@@ -50,8 +50,11 @@ published documentation, and is now enforced by
   `ServerBrokeConnection` subclasses `RestClient::Exception`, so the broader
   clause listed above it always matched first, then tried to decode a `nil`
   `http_body` and raised `NoMethodError` from inside the error handler.
-  Connection-level failures are now rescued first, and timeouts
-  (`RestClient::Exceptions::Timeout`) map to `ConnectionError` too.
+  Connection-level failures are now rescued first: `SocketError`,
+  `ServerBrokeConnection`, `SSLCertificateNotVerified` and
+  `RestClient::Exceptions::Timeout`. A real HTTP 408 stays in the response
+  taxonomy, since `RestClient::RequestTimeout` is a *superclass* of
+  `Exceptions::Timeout`.
 - **An unusable id raises `Conexa::RequestError`, not `URI::InvalidURIError`**
   (issue #12). `find(" 123 ")` leaked a URI error from inside RestClient, outside
   the `Conexa::ConexaError` hierarchy. Surrounding whitespace is now stripped, and

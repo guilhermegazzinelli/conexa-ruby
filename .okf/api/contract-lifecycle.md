@@ -4,7 +4,7 @@ title: Contract create and end
 description: POST /contract and PATCH /contract/end/:id — the conditional dueDay rule, the atomic create-and-settle option, and the fact that "end" also amends and reopens.
 resource: https://{tenant}.conexa.app/index.php/api/v2/contract
 tags: [contract, api-contract]
-timestamp: 2026-08-11T13:23:00Z
+timestamp: 2026-08-12T18:30:00Z
 ---
 
 # Overview
@@ -33,7 +33,7 @@ cannot be closed retroactively past a day that already has invoiced sales.
 On success this endpoint may answer with an **empty body** — see
 [empty response body raises NoMethodError](../defects/empty-body-nomethoderror.md).
 
-The gem's `Contract#end_contract` gets both the verb and the field name wrong:
+Until 0.2.0 the gem's `Contract#end_contract` got both the verb and the field name wrong:
 [wrong HTTP verb on action endpoints](../defects/wrong-verb-on-action-endpoints.md).
 
 # `POST /contract`

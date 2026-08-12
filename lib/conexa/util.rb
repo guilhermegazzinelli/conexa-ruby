@@ -52,17 +52,23 @@ module Conexa
       # gem used to send `end_date`, which camelizes to `endDate` and is rejected:
       # "endDate field does not exist or is not available in the company".
       #
+      # Both key spellings are handled, and both are removed. Checking only the
+      # symbol `:date` would leave a caller's string `"date"` in place and add a
+      # second, colliding key — camelize_hash folds the two into one and the last
+      # one wins, so the deprecated value would silently replace the real one.
+      #
       # @param params [Hash] caller params, possibly using the old name
-      # @return [Hash] a copy with :end_date folded into :date
+      # @return [Hash] a copy with end_date folded into date
       def normalize_end_date_param(params)
         params = params.dup
-        legacy = params.delete(:end_date)
-        legacy = params.delete("end_date") || legacy
+        legacy = [params.delete(:end_date), params.delete("end_date")].compact.first
         return params unless legacy
 
         warn "DEPRECATION WARNING: `end_date:` foi renomeado para `date:` em conexa 0.2.0 " \
              "(a API v2 rejeita `endDate`). O alias será removido em 0.3.0."
-        params[:date] ||= legacy
+
+        # An explicit date, under either spelling, always wins over the alias.
+        params[:date] = legacy unless params.key?(:date) || params.key?("date")
         params
       end
 

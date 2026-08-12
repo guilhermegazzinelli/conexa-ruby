@@ -68,9 +68,12 @@ RSpec.describe "review fixes" do
         .to raise_error(Conexa::ConnectionError)
     end
 
-    it "never lets a raw NoMethodError escape for an error with no body" do
-      expect { request_raising(RestClient::ServerBrokeConnection).run }
-        .not_to raise_error(NoMethodError)
+    # Same shape as ServerBrokeConnection: a direct RestClient::Exception subclass
+    # with no response and a nil http_body. A TLS handshake failure is a
+    # connection failure, not a validation error.
+    it "maps a TLS verification failure to ConnectionError" do
+      expect { request_raising(RestClient::SSLCertificateNotVerified).run }
+        .to raise_error(Conexa::ConnectionError)
     end
 
     # An HTTP error with an empty body is not a connection failure — it should
@@ -101,6 +104,59 @@ RSpec.describe "review fixes" do
 
     it "keeps rejecting a blank id" do
       expect { Conexa::Customer.find("   ") }.to raise_error(Conexa::RequestError, /Invalid ID/)
+    end
+
+    it "validates the URL at the request layer, not just through Model" do
+      expect { Conexa::Request.get("/customer/12 3").full_api_url }
+        .to raise_error(Conexa::RequestError, /Invalid request path/)
+    end
+
+    # Read-only is a policy: it must win regardless of what the path looks like,
+    # or a caller rescuing ReadOnlyError to report "you are in read-only mode"
+    # gets a misleading "invalid path" instead.
+    it "reports read-only mode even when the path is unusable" do
+      Conexa.configuration.read_only = true
+
+      expect { Conexa::Request.patch("/customer/12 3", params: {}).run }
+        .to raise_error(Conexa::ReadOnlyError)
+    ensure
+      Conexa.configuration.read_only = false
+    end
+  end
+
+  # `params[:date] ||=` only sees the symbol key, so a caller passing a string
+  # "date" got a second, colliding :date — and camelize_hash folds both into one,
+  # last-write-wins, so the deprecated value silently replaced the real one.
+  describe Conexa::Util do
+    it "does not let a string date key collide with the deprecated alias" do
+      result = described_class.normalize_end_date_param("date" => "2026-08-12",
+                                                        :end_date => "2020-01-01")
+
+      expect(result.values.uniq).to eq(["2026-08-12"])
+      expect(Conexa::Util.camelize_hash(result)).to eq(date: "2026-08-12")
+    end
+
+    it "accepts the deprecated alias under a string key" do
+      result = nil
+      expect { result = described_class.normalize_end_date_param("end_date" => "2026-08-12") }
+        .to output(/end_date/).to_stderr
+
+      expect(Conexa::Util.camelize_hash(result)).to eq(date: "2026-08-12")
+    end
+
+    it "removes both spellings of the deprecated alias" do
+      both = { :end_date => "2026-08-12", "end_date" => "2026-08-12" }
+      result = nil
+
+      expect { result = described_class.normalize_end_date_param(both) }
+        .to output(/end_date/).to_stderr
+
+      expect(Conexa::Util.camelize_hash(result)).to eq(date: "2026-08-12")
+    end
+
+    it "leaves a hash with no end_date untouched" do
+      expect(described_class.normalize_end_date_param(date: "2026-08-12", reason_id: 2))
+        .to eq(date: "2026-08-12", reason_id: 2)
     end
   end
 

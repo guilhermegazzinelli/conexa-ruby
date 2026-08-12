@@ -52,7 +52,13 @@ module Conexa
       # listing them after it made them unreachable — Ruby matches rescue clauses
       # top-down. The broad clause then tried to decode their (nil) http_body and
       # raised NoMethodError instead of the documented ConnectionError.
+      #
+      # All of these carry no response, so there is nothing to classify: they are
+      # failures to reach the API, not answers from it. Note that a real HTTP 408
+      # is RestClient::RequestTimeout, a *superclass* of Exceptions::Timeout, so
+      # it correctly stays in the response taxonomy below.
       rescue SocketError, RestClient::ServerBrokeConnection,
+             RestClient::SSLCertificateNotVerified,
              RestClient::Exceptions::Timeout => error
         raise Conexa::ConnectionError.new error
       rescue RestClient::Exception => error
@@ -90,8 +96,12 @@ module Conexa
       return unless Conexa.read_only?
       return if @auth || READ_METHODS.include?(method.to_s.upcase)
 
+      # Deliberately `path`, not `full_api_url`: the latter validates the URL and
+      # can raise RequestError, which would win over this one purely because the
+      # message is interpolated first. Read-only is a policy — it applies whatever
+      # the path looks like.
       raise Conexa::ReadOnlyError,
-            "Conexa is in read-only mode: refusing #{method.to_s.upcase} #{full_api_url}. " \
+            "Conexa is in read-only mode: refusing #{method.to_s.upcase} #{path}. " \
             "Unset config.read_only (or CONEXA_READ_ONLY) to allow writes."
     end
 
