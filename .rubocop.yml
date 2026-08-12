@@ -20,3 +20,14 @@ Style/StringLiteralsInInterpolation:
 
 Layout/LineLength:
   Max: 120
+
+# A policy, not a backlog item: RSpec describe blocks, gemspecs, rake tasks and
+# one-off dev scripts are long by construction, and the todo file was listing 51
+# spec files one by one. Note this Exclude replaces the inherited one rather than
+# merging, so it has to name every case.
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'claude_scripts/**/*'
+    - '**/*.gemspec'
+    - 'Rakefile'

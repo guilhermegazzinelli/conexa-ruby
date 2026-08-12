@@ -132,19 +132,11 @@ module Conexa
       end
       alias_method :end_contract, :set_end_date
 
-      # The documented field is `date`; the gem used to send `end_date`, which
-      # camelizes to `endDate` and is rejected: "endDate field does not exist or
-      # is not available in the company".
+      # @deprecated Use {Conexa::Util.normalize_end_date_param}, which both "end"
+      #   endpoints share.
       # @api private
       def normalize_end_params(params)
-        params = params.dup
-        legacy = params.delete(:end_date) || params.delete("end_date")
-        return params unless legacy
-
-        warn "DEPRECATION WARNING: `end_date:` foi renomeado para `date:` em conexa 0.2.0 " \
-             "(a API v2 rejeita `endDate`). O alias será removido em 0.3.0."
-        params[:date] ||= legacy
-        params
+        Util.normalize_end_date_param(params)
       end
 
       # Create contract with custom product items

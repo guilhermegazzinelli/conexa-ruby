@@ -83,12 +83,12 @@ RSpec.describe 'Nil Guards' do
         .to raise_error(Conexa::RequestError, 'Invalid ID')
     end
 
-    # Note: whitespace-only strings are considered present in this gem's implementation
-    # so they won't trigger RequestError. However, the gem doesn't URL-encode the ID,
-    # which causes URI::InvalidURIError when spaces are passed.
-    it 'raises URI error for whitespace ID (no URL encoding)' do
+    # Used to leak URI::InvalidURIError from inside RestClient — outside the
+    # Conexa::ConexaError hierarchy, so callers could not rescue it. Fixed in
+    # 0.2.0 (issue #12): a whitespace-only id is now simply blank.
+    it 'raises RequestError for a whitespace-only ID' do
       expect { Conexa::Customer.find('   ') }
-        .to raise_error(URI::InvalidURIError)
+        .to raise_error(Conexa::RequestError, 'Invalid ID')
     end
 
     it 'does not raise for valid ID (mocked)' do

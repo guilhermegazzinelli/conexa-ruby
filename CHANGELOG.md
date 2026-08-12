@@ -45,6 +45,22 @@ published documentation, and is now enforced by
   write endpoints answer with `{"id": N}`, which is what `Model#create` reads.
 - **`ResponseError` no longer raises `NoMethodError` on malformed bodies.** It was
   handed a `RestClient::Response`, which has no `#message`.
+- **A broken connection raises `Conexa::ConnectionError`** (issue #11). The
+  `rescue RestClient::ServerBrokeConnection` clause was unreachable —
+  `ServerBrokeConnection` subclasses `RestClient::Exception`, so the broader
+  clause listed above it always matched first, then tried to decode a `nil`
+  `http_body` and raised `NoMethodError` from inside the error handler.
+  Connection-level failures are now rescued first, and timeouts
+  (`RestClient::Exceptions::Timeout`) map to `ConnectionError` too.
+- **An unusable id raises `Conexa::RequestError`, not `URI::InvalidURIError`**
+  (issue #12). `find(" 123 ")` leaked a URI error from inside RestClient, outside
+  the `Conexa::ConexaError` hierarchy. Surrounding whitespace is now stripped, and
+  `Request#full_api_url` validates the URL it builds.
+- **`RecurringSale#end_recurring_sale` sends the documented `date`.** The verb was
+  corrected but the field was not, so `end_date:` still went out as the rejected
+  `endDate`, and its YARD named that field as the example. It now shares
+  `Util.normalize_end_date_param` with `Contract`, and gains a `set_end_date`
+  alias for symmetry.
 - `README.md` configured a non-existent `config.subdomain`; the quick start now
   runs.
 - `lib/conexa/resources/supplier.rb` shipped as `0600`, breaking `require` on a
@@ -75,7 +91,6 @@ published documentation, and is now enforced by
 - `verify_partial_doubles = true`.
 - YARD documentation of `POST /contract`'s fields, including the conditional
   `due_day` rule and the atomic `firstOccurrenceSettleRetroactive` flow.
-- `claude_scripts/multi_ruby_specs/` runs the suite across Ruby 3.1–3.4 locally.
 
 ### Changed
 - **Breaking**: `end_contract` sends the documented `date`; `end_date:` still
@@ -101,9 +116,8 @@ published documentation, and is now enforced by
   ~2000 pre-existing offences made it fail, which is why CI ran lint with
   `continue-on-error`. A generated `.rubocop_todo.yml` grandfathers them, so new
   code is genuinely linted and CI can gate on it.
-- `rake spec:all` runs the suite across every supported Ruby via mise, replacing
-  an ad-hoc shell script; `rake ci` mirrors the CI pipeline. CI uses
-  `bundler-cache: true`.
+- `rake spec:all` runs the suite across every supported Ruby via mise; `rake ci`
+  adds RuboCop. CI uses `bundler-cache: true`.
 
 ### Removed
 - **Breaking**: `Conexa::Client`, `Conexa::Authenticator` and

@@ -44,7 +44,9 @@ namespace :spec do
   end
 end
 
-desc "Everything CI runs: specs on every supported ruby, then rubocop"
+# CI additionally runs bundler-audit, which is advisory there and needs the gem
+# installed, so it is not wired in here.
+desc "Specs on every supported ruby, then rubocop"
 task ci: ["spec:all", :rubocop]
 
 task default: %i[spec rubocop]

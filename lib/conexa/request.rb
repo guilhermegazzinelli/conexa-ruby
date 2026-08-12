@@ -48,9 +48,18 @@ module Conexa
 
       {data: decoded["data"] || decoded, pagination: decoded["pagination"]}
 
+      # Connection-level failures first. These subclass RestClient::Exception, so
+      # listing them after it made them unreachable — Ruby matches rescue clauses
+      # top-down. The broad clause then tried to decode their (nil) http_body and
+      # raised NoMethodError instead of the documented ConnectionError.
+      rescue SocketError, RestClient::ServerBrokeConnection,
+             RestClient::Exceptions::Timeout => error
+        raise Conexa::ConnectionError.new error
       rescue RestClient::Exception => error
         begin
-          parsed_error = MultiJson.decode error.http_body
+          # nil for an error carrying no body; MultiJson.decode(nil) returns nil
+          # rather than raising, so the guard has to be here.
+          parsed_error = MultiJson.decode(error.http_body.to_s) || {}
 
           if error.is_a? RestClient::ResourceNotFound
             if parsed_error['message']
@@ -72,10 +81,6 @@ module Conexa
         # Only genuinely malformed JSON reaches here — empty and null bodies are
         # handled above, for every status.
         raise Conexa::ResponseError.new(request_params, response)
-      rescue SocketError
-        raise Conexa::ConnectionError.new $!
-      rescue RestClient::ServerBrokeConnection
-        raise Conexa::ConnectionError.new $!
     end
 
     # @raise [Conexa::ReadOnlyError] when a mutating verb is attempted while
@@ -149,6 +154,15 @@ module Conexa
 
       if @query.present?
         url += '?' + URI.encode_www_form(query)
+      end
+
+      # An unusable path (a stray space in an id, say) would otherwise surface as
+      # URI::InvalidURIError from inside RestClient — outside Conexa::ConexaError,
+      # so no caller could rescue it meaningfully.
+      begin
+        URI.parse(url)
+      rescue URI::InvalidURIError
+        raise Conexa::RequestError, "Invalid request path: #{path.inspect}"
       end
 
       url

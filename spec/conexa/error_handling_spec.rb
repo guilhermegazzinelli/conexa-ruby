@@ -103,11 +103,11 @@ RSpec.describe 'Error Handling for All Resources' do
       stub_request(:get, "#{api_base}/customer/test-id")
         .to_raise(RestClient::ServerBrokeConnection.new('Server broke connection'))
 
-      # Note: Current implementation has a bug where ServerBrokeConnection
-      # causes NoMethodError instead of ConnectionError because http_body is nil
-      # This test documents the current behavior
+      # Used to raise NoMethodError: ServerBrokeConnection subclasses
+      # RestClient::Exception, so the broad rescue matched first and tried to
+      # decode its nil http_body. Fixed in 0.2.0 (issue #11).
       expect { Conexa::Customer.find('test-id') }
-        .to raise_error(NoMethodError)
+        .to raise_error(Conexa::ConnectionError)
     end
   end
 

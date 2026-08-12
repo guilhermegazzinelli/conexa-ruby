@@ -15,16 +15,18 @@ module Conexa
   #
   # == Primary Key
   #
-  # Each resource needs primary_key_attribute for :id alias and operations
-  # that require the resource ID (destroy, save, fetch, etc.):
+  # Each resource declares primary_key_attribute, which defines #id and the
+  # operations that need the resource ID (destroy, save, fetch, etc.):
   #
   #   class Charge < Model
   #     primary_key_attribute :charge_id
   #   end
   #
-  #   charge.id         # => 123 (alias for charge_id)
   #   charge.charge_id  # => 123
   #   charge.chargeId   # => 123 (camelCase alias for backwards compat)
+  #   charge.id         # => 123 — the resource's own key, falling back to a
+  #                     #    plain "id" attribute, which is what write endpoints
+  #                     #    return and what Model#create reads back
   #
   # == Why explicit primary_key_attribute?
   #
@@ -75,10 +77,10 @@ module Conexa
     end
 
     class << self
-      # DSL for primary key attribute with :id alias
+      # DSL for the primary key attribute
       # @example
       #   primary_key_attribute :charge_id
-      #   # Generates: charge_id method + chargeId alias + id alias
+      #   # Generates: charge_id + chargeId alias + #id (with an "id" fallback)
       def primary_key_attribute(snake_name)
         camel_name = Util.camelize_str(snake_name.to_s)
 
@@ -102,7 +104,12 @@ module Conexa
       end
 
       def find_by_id(id, **options)
+        # Surrounding whitespace is a copy-paste artefact, not a different id —
+        # strip it rather than failing. Anything still unusable in a URL is caught
+        # by Request#full_api_url and raised as a RequestError.
+        id = id.to_s.strip if id.is_a?(String)
         raise RequestError.new('Invalid ID') unless id.present?
+
         Conexa::Request.get(show_url(id), params: options).call underscored_class_name
       end
       alias :find :find_by_id
