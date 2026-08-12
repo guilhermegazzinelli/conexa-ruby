@@ -3,7 +3,7 @@ type: Component
 title: Error model
 description: The exception taxonomy raised by Request#run, and how the API's two different error shapes land in it.
 tags: [errors, http]
-timestamp: 2026-08-12T18:30:00Z
+timestamp: 2026-08-12T23:30:00Z
 ---
 
 # Overview
@@ -25,9 +25,17 @@ own.
 | `Conexa::ReadOnlyError` | a mutating verb while [read-only mode](read-only-mode.md) is on | — |
 | `Conexa::MissingCredentialsError` | nothing, since 0.2.0 — kept for compatibility after the JWT auth path was removed | — |
 
-`ValidationError`'s branch is close to unreachable in practice: it triggers only
-when the body has no `message`, yet its constructor then maps over
-`response['message']`. It is safe (`&.`) but yields an empty error list.
+`ValidationError` is effectively unreachable against the real contract: all 161
+error responses in [the collection](../api/postman-collection.md) carry a
+`message`, and this branch only fires without one. Until 0.2.0 it also rendered as
+the bare string `"Conexa::ValidationError"` and its `#to_h` raised — it now
+reports what actually arrived. Treat reaching it as a sign the API returned
+something undocumented.
+
+The exception message itself is `message` plus the normalised errors, e.g.
+`422 … => It was not possible to process your request — CHARGE_11: Only open
+charges can be settled.` It used to append a dangling `"=> Erros: "` to the 75
+responses with no `errors` array, and dump Ruby's `#inspect` for the rest.
 
 ## The API answers errors in two shapes
 

@@ -3,7 +3,7 @@ type: Component
 title: Dynamic object model
 description: ConexaObject and Model give every resource its attributes through method_missing — powerful, zero-maintenance, and silent about typos.
 tags: [api-contract]
-timestamp: 2026-08-11T13:23:00Z
+timestamp: 2026-08-12T23:30:00Z
 ---
 
 # Overview
@@ -39,6 +39,16 @@ of that name exists** under `lib/conexa/resources/`. Otherwise it stays a plain
   at load time.
 - `Util.singularize` is a hand-rolled inflector (a 26-rule regex table), not
   ActiveSupport's. A key it singularizes wrongly silently loses its typing.
+
+## `update` merges only what carries attributes
+
+`ConexaObject#update` ignores anything with no attributes to merge — `nil`, `{}`,
+and the arrays and scalars [`Request#run`](request-pipeline.md) can also produce.
+Two separate release bugs came from not doing this: a documented `204` crashed
+every `Model#save`/`#destroy` with `NoMethodError`, and a `200 {}` wiped the whole
+object, because `update` deletes every attribute absent from the incoming hash.
+That deletion is right for a full refresh and wrong for a write response, so an
+empty incoming set is now a no-op rather than a reset.
 
 ## The trap: unknown attributes return `nil`, they do not raise
 

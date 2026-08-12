@@ -27,13 +27,31 @@ published documentation, and is now enforced by
   `204` success (`PATCH /charge/settle/:id`) raised `NoMethodError`, which is not
   a `Conexa::ConexaError` and escaped `rescue Conexa::ConexaError`.
 
-  `ConexaObject#update` now treats a `nil` argument as "nothing to merge", and
-  `Model#create` returns the local object when the response carries no id. Fixing
-  `Request#run` alone was not enough: `Model#save` and `#destroy` fed the
-  resulting `nil` straight into `update`, so **every** resource's generic CRUD
-  still raised `NoMethodError` on a documented `204` — `DELETE /sale/:id` among
-  them. Only the three action methods were safe, and only because they discard
-  their return value.
+  `ConexaObject#update` treats anything carrying no attributes as "nothing to
+  merge" — `nil`, `{}`, and the arrays and scalars `Request#run` also produces —
+  and `Model#create` does the same. Fixing `Request#run` alone was not enough:
+  `Model#save` and `#destroy` fed the result straight into `update`, so **every**
+  resource's generic CRUD still raised `NoMethodError` on a documented `204`
+  (`DELETE /sale/:id` among them). Only the three action methods were safe, and
+  only because they discard their return value.
+- **A write answering `200 {}` no longer wipes the object.** `update` removes
+  every attribute absent from the incoming hash, which is right for a full
+  refresh and destructive for an empty write response — it cleared the whole
+  object, primary key included, and reported success.
+- **`Model#save` guards a blank id**, as `#destroy` already did. Without it an
+  id-less object issued `PATCH /customer/` instead of failing fast.
+- **`Result#next_page` raises a `Conexa` error** when pagination carries no
+  `limit`, instead of `TypeError` from `nil + Integer`, and survives a
+  non-marshallable filter in the original query.
+- **`Conexa::ValidationError` is usable.** It rendered as the bare string
+  `"Conexa::ValidationError"` and `#to_h` raised `NoMethodError`. It is only
+  reachable for an error body with no `message` key — which no documented
+  response has — but it now reports what actually arrived.
+- **Exception messages read as prose.** The old format appended a dangling
+  `"=> Erros: "` to the 75 documented responses that carry no `errors` array, and
+  dumped Ruby's `#inspect` of an array of hashes for the ones that do. It now
+  uses the same normalisation as `#api_error_messages`:
+  `422 … => It was not possible to process your request — CHARGE_11: Only open charges can be settled.`
 - **Error bodies that are not JSON objects no longer raise `TypeError`.** An
   array or scalar error body reached `parsed_error['message']` and blew up inside
   the error handler.

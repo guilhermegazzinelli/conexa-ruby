@@ -65,25 +65,40 @@ module Conexa
     end
 
     protected
+    # Merge a response into this object.
+    #
+    # Anything that carries no attributes is a no-op rather than an error. A
+    # write may answer with no body (Request#call then yields nil), with `{}`, or
+    # — for the top-level-array shape Request#run explicitly handles — with an
+    # Array or a scalar, which ConexaObject.convert passes straight through.
+    # None of those can update an object, and none of them should raise a bare
+    # NoMethodError at the caller: that is the failure this release exists to
+    # remove.
+    #
+    # The empty case matters beyond the crash. `removed_attributes` deletes every
+    # key absent from the incoming hash, which is right for a full refresh and
+    # destructive for a write that answers `{}` — that used to wipe the object,
+    # primary key included, and report success.
     def update(attributes)
-      # A successful write may answer with no body, in which case Request#call
-      # yields nil. "The server told us nothing" means "there is nothing to
-      # merge", not a crash — this used to raise NoMethodError from every
-      # Model#save/#destroy against a documented 204.
-      return self if attributes.nil?
+      return self unless attributes.respond_to?(:to_hash)
 
-      removed_attributes = @attributes.keys - attributes.to_hash.keys
+      incoming = attributes.to_hash
+      return self if incoming.empty?
+
+      removed_attributes = @attributes.keys - incoming.keys
 
       removed_attributes.each do |key|
         @attributes.delete key
       end
 
-      attributes.each do |key, value|
+      incoming.each do |key, value|
         key = Util.to_snake_case(key.to_s)
 
         @attributes[key] = ConexaObject.convert(value, Util.singularize(key))
         @unsaved_attributes.delete key
       end
+
+      self
     end
 
     def to_hash_value(value, type)

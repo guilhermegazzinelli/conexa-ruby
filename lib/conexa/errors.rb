@@ -93,20 +93,34 @@ module Conexa
     end
   end
 
+  # Raised for an error body with no `message` key.
+  #
+  # Every error response the published collection documents carries a `message`,
+  # so in practice this is reached only by an undocumented or malformed body. It
+  # used to render as the bare string "Conexa::ValidationError" and `#to_h` raised
+  # NoMethodError; both now degrade to something a caller can act on.
   class ValidationError < ConexaError
     attr_reader :response, :errors
 
     def initialize(response)
       @response = response
-      @errors   = response['message']&.map do |msg|
-        params = msg.values_at('message', 'parameter_name', 'type', 'url')
-        ParamError.new(*params)
+      @errors   = Array(response.is_a?(Hash) ? response['message'] : nil).filter_map do |msg|
+        next unless msg.is_a?(Hash)
+
+        ParamError.new(*msg.values_at('message', 'parameter_name', 'type', 'url'))
       end
-      super @errors&.map(&:message)&.join(', ')
+
+      super(@errors.any? ? @errors.map(&:message).join(', ') : describe(response))
     end
 
     def to_h
       @errors.map(&:to_h)
+    end
+
+    private
+
+    def describe(response)
+      "The API returned an error with no message: #{response.inspect[0, 200]}"
     end
   end
 

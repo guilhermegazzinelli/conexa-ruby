@@ -83,7 +83,8 @@ module Conexa
             end
           else
             if parsed_error['message']
-              raise Conexa::ResponseError.new(request_params, error, parsed_error['message'] + "=> Erros: "+ parsed_error['errors'].to_s, parsed_error)
+              raise Conexa::ResponseError.new(request_params, error,
+                                              describe_api_error(parsed_error), parsed_error)
             else
               raise Conexa::ValidationError.new parsed_error
             end
@@ -95,6 +96,20 @@ module Conexa
         # Only genuinely malformed JSON reaches here — empty and null bodies are
         # handled above, for every status.
         raise Conexa::ResponseError.new(request_params, response)
+    end
+
+    # The API's `message` plus its `errors`, rendered as prose.
+    #
+    # This used to be `message + "=> Erros: " + errors.to_s`, which appended a
+    # dangling "=> Erros: " to the 75 documented responses that carry no `errors`
+    # array, and dumped Ruby's `#inspect` of an array of hashes for the ones that
+    # do. ResponseError#api_error_messages already normalises both shapes.
+    def describe_api_error(parsed_error)
+      message = parsed_error['message'].to_s
+      details = Conexa::ResponseError.new({}, nil, nil, parsed_error).api_error_messages
+      return message if details.empty?
+
+      "#{message} — #{details.join("; ")}"
     end
 
     # @raise [Conexa::ReadOnlyError] when a mutating verb is attempted while

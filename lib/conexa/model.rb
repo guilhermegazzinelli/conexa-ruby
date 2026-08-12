@@ -38,16 +38,20 @@ module Conexa
     def create
       created = Conexa::Request.post(self.class.show_url, params: to_hash).call(class_name)
 
-      # A create that answers with no body leaves us nothing to identify the new
-      # record by, so there is nothing to re-fetch. Returning the local object is
-      # honest; raising NoMethodError from `nil.attributes` was not.
-      return self if created.nil?
+      # A create that answers with no usable body leaves us nothing to identify
+      # the new record by, so there is nothing to re-fetch. Returning the local
+      # object is honest; raising NoMethodError from `nil.attributes` was not.
+      return self unless created.respond_to?(:attributes)
 
       set_primary_key created.attributes['id']
       fetch
     end
 
     def save
+      # #destroy has always guarded this; #save did not, so an object with no id
+      # silently issued `PATCH /customer/` instead of failing fast.
+      raise RequestError.new('Invalid ID') unless id.present?
+
       update Conexa::Request.patch(self.class.show_url(primary_key), params: unsaved_attributes).call(class_name)
       self
     end

@@ -24,13 +24,28 @@ module Conexa
 
     def next_page
       raise StopIteration, "No more pages" unless has_next?
-      raise "No query context available for next_page" unless @query_context
+      raise Conexa::RequestError, "No query context available for next_page" unless @query_context
+
+      limit  = pagination.limit
+      offset = pagination.offset
+      unless limit.is_a?(Integer) && offset.is_a?(Integer)
+        raise Conexa::ResponseError.new(@query_context[:params], nil,
+                                        "pagination is missing limit/offset " \
+                                        "(limit=#{limit.inspect}, offset=#{offset.inspect}), " \
+                                        "so the next page cannot be computed")
+      end
 
       resource_class = @query_context[:resource_class]
-      next_params = Marshal.load(Marshal.dump(@query_context[:params]))
 
-      next_params[:limit] = pagination.limit
-      next_params[:offset] = pagination.offset + pagination.limit
+      begin
+        next_params = Marshal.load(Marshal.dump(@query_context[:params]))
+      rescue TypeError
+        # A non-marshallable filter (a Proc, an IO) in the original query.
+        next_params = @query_context[:params].dup
+      end
+
+      next_params[:limit] = limit
+      next_params[:offset] = offset + limit
       next_params.delete(:page)
       next_params.delete(:size)
 
