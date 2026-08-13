@@ -18,16 +18,12 @@ RSpec.describe "API v2 contract" do
   #
   # A read-only probe of the production tenant on 2026-08-12 confirmed that
   # /accounts, /suppliers and /serviceCategories return real data, and that the
-  # /creditCard reads do NOT exist (404). See
-  # .okf/architecture/resource-catalog.md for the per-path rationale.
+  # /creditCard reads do NOT exist (404). The 2026-08-13 collection refresh then
+  # documented the first three, so they left this list — the probe was right and
+  # the collection was merely behind. See .okf/architecture/resource-catalog.md.
   UNDOCUMENTED = [
-    ["GET",  "/accounts"],             # only GET /account/:id is documented
-    ["GET",  "/suppliers"],            # only POST /supplier is documented
-    ["GET",  "/supplier/:id"],
-    ["GET",  "/serviceCategories"],
-    ["GET",  "/serviceCategory/:id"],
     # Verified absent from the API, not just from the collection. Kept here so the
-    # spec passes, but CreditCard.all/.find are dead surface — see the catalogue.
+    # spec passes, but CreditCard reads are dead surface — see the catalogue.
     ["GET",  "/creditCard"],
     ["GET",  "/creditCard/:id"],
     ["POST", "/charge/cancel/:id"],

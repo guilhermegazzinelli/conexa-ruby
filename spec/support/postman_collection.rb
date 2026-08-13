@@ -26,8 +26,10 @@ module PostmanCollection
         ops = Set.new
         each_leaf(JSON.parse(File.read(PATH))["item"]) do |leaf|
           request = leaf["request"] or next
-          ops << [request["method"].to_s.upcase, "/#{Array(request.dig("url", "path")).join("/")}"]
+          ops << [request["method"].to_s.upcase, path_of(request)]
         end
+        raise "#{PATH} yielded no operations — the export format probably changed" if ops.empty?
+
         ops.freeze
       end
     end
@@ -42,6 +44,22 @@ module PostmanCollection
     end
 
     private
+
+    # The export has used two shapes for `url`: a Hash carrying a `path` array,
+    # and a plain String with the full URL. Normalise both to the path after
+    # /api/v2, so refreshing the collection does not silently change what every
+    # comparison in the contract spec is comparing.
+    def path_of(request)
+      url = request["url"]
+      raw = url.is_a?(Hash) ? "/#{Array(url["path"]).join("/")}" : url.to_s
+      raw = raw.split("?").first.to_s
+
+      marker = "/api/v2"
+      index = raw.index(marker)
+      raw = raw[(index + marker.length)..] if index
+
+      raw.start_with?("/") ? raw : "/#{raw}"
+    end
 
     # Collection items nest arbitrarily deep; leaves are the ones with a "request".
     def each_leaf(items, &block)
