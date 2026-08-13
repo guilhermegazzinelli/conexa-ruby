@@ -1,14 +1,15 @@
 ---
 type: Runbook
 title: Cutting a release
-description: Version bump through gem push, what the gem actually packages, and the build warnings that 0.2.0 cleared.
+description: Publicar é empurrar uma tag — o workflow roda o gate do PR, confere tag contra VERSION e o conteúdo do pacote, espera aprovação e publica por OIDC sem chave nenhuma.
 tags: [release]
-timestamp: 2026-08-13T03:00:00Z
+timestamp: 2026-08-13T14:30:00Z
 ---
 
 # Overview
 
-Releases are manual. Current version: **0.2.0** (`lib/conexa/version.rb`), the
+Current version: **0.2.0**, published 2026-08-13 — the first release to go out
+through the workflow rather than from a laptop. (`lib/conexa/version.rb`), the
 single source — `conexa.gemspec` reads it.
 
 # Steps
@@ -19,9 +20,18 @@ gem packages, and pushes via **Trusted Publishing** — GitHub's OIDC token is
 exchanged for a short-lived, push-scoped RubyGems credential, so no API key is
 stored anywhere. The `release` environment is where you add required reviewers.
 
-One-time setup on RubyGems.org (needs the gem owner's account):
-https://rubygems.org/gems/conexa/trusted_publishers — repository,
-`push_gem.yml`, environment `release`.
+One-time setup on RubyGems.org, **done** — but two traps cost an attempt each,
+and both are easy to hit again on another gem:
+
+- **The gem is `conexa`; the repository is `conexa-ruby`.** Register at
+  `rubygems.org/gems/`**`conexa`**`/trusted_publishers`. Registering under the
+  repository name authenticates fine and then fails at authorization with
+  `You are not allowed to push this gem` — the OIDC exchange succeeds, so the log
+  looks like a permissions problem rather than a wrong-target problem.
+- **A *pending* trusted publisher is the wrong flow here.** It reserves a gem name
+  that does not exist yet and expires in ~12h. For a gem already on RubyGems, use
+  the gem's own page, logged in as an owner — the owner of `conexa` is
+  `ggazzinelli`, which is not the GitHub handle.
 
 1. Bump `Conexa::VERSION` in `lib/conexa/version.rb`.
 2. Add a `## [x.y.z] - YYYY-MM-DD` section to `CHANGELOG.md` (Added / Changed /

@@ -1,5 +1,11 @@
 # Update Log
 
+## 2026-08-13
+* **Update**: **v0.2.0 publicada no RubyGems.** PR #21 mergeado (14 commits, 97 arquivos), issues #20, #11 e #12 fechadas. Publicada via [Trusted Publishing](operations/release-process.md) — nenhuma chave de API existe nesta máquina nem nos secrets do repositório.
+* **Update**: [Cutting a release](operations/release-process.md) deixou de ser teórico. O caminho completo rodou: `workflow_call` reusando o gate do PR, os dois gates novos (tag == `Conexa::VERSION`, conteúdo do pacote), aprovação obrigatória no environment `release`, e a troca OIDC → publicação.
+* **Update**: a tag `v0.1.1` foi reapontada de `fa815df` (que carregava `VERSION = "0.1.0"`) para `a7fdc6d`, cujo `lib/` é byte-idêntico ao gem publicado — verificado baixando o `.gem` do RubyGems e comparando. As oito tags do repositório agora batem com a versão do código que apontam.
+* **Note**: duas armadilhas custaram uma tentativa cada no primeiro release. O gem chama-se `conexa`, o repositório `conexa-ruby` — registrar o trusted publisher pelo nome do repositório autentica mas não autoriza (`You are not allowed to push this gem`). E o fluxo de *pending* trusted publisher serve para reservar nome de gem inexistente, não para um já publicado.
+
 ## 2026-08-11
 
 ### v0.2.0 — the fixes
