@@ -5,6 +5,8 @@
 * **Update**: a camada de contrato passou a checar **atributos**, não só verbo e caminho — `PostmanCollection.response_fields`. Era a lacuna que deixou um predicado ler campo inexistente atravessar quatro rodadas de review e uma release.
 * **Update**: [collection atualizada](api/postman-collection.md) — 68 para 83 operações, e as duas rotas de refresh documentadas como não equivalentes (o export nativo traz Markdown e `url` como Hash; o documenter renderiza HTML).
 * **Note**: a lacuna de documentação do `isActive` foi reportada ao time do Conexa.
+* **Creation**: [Validating against the live API](operations/validating-against-the-api.md) — o runbook que faltava. Sem tenant de teste, toda afirmação sobre a API ou é verificada contra produção em modo leitura, ou é hipótese; este projeto já publicou hipótese como fato duas vezes. Documenta a sonda, os endpoints que nunca são tocados, e como as três formas de 404 da API distinguem rota, ação e permissão.
+* **Creation**: `docs/HANDOFF-0.2.1.md` — guia para o cliente validar a 0.2.1 a partir do repositório antes de publicar, começando com o modo somente-leitura ligado.
 
 ## 2026-08-13
 * **Update**: **v0.2.0 publicada no RubyGems.** PR #21 mergeado (14 commits, 97 arquivos), issues #20, #11 e #12 fechadas. Publicada via [Trusted Publishing](operations/release-process.md) — nenhuma chave de API existe nesta máquina nem nos secrets do repositório.

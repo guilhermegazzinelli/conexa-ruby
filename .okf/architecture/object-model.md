@@ -3,7 +3,7 @@ type: Component
 title: Dynamic object model
 description: ConexaObject and Model give every resource its attributes through method_missing — powerful, zero-maintenance, and silent about typos.
 tags: [api-contract]
-timestamp: 2026-08-12T23:30:00Z
+timestamp: 2026-08-13T19:00:00Z
 ---
 
 # Overview
@@ -53,7 +53,11 @@ empty incoming set is now a no-op rather than a reset.
 ## The trap: unknown attributes return `nil`, they do not raise
 
 `method_missing` with zero args returns `nil` for any key not in `@attributes`.
-A typo (`charge.due_data`) is indistinguishable from a genuinely absent field.
+A typo (`charge.due_data`) is indistinguishable from a genuinely absent field —
+and so is a field that has never existed. That is the whole mechanism behind
+[the status predicates defect](../defects/status-predicates-read-fields-that-do-not-exist.md):
+`status == "active"` on a resource with no `status` reads as `nil == "active"`,
+quietly false, forever.
 `respond_to_missing?` is implemented, so `respond_to?` is honest — but nothing in
 normal call syntax consults it. When a value reads as `nil` unexpectedly, check
 `obj.attributes.keys` before assuming the API omitted it.
