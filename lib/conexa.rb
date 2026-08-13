@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "conexa/version"
+# No dependencies of its own, and Model extends it at load time.
+require_relative "conexa/deprecation"
 require_relative "conexa/request"
 require_relative "conexa/object"
 require_relative "conexa/model"

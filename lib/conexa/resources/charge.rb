@@ -29,15 +29,26 @@ module Conexa
   class Charge < Model
     primary_key_attribute :charge_id
 
-    # The values `status` actually takes. The API names them in the 400 it
-    # returns for an unrecognised filter, so this list is the API's own, not a
-    # guess: `unpaid`, `negotiated`, `generatedByNegotiation`, `cancelled`,
-    # `paid`, `denied`, `thirdPartyCompany`, `protested`, `juridical`.
+    # The values `status` can take on a charge, per the collection's field table
+    # for `GET /charge/:id`.
     #
-    # `pending` and `overdue` are **not** among them — both were rejected
-    # outright — which is why the predicates built on them never matched.
-    STATUSES = %w[unpaid negotiated generatedByNegotiation cancelled paid
-                  denied thirdPartyCompany protested juridical].freeze
+    # **`excluded` is here but not in {FILTERABLE_STATUSES}.** The two lists are
+    # not the same thing: a charge can hold a status you cannot query by. This
+    # constant shipped with nine values in 0.2.1 because it was built from the
+    # filter's rejection message rather than from the field table.
+    STATUSES = %w[unpaid paid negotiated generatedByNegotiation cancelled
+                  denied thirdPartyCompany protested juridical excluded].freeze
+
+    # What `GET /charges?status=` accepts. The API names them in the 400 it
+    # returns for an unrecognised value, so this list is the API's own:
+    #
+    #   status=zzz -> 400 "Status is not on the list (unpaid, negotiated,
+    #                 generatedByNegotiation, cancelled, paid, denied,
+    #                 thirdPartyCompany, protested, juridical)"
+    #
+    # `pending` and `overdue` are in neither list, which is why the predicates
+    # built on them never matched.
+    FILTERABLE_STATUSES = (STATUSES - %w[excluded]).freeze
 
     # @return [Boolean]
     def paid?
@@ -60,19 +71,21 @@ module Conexa
     #   predicate keep working while they migrate.
     # @return [Boolean]
     def pending?
-      warn "DEPRECATION WARNING: `Charge#pending?` foi renomeado para `unpaid?` " \
-           "em conexa 0.2.1 — a API v2 não tem status `pending`, o estado em " \
-           "aberto chama-se `unpaid`. O alias será removido em 0.3.0."
+      self.class.deprecate(:pending?,
+                           "`Charge#pending?` foi renomeado para `unpaid?` em conexa 0.2.1 — " \
+                           "a API v2 não tem status `pending`, o estado em aberto chama-se " \
+                           "`unpaid`. O alias será removido em 0.3.0.")
       unpaid?
     end
 
     # @deprecated The API has no `overdue` status. An overdue charge is `unpaid`
     #   with a `due_date` in the past; compare the date yourself.
-    # @return [Boolean]
+    # @return [Boolean] always false
     def overdue?
-      warn "DEPRECATION WARNING: `Charge#overdue?` sempre devolveu false — a API " \
-           "v2 não tem status `overdue`. Use `unpaid?` e compare `due_date`. " \
-           "O método será removido em 0.3.0."
+      self.class.deprecate(:overdue?,
+                           "`Charge#overdue?` sempre devolveu false — a API v2 não tem status " \
+                           "`overdue`. Use `unpaid?` e compare `due_date`. O método será " \
+                           "removido em 0.3.0.")
       false
     end
 

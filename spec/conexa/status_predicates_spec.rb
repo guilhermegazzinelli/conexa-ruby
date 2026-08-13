@@ -79,6 +79,39 @@ RSpec.describe "status predicates" do
     it "does not claim unpaid for an unrelated status" do
       expect(described_class.new("status" => "cancelled")).not_to be_unpaid
     end
+
+    it "warns and answers false for overdue?, which the API has no state for" do
+      charge = described_class.new("status" => "unpaid", "due_date" => "2024-01-01")
+
+      expect { expect(charge.overdue?).to be(false) }.to output(/overdue/).to_stderr
+    end
+
+    # A deprecation is meant to be read once and acted on. Emitted per call it
+    # becomes noise: one page of results produced a hundred identical lines.
+    it "warns once per process, not once per call" do
+      charges = Array.new(50) { described_class.new("status" => "unpaid") }
+
+      expect { charges.each(&:pending?) }.to output(a_string_matching(/\A[^\n]*\n\z/)).to_stderr
+    end
+
+    describe "STATUSES" do
+      # The field can hold `excluded`; `?status=` does not accept it. The two
+      # were conflated in 0.2.1, which shipped the filter list as the field list.
+      it "covers every value the field can take" do
+        expect(described_class::STATUSES).to include("excluded")
+      end
+
+      it "is not the same list the filter accepts" do
+        expect(described_class::FILTERABLE_STATUSES).not_to include("excluded")
+      end
+
+      it "matches what the API named when rejecting a filter" do
+        expect(described_class::FILTERABLE_STATUSES).to contain_exactly(
+          "unpaid", "negotiated", "generatedByNegotiation", "cancelled",
+          "paid", "denied", "thirdPartyCompany", "protested", "juridical"
+        )
+      end
+    end
   end
 
   # Sale was already right: billed, paid and notBilled are all accepted values.

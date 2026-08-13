@@ -3,7 +3,7 @@ type: Component
 title: Read-only mode
 description: A hard guard at Request#run that refuses every non-GET request, for the many cases where the gem is used to look rather than to change.
 tags: [auth, http, errors]
-timestamp: 2026-08-12T21:00:00Z
+timestamp: 2026-08-13T21:00:00Z
 ---
 
 # Overview
@@ -55,6 +55,21 @@ overrides for its own duration.
 `Configuration#initialize` — setting it after `Conexa.configure` used to be a
 silent no-op. An unrecognised value warns rather than failing open, since a typo
 while trying to turn the guard **on** is the dangerous case.
+
+# Verifying it is on
+
+Use a transport call, not a resource method:
+
+```ruby
+Conexa::Request.patch("/charge/settle/1", params: {}).run   # => Conexa::ReadOnlyError
+```
+
+`Charge.settle(id)` does `find(id)` first — a `GET`, which read-only allows — so
+on a tenant where that charge does not exist you get `NotFound` and never reach
+the guard. Worse, making that check work would require the charge to **exist**:
+pointing a settlement at a real charge to test the brake, which performs the
+exact damage the brake prevents if the brake is broken. Reported as #26 against
+the 0.2.1 handoff, which shipped with that snippet.
 
 # What it does not do
 

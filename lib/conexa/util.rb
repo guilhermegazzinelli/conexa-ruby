@@ -68,10 +68,7 @@ module Conexa
         legacy   = [params.delete(:end_date), params.delete("end_date")].compact.first
         explicit = [params.delete(:date), params.delete("date")].compact.first
 
-        if legacy
-          warn "DEPRECATION WARNING: `end_date:` foi renomeado para `date:` em conexa 0.2.0 " \
-               "(a API v2 rejeita `endDate`). O alias será removido em 0.3.0."
-        end
+        warn_end_date_renamed if legacy
 
         # An explicit date wins; a key present with a nil value is not one.
         date = explicit || legacy
@@ -83,6 +80,12 @@ module Conexa
         str.gsub(/([A-Z])/, '_\1').downcase.sub(/^_/, '')
       end
 
+
+      def warn_end_date_renamed
+        Deprecation.warn_once(:end_date_param,
+                              "`end_date:` foi renomeado para `date:` em conexa 0.2.0 " \
+                              "(a API v2 rejeita `endDate`). O alias será removido em 0.3.0.")
+      end
 
       # Convert a payload's keys to the camelCase the API expects, all the way
       # down. Arrays of objects matter as much as nested hashes: ten documented

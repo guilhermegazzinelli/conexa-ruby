@@ -35,6 +35,8 @@ module Conexa
   # instead of "recurring_sale_id". Explicit declaration ensures correctness.
   #
   class Model < ConexaObject
+    extend Deprecatable
+
     def create
       created = Conexa::Request.post(self.class.show_url, params: to_hash).call(class_name)
 
@@ -227,10 +229,11 @@ module Conexa
             raise RequestError, "size must be a positive integer"
           end
 
-          warn "DEPRECATION WARNING: page/size foi substituído por limit/offset e será " \
-               "removido em conexa 0.3.0. A API v2 valida `page` e depois o ignora, " \
-               "devolvendo sempre a primeira página; os valores foram convertidos para " \
-               "limit=#{size}, offset=#{(page - 1) * size}."
+          deprecate(:page_size,
+                    "page/size foi substituído por limit/offset e será removido em " \
+                    "conexa 0.3.0. A API v2 valida `page` e depois o ignora, devolvendo " \
+                    "sempre a primeira página; os valores são convertidos para " \
+                    "limit=size, offset=(page-1)*size.")
 
           params[:limit]  = size
           params[:offset] = (page - 1) * size
