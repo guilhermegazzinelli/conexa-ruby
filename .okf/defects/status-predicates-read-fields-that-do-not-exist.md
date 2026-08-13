@@ -26,6 +26,39 @@ All three answered `false` unconditionally. `Charge#paid?` and every `Sale`
 predicate were correct, which is probably how these survived — the pattern looked
 uniform and three quarters of it worked.
 
+# Validated against a live tenant
+
+The fix was checked read-only before publishing, and that validation produced the
+number worth carrying: **44 of the first 100 contracts on that tenant are active
+with an `end_date` set.** Deriving "ended" from the presence of `end_date` — the
+obvious shortcut for anyone who cannot trust `active?` — is therefore wrong for
+nearly half the base, and wrong in the direction that writes. The caveat was
+written as an edge case. It is not one.
+
+**Prefer `ended?` over `!active?`.** Ruby cannot tell `nil` from `false` through
+`!`, so `!active?` reads an *unknown* contract as closed — the same "unknown
+treated as inactive" this fix set out to remove. Only `ended?`, or an explicit
+`.nil?`, preserves the distinction.
+
+# The follow-ups
+
+Reviewing the fix turned up four more, all of the same family: a claim stated with
+more confidence than its evidence supported.
+
+- **`Charge::STATUSES` was the filter list, not the field list.** Built from the
+  400 the API returns for an unrecognised filter — and the comment called it "the
+  API's own, not a guess", when that message had been truncated in the terminal
+  and the tail completed from memory. The field can also hold `excluded`, which
+  `?status=` does not accept. Now `STATUSES` (10) and `FILTERABLE_STATUSES` (9).
+- **`REFERENCE.md` still taught `contract.status` and `charge.pending?`** in seven
+  places. The code and the CHANGELOG were fixed; the document a consumer actually
+  reads was not.
+- **Deprecations warned per call** — a hundred identical lines from one
+  `charges.select(&:pending?)`. `Conexa::Deprecation` now warns once per process.
+- **The handoff's own read-only check did not reach the guard** (#26), and would
+  have required pointing a settlement at a real charge to test the brake. See
+  [read-only mode](../architecture/read-only-mode.md).
+
 # Why it is the dangerous kind
 
 `Contract#active?` exists to answer *does this customer already have an active

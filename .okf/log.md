@@ -1,6 +1,10 @@
 # Update Log
 
 ## 2026-08-13
+* **Update**: [Status predicates](defects/status-predicates-read-fields-that-do-not-exist.md) validado contra tenant real antes de publicar. O número que ficou: **44 dos 100 primeiros contratos estão ativos com `end_date` preenchida** — a ressalva do handoff não era caso de canto, e deduzir "encerrado" de `end_date` erraria em quase metade da base.
+* **Update**: quatro follow-ups do review da 0.2.1, todos da mesma família — afirmação com mais confiança do que a evidência sustentava. `Charge::STATUSES` era a lista do filtro e não a do campo, montada de uma mensagem de erro truncada no terminal; `REFERENCE.md` ainda ensinava a API removida em sete lugares; deprecations avisavam por chamada; e o próprio check de somente-leitura do handoff não alcançava o guard (#26).
+* **Creation**: `Conexa::Deprecation` — avisos uma vez por processo. Um aviso emitido cem vezes deixa de ser lido.
+* **Note**: v0.2.1 com tag criada, workflow parado aguardando aprovação. Issues #23 e #26 fechadas.
 * **Creation**: [Status predicates read fields the API never sends](defects/status-predicates-read-fields-that-do-not-exist.md) — issue #23, corrigido na 0.2.1. `Contract#active?` comparava um `status` que contrato nunca teve, e `Charge#pending?`/`#overdue?` comparavam valores que a API rejeita. Os três respondiam `false` sempre, e o primeiro empurrava o chamador a criar contrato duplicado.
 * **Update**: a camada de contrato passou a checar **atributos**, não só verbo e caminho — `PostmanCollection.response_fields`. Era a lacuna que deixou um predicado ler campo inexistente atravessar quatro rodadas de review e uma release.
 * **Update**: [collection atualizada](api/postman-collection.md) — 68 para 83 operações, e as duas rotas de refresh documentadas como não equivalentes (o export nativo traz Markdown e `url` como Hash; o documenter renderiza HTML).
