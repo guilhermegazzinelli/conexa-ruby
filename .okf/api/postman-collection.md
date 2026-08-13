@@ -9,7 +9,7 @@ timestamp: 2026-08-13T16:00:00Z
 
 # Overview
 
-`docs/postman-collection.json` (~1.4 MB) is a vendored copy of Conexa's published
+`docs/postman-collection.json` (~1.8 MB) is a vendored copy of Conexa's published
 Postman collection. It documents **83 operations** with field tables,
 required/optional flags, conditional-requirement prose and example error
 responses — none of which appear anywhere else.
@@ -27,13 +27,24 @@ report a field that exists as missing.
 
 # Refreshing it
 
-The documenter page is JS-rendered, so `curl` on the human URL returns only a
-title. Pull the JSON directly:
+Two routes, and they are **not** equivalent.
+
+**Preferred — export from Postman.** Open the collection in the app or on the
+web and export as *Collection v2.1*, then replace the file. This is what the
+vendored copy is: `url` as a Hash with a `path` array, and descriptions in
+Markdown.
+
+**Fallback — the documenter API**, when you cannot reach the app:
 
 ```bash
 curl -s 'https://documenter.gw.postman.com/api/collections/25182821/2s93RZMpcB?segregateAuth=true&versionTag=latest' \
   > docs/postman-collection.json
 ```
+
+Same 83 operations and 348 response examples, but it renders descriptions to
+**HTML** — the `POST /contract` field table goes from 55 lines of Markdown to 321
+lines of `<table>`/`<td>`, same content, far worse to read or grep — and it emits
+`url` as a plain String. Both shapes are handled, but prefer the export.
 
 After refreshing, re-run `spec/contract/api_contract_spec.rb` and prune the
 `UNDOCUMENTED` allowlist — the 2026-08-13 refresh documented five paths that had
