@@ -47,25 +47,62 @@ module Conexa
         string.to_s.strip.gsub(/[\s\-]+/, '_').to_sym
       end
 
+      # Both "end" endpoints — PATCH /contract/end/:id and
+      # PATCH /recurringSale/end/:id — document the closing date as `date`. The
+      # gem used to send `end_date`, which camelizes to `endDate` and is rejected:
+      # "endDate field does not exist or is not available in the company".
+      #
+      # Both key spellings are handled, and both are removed. Checking only the
+      # symbol `:date` would leave a caller's string `"date"` in place and add a
+      # second, colliding key — camelize_hash folds the two into one and the last
+      # one wins, so the deprecated value would silently replace the real one.
+      #
+      # @param params [Hash] caller params, possibly using the old name
+      # @return [Hash] a copy with end_date folded into date
+      def normalize_end_date_param(params)
+        params = params.dup
+
+        # Collapse both spellings of each key up front. Leaving one behind would
+        # let camelize_hash fold two `date` keys into one, last-write-wins — which
+        # is how the deprecated value once silently replaced the real one.
+        legacy   = [params.delete(:end_date), params.delete("end_date")].compact.first
+        explicit = [params.delete(:date), params.delete("date")].compact.first
+
+        if legacy
+          warn "DEPRECATION WARNING: `end_date:` foi renomeado para `date:` em conexa 0.2.0 " \
+               "(a API v2 rejeita `endDate`). O alias será removido em 0.3.0."
+        end
+
+        # An explicit date wins; a key present with a nil value is not one.
+        date = explicit || legacy
+        params[:date] = date unless date.nil?
+        params
+      end
+
       def to_snake_case str
         str.gsub(/([A-Z])/, '_\1').downcase.sub(/^_/, '')
       end
 
 
+      # Convert a payload's keys to the camelCase the API expects, all the way
+      # down. Arrays of objects matter as much as nested hashes: ten documented
+      # endpoints take them (complementaryServices, productQuotas, devices,
+      # extraFields, bookingModels, visitors, costCenters, ...), and a snake_case
+      # key inside one is rejected outright.
       def camelize_hash(hash)
         return {} if hash.nil?
 
-        new_hash = {}
-
-        hash.each do |key, value|
-          if value.is_a?(Hash)
-            new_hash[camel_case_lower(key).to_sym] = camelize_hash(value)
-          else
-            new_hash[camel_case_lower(key).to_sym] = value
-          end
+        hash.each_with_object({}) do |(key, value), new_hash|
+          new_hash[camel_case_lower(key).to_sym] = camelize_value(value)
         end
+      end
 
-        new_hash
+      def camelize_value(value)
+        case value
+        when Hash  then camelize_hash(value)
+        when Array then value.map { |element| camelize_value(element) }
+        else value
+        end
       end
 
       def camelize_str(str)

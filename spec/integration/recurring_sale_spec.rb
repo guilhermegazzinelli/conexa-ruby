@@ -114,7 +114,7 @@ RSpec.describe "RecurringSale Integration" do
       stub_request(:get, /test\.conexa\.app.*recurringSale\/555/)
         .to_return(status: 200, body: recurring_sale_response, headers: { "Content-Type" => "application/json" })
 
-      stub_request(:post, /test\.conexa\.app.*recurringSale\/end\/555/)
+      stub_request(:patch, /test\.conexa\.app.*recurringSale\/end\/555/)
         .to_return(status: 200, body: ended_response, headers: { "Content-Type" => "application/json" })
     end
 

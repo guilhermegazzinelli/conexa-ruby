@@ -6,7 +6,7 @@ RSpec.describe "Customer Integration", :vcr do
   describe "CRUD operations" do
     describe "listing customers", vcr: { cassette_name: "customer" } do
       it "returns a list of customers with pagination" do
-        result = Conexa::Customer.all(page: 1, size: 100)
+        result = Conexa::Customer.all(limit: 100)
 
         expect(result).to respond_to(:data)
         expect(result).to respond_to(:pagination)
@@ -15,7 +15,7 @@ RSpec.describe "Customer Integration", :vcr do
       end
 
       it "returns customer objects with attributes" do
-        result = Conexa::Customer.all(page: 1, size: 100)
+        result = Conexa::Customer.all(limit: 100)
         customer = result.data.first
 
         expect(customer).to respond_to(:name)
@@ -30,7 +30,7 @@ RSpec.describe "Customer Integration", :vcr do
 
         expect(customer).to respond_to(:customer_id)
         expect(customer.customer_id).to eq(3)
-        expect(customer.name).to eq("ROTULA METALURGICA LTDA")
+        expect(customer.name).to eq("LUMEN S.A.")
       end
 
       it "includes nested address data" do
@@ -45,7 +45,7 @@ RSpec.describe "Customer Integration", :vcr do
 
         expect(customer.is_juridical_person).to eq(true)
         expect(customer.legal_person).to respond_to(:cnpj)
-        expect(customer.legal_person.cnpj).to include("33.871.336")
+        expect(customer.legal_person.cnpj).to include("13.103.103")
       end
     end
   end

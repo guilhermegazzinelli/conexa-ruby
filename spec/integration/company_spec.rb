@@ -47,7 +47,7 @@ RSpec.describe "Company Integration" do
 
   describe "listing companies" do
     before do
-      stub_request(:get, /test\.conexa\.app.*companys/)
+      stub_request(:get, /test\.conexa\.app.*companies/)
         .to_return(status: 200, body: companies_list_response, headers: { "Content-Type" => "application/json" })
     end
 

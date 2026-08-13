@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 RSpec.describe 'Error Handling for All Resources' do
-  let(:api_host) { 'https://checkbits.conexa.app' }
+  let(:api_host) { 'https://test.conexa.app' }
   let(:api_base) { "#{api_host}/index.php/api/v2" }
 
   around(:each) do |example|
@@ -27,7 +27,8 @@ RSpec.describe 'Error Handling for All Resources' do
     Conexa::Bill,
     Conexa::Charge,
     Conexa::Contract,
-    Conexa::CreditCard,
+    # CreditCard is write-only: API v2 exposes no GET for it, so the read-path
+    # error cases below do not apply. See lib/conexa/resources/credit_card.rb.
     Conexa::Person,
     Conexa::Plan,
     Conexa::Product,
@@ -103,11 +104,11 @@ RSpec.describe 'Error Handling for All Resources' do
       stub_request(:get, "#{api_base}/customer/test-id")
         .to_raise(RestClient::ServerBrokeConnection.new('Server broke connection'))
 
-      # Note: Current implementation has a bug where ServerBrokeConnection
-      # causes NoMethodError instead of ConnectionError because http_body is nil
-      # This test documents the current behavior
+      # Used to raise NoMethodError: ServerBrokeConnection subclasses
+      # RestClient::Exception, so the broad rescue matched first and tried to
+      # decode its nil http_body. Fixed in 0.2.0 (issue #11).
       expect { Conexa::Customer.find('test-id') }
-        .to raise_error(NoMethodError)
+        .to raise_error(Conexa::ConnectionError)
     end
   end
 

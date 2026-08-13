@@ -32,7 +32,7 @@ Conexa is a Brazilian SaaS platform for **recurring billing**, **subscription ma
 
 ```ruby
 # Gemfile
-gem 'conexa', '~> 0.1.0'
+gem 'conexa', '~> 0.1.1'
 
 # Or install directly
 gem install conexa
@@ -42,13 +42,41 @@ gem install conexa
 
 ```ruby
 Conexa.configure do |config|
-  config.api_host = 'https://api.conexa.com.br'  # or sandbox URL
+  config.api_host  = 'https://mycompany.conexa.app'  # your tenant subdomain
   config.api_token = 'your_api_token_here'
+  config.read_only = false                           # see below
 end
 
 # Rails: use generator
 rails generate conexa:install
 # Creates config/initializers/conexa.rb
+```
+
+| Setting | Default | Purpose |
+|---------|---------|---------|
+| `api_host` | `''` | Tenant base URL. `/index.php/api/v2` is appended automatically. |
+| `api_token` | `''` | Application Token — Config > Integrações > API / Token. |
+| `read_only` | `ENV['CONEXA_READ_ONLY']` | Refuse every non-GET request. |
+
+### Read-only mode
+
+Any request other than `GET` raises `Conexa::ReadOnlyError` before it leaves the
+process. `POST /auth` stays allowed — matched on the path, not on a caller flag —
+since read-only mode would otherwise be unable to obtain a token.
+
+`Conexa.read_only { }` is fiber-local: it does not reach a `Thread` or `Fiber`
+spawned inside the block. Use `config.read_only` for concurrent work.
+
+`CONEXA_READ_ONLY` is read at each check, so it applies even when set after
+`Conexa.configure`. Recognised: `1/true/yes/on` and `0/false/no/off`; anything
+else warns and is treated as off.
+
+```ruby
+Conexa.configure { |c| c.read_only = true }   # or CONEXA_READ_ONLY=1
+
+Conexa.read_only do                            # block-scoped, thread-local
+  Conexa::Charge.all(status: 'pending')
+end
 ```
 
 ## Convention: snake_case
@@ -211,7 +239,13 @@ customer.destroy
 # or
 Conexa::Customer.destroy(127)
 
-# Sub-resources
+# Sub-resources (instance methods — requires fetching customer first)
+customer = Conexa::Customer.find(127)
+customer.persons    # List persons for this customer
+customer.contracts  # List contracts for this customer
+customer.charges    # List charges for this customer
+
+# Sub-resources (class methods — saves a request, no need to fetch customer)
 Conexa::Customer.persons(127)    # List persons for customer
 Conexa::Customer.contracts(127)  # List contracts for customer
 Conexa::Customer.charges(127)    # List charges for customer
@@ -1265,6 +1299,10 @@ The API enforces a limit of 100 requests per minute (changing to **60 requests p
 
 ## Version History
 
+- **v0.1.1** - Add instance methods for Customer sub-resources (persons, contracts, charges)
+- **v0.1.0** - Default new pagination, Result#next_page, code review fixes, 502 specs
+- **v0.0.9** - New pagination model (limit/offset), new API v2 resources
+- **v0.0.8** - Fix Auth.login, integration tests, REFERENCE.md rewrite
 - **v0.0.7** - Add Auth resource, fix Auth.login, add test suite with VCR
 - **v0.0.6** - Fix nil guard in camelize_hash, fix Result#empty? delegation
 - **v0.0.5** - Initial public release

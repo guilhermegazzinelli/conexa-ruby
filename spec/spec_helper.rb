@@ -6,12 +6,18 @@ require "vcr"
 require "factory_bot"
 require "faker"
 
+Dir[File.expand_path("support/**/*.rb", __dir__)].sort.each { |f| require f }
+
 VCR.configure do |config|
   config.cassette_library_dir = "spec/cassettes"
   config.hook_into :webmock
   config.configure_rspec_metadata!
   config.allow_http_connections_when_no_cassette = false # Bloqueia chamadas sem cassetes
   config.default_cassette_options = { record: :new_episodes }
+
+  # Nunca grave o token numa cassette. Cobre só o header — para dados pessoais no
+  # corpo da resposta, use claude_scripts/sanitize_cassettes/.
+  config.filter_sensitive_data("<API_TOKEN>") { Conexa.configuration&.api_token }
 end
 
 
@@ -26,7 +32,15 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
+  # Without this, `allow(Conexa).to receive(:secret_key)` happily stubs a method
+  # that does not exist — which is how the TokenManager specs stayed green over
+  # code that raises NoMethodError in any real use.
+  config.mock_with :rspec do |mocks|
+    mocks.verify_partial_doubles = true
+  end
+
   config.include FactoryBot::Syntax::Methods
+  config.include RequestCapture
 
   config.before(:suite) do
     FactoryBot.find_definitions
@@ -34,9 +48,8 @@ RSpec.configure do |config|
 
   config.before(:each) do
     Conexa.configure do |c|
-      c.api_token = "015bce623f2cd6972d9e1d7eda86ff90f0cbc83081e373712d6a7b9445b6432b"
-      c.api_host = "https://checkbits.conexa.app"
+      c.api_token = "test_token"
+      c.api_host = "https://test.conexa.app"
     end
-
   end
 end

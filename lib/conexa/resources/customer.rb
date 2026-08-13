@@ -71,22 +71,40 @@ module Conexa
       Address.new(@attributes['address'])
     end
 
+    # List persons (requesters) for this customer
+    # @return [Result] List of persons
+    def persons
+      Conexa::Person.all(customer_id: id, limit: 100)
+    end
+
+    # List contracts for this customer
+    # @return [Result] List of contracts
+    def contracts
+      Conexa::Contract.all(customer_id: [id], limit: 100)
+    end
+
+    # List charges for this customer
+    # @return [Result] List of charges
+    def charges
+      Conexa::Charge.all(customer_id: [id], limit: 100)
+    end
+
     class << self
-      # List persons (requesters) for a customer
+      # List persons (requesters) for a customer without fetching the customer first
       # @param customer_id [Integer] Customer ID
       # @return [Result] List of persons
       def persons(customer_id)
         Conexa::Person.all(customer_id: customer_id, limit: 100)
       end
 
-      # List contracts for a customer
+      # List contracts for a customer without fetching the customer first
       # @param customer_id [Integer] Customer ID
       # @return [Result] List of contracts
       def contracts(customer_id)
         Conexa::Contract.all(customer_id: [customer_id], limit: 100)
       end
 
-      # List charges for a customer
+      # List charges for a customer without fetching the customer first
       # @param customer_id [Integer] Customer ID
       # @return [Result] List of charges
       def charges(customer_id)

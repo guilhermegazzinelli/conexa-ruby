@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 RSpec.describe 'Nil Guards' do
-  let(:api_host) { 'https://checkbits.conexa.app' }
+  let(:api_host) { 'https://test.conexa.app' }
   let(:api_base) { "#{api_host}/index.php/api/v2" }
 
   around(:each) do |example|
@@ -83,12 +83,12 @@ RSpec.describe 'Nil Guards' do
         .to raise_error(Conexa::RequestError, 'Invalid ID')
     end
 
-    # Note: whitespace-only strings are considered present in this gem's implementation
-    # so they won't trigger RequestError. However, the gem doesn't URL-encode the ID,
-    # which causes URI::InvalidURIError when spaces are passed.
-    it 'raises URI error for whitespace ID (no URL encoding)' do
+    # Used to leak URI::InvalidURIError from inside RestClient — outside the
+    # Conexa::ConexaError hierarchy, so callers could not rescue it. Fixed in
+    # 0.2.0 (issue #12): a whitespace-only id is now simply blank.
+    it 'raises RequestError for a whitespace-only ID' do
       expect { Conexa::Customer.find('   ') }
-        .to raise_error(URI::InvalidURIError)
+        .to raise_error(Conexa::RequestError, 'Invalid ID')
     end
 
     it 'does not raise for valid ID (mocked)' do
@@ -131,10 +131,15 @@ RSpec.describe 'Nil Guards' do
   end
 
   describe 'ConexaObject with nil attributes' do
-    it 'handles initialization with nil by raising NoMethodError' do
-      # ConexaObject.new expects a hash; nil.to_hash and nil.each will fail
-      # This documents the current behavior - nil is not a valid input
-      expect { Conexa::ConexaObject.new(nil) }.to raise_error(NoMethodError)
+    # Used to raise NoMethodError from `nil.to_hash`. Since 0.2.0 #update treats
+    # nil as "nothing to merge", so that a write answering with an empty body
+    # yields an unchanged object instead of a crash — the same guard makes
+    # constructing from nil produce an empty object.
+    it 'handles initialization with nil as an empty object' do
+      obj = Conexa::ConexaObject.new(nil)
+
+      expect(obj.attributes).to eq({})
+      expect(obj.empty?).to be true
     end
 
     it 'handles initialization with empty hash' do
@@ -223,14 +228,14 @@ RSpec.describe 'Nil Guards' do
   describe 'Model.all with nil filters' do
     it 'handles nil in filter hash values' do
       stub_request(:get, "#{api_base}/customers")
-        .with(query: hash_including({ 'page' => '1', 'size' => '100' }))
+        .with(query: hash_including({ 'limit' => '100', 'offset' => '0' }))
         .to_return(
           status: 200,
           body: { data: [], pagination: { page: 1, size: 100, totalPages: 0, totalElements: 0 } }.to_json,
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      result = Conexa::Customer.all(page: 1, size: 100, status: nil)
+      result = Conexa::Customer.all(limit: 100, offset: 0, status: nil)
       expect(result).to be_a(Conexa::Result)
     end
   end

@@ -15,16 +15,18 @@ module Conexa
   #
   # == Primary Key
   #
-  # Each resource needs primary_key_attribute for :id alias and operations
-  # that require the resource ID (destroy, save, fetch, etc.):
+  # Each resource declares primary_key_attribute, which defines #id and the
+  # operations that need the resource ID (destroy, save, fetch, etc.):
   #
   #   class Charge < Model
   #     primary_key_attribute :charge_id
   #   end
   #
-  #   charge.id         # => 123 (alias for charge_id)
   #   charge.charge_id  # => 123
   #   charge.chargeId   # => 123 (camelCase alias for backwards compat)
+  #   charge.id         # => 123 — the resource's own key, falling back to a
+  #                     #    plain "id" attribute, which is what write endpoints
+  #                     #    return and what Model#create reads back
   #
   # == Why explicit primary_key_attribute?
   #
@@ -34,17 +36,38 @@ module Conexa
   #
   class Model < ConexaObject
     def create
-      set_primary_key Conexa::Request.post(self.class.show_url, params: to_hash).call(class_name).attributes['id']
+      created = Conexa::Request.post(self.class.show_url, params: to_hash).call(class_name)
+
+      # A create that answers with no usable body leaves us nothing to identify
+      # the new record by, so there is nothing to re-fetch. Returning the local
+      # object is honest; raising NoMethodError from `nil.attributes` was not.
+      return self unless created.respond_to?(:attributes)
+
+      set_primary_key created.attributes['id']
       fetch
     end
 
     def save
+      # #destroy has always guarded this; #save did not, so an object with no id
+      # silently issued `PATCH /customer/` instead of failing fast.
+      raise RequestError.new('Invalid ID') unless id.present?
+
       update Conexa::Request.patch(self.class.show_url(primary_key), params: unsaved_attributes).call(class_name)
       self
     end
 
     def fetch
-      update self.class.find(primary_key)
+      fetched = self.class.find(primary_key)
+
+      # #update ignores anything with no attributes, which is right for a write
+      # that answers with no body — but a *refresh* that comes back empty must
+      # not quietly leave stale values in place reporting success.
+      unless fetched.respond_to?(:attributes)
+        raise ResponseError.new({ url: self.class.show_url(primary_key) }, nil,
+                                "a API respondeu sem corpo: nada para atualizar")
+      end
+
+      update fetched
       self
     end
 
@@ -75,10 +98,10 @@ module Conexa
     end
 
     class << self
-      # DSL for primary key attribute with :id alias
+      # DSL for the primary key attribute
       # @example
       #   primary_key_attribute :charge_id
-      #   # Generates: charge_id method + chargeId alias + id alias
+      #   # Generates: charge_id + chargeId alias + #id (with an "id" fallback)
       def primary_key_attribute(snake_name)
         camel_name = Util.camelize_str(snake_name.to_s)
 
@@ -87,7 +110,14 @@ module Conexa
         end
 
         alias_method camel_name.to_sym, snake_name
-        alias_method :id, snake_name
+
+        # Not an alias: #id has to keep Model#id's documented fallback to a plain
+        # "id" attribute. Write endpoints answer with {"id": N} rather than the
+        # resource's own key — Model#create depends on exactly that — so aliasing
+        # #id straight to #charge_id silently made the fallback dead code.
+        define_method(:id) do
+          @attributes[snake_name.to_s] || @attributes["id"]
+        end
       end
 
       def create(*args)
@@ -95,19 +125,32 @@ module Conexa
       end
 
       def find_by_id(id, **options)
+        # Surrounding whitespace is a copy-paste artefact, not a different id —
+        # strip it rather than failing. Anything still unusable in a URL is caught
+        # by Request#full_api_url and raised as a RequestError.
+        id = id.to_s.strip if id.is_a?(String)
         raise RequestError.new('Invalid ID') unless id.present?
+
         Conexa::Request.get(show_url(id), params: options).call underscored_class_name
       end
       alias :find :find_by_id
 
       def find_by(params = Hash.new, page = nil, size = nil)
+        # extract_page_size_or_params always returns limit/offset now, and
+        # validates them, so there is no page/size left here to guard.
         params = extract_page_size_or_params(page, size, **params)
-        raise RequestError.new('Invalid page size') if (!params.key?(:limit)) && (params[:page] < 1 or params[:size] < 1)
 
-        Conexa::Request.get(url, params: params).call(
+        result = Conexa::Request.get(url, params: params).call(
           underscored_class_name,
           query_context: { resource_class: self, params: params }
         )
+
+        # A listing always answers with a Result, as the READMEs promise. Without
+        # this, an empty body yielded nil and a bare-array body yielded an Array,
+        # so `.data` / `.pagination` / `.next_page` blew up far from the cause.
+        return result if result.is_a?(Conexa::Result)
+
+        Conexa::Result.new("data" => Array(result), "pagination" => nil)
       end
       alias :find_by_hash :find_by
 
@@ -166,11 +209,31 @@ module Conexa
           return params
         end
 
-        # Explicit legacy pagination (page/size) — deprecated
+        # Legacy pagination (page/size) — deprecated, and broken upstream.
+        #
+        # The API validates `page` and then ignores it, always returning the
+        # first page with offset 0 and hasNext true, so a loop over `page` never
+        # terminates and silently re-yields the same batch. Converting to
+        # limit/offset fixes existing callers instead of leaving them with
+        # plausible wrong answers.
         if params.key?(:page) || params.key?(:size) || page_val.is_a?(Integer)
-          warn "DEPRECATION WARNING: O modelo antigo de paginação (page/size) será removido em 01 de agosto de 2026. Utilize limit e offset."
-          params[:page] ||= page_val || 1
-          params[:size] ||= size_val || 100
+          page = params.delete(:page) || page_val || 1
+          size = params.delete(:size) || size_val || 100
+
+          unless page.is_a?(Integer) && page.positive?
+            raise RequestError, "page must be a positive integer"
+          end
+          unless size.is_a?(Integer) && size.positive?
+            raise RequestError, "size must be a positive integer"
+          end
+
+          warn "DEPRECATION WARNING: page/size foi substituído por limit/offset e será " \
+               "removido em conexa 0.3.0. A API v2 valida `page` e depois o ignora, " \
+               "devolvendo sempre a primeira página; os valores foram convertidos para " \
+               "limit=#{size}, offset=#{(page - 1) * size}."
+
+          params[:limit]  = size
+          params[:offset] = (page - 1) * size
           return params
         end
 

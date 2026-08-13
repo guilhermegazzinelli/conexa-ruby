@@ -114,7 +114,7 @@ RSpec.describe "Contract Integration" do
       stub_request(:get, /test\.conexa\.app.*contract\/789/)
         .to_return(status: 200, body: contract_response, headers: { "Content-Type" => "application/json" })
 
-      stub_request(:post, /test\.conexa\.app.*contract\/end\/789/)
+      stub_request(:patch, /test\.conexa\.app.*contract\/end\/789/)
         .to_return(status: 200, body: ended_contract_response, headers: { "Content-Type" => "application/json" })
     end
 

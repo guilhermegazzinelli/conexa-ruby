@@ -47,16 +47,19 @@ RSpec.describe Conexa::Model do
   end
 
   describe '.extract_page_size_or_params' do
-    it 'extracts page and size from positional args' do
+    # page/size are converted to limit/offset rather than passed through: the API
+    # validates `page` and then ignores it, so the legacy path used to return the
+    # first page forever while looking like it was advancing.
+    it 'converts positional page/size into limit/offset' do
       result = model_class.extract_page_size_or_params(2, 50)
-      expect(result[:page]).to eq(2)
-      expect(result[:size]).to eq(50)
+      expect(result).to include(limit: 50, offset: 50)
+      expect(result).not_to have_key(:page)
+      expect(result).not_to have_key(:size)
     end
 
-    it 'uses keyword args over positional' do
+    it 'uses keyword args over positional when converting' do
       result = model_class.extract_page_size_or_params(1, 10, page: 5, size: 100)
-      expect(result[:page]).to eq(5)
-      expect(result[:size]).to eq(100)
+      expect(result).to include(limit: 100, offset: 400)
     end
 
     it 'defaults to limit 100, offset 0 (new pagination)' do
