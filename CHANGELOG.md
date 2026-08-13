@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [Unreleased]
+## [0.2.1] - 2026-08-13
 
-### Fixed
+Found validating 0.2.1 against a live tenant before publishing, and by reviewing
+the same release. Folded in rather than shipped separately — 0.2.1 was never
+published.
+
+### Fixed — found validating and reviewing
 - **`Charge::STATUSES` was the filter list, not the field list.** It shipped with
   nine values, built from the 400 the API returns for an unrecognised filter. The
   field itself can also hold `excluded`, which `?status=` does not accept — two
@@ -32,9 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reads an unknown contract as closed, because Ruby cannot tell `nil` from
   `false` through `!`.
 
-## [0.2.1] - 2026-08-13
-
-### Fixed
+### Fixed — the original issue #23
 - **`Contract#active?` and `#ended?` read `is_active`.** They compared a `status`
   field contracts have never had, so `active?` answered `false` for an active
   contract — the answer that biases a caller toward creating a second one. Both
