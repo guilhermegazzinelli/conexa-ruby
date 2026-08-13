@@ -117,6 +117,11 @@ module Conexa
     # Deliberately not derived from +end_date+: an active contract can carry a
     # future closing date, so a present +end_date+ does not mean closed.
     #
+    # **Prefer {#ended?} over `!active?`.** Ruby cannot tell +nil+ from +false+
+    # through `!`, so `!active?` reads an *unknown* contract as closed — the
+    # same "treat unknown as inactive" that this fix exists to remove. `ended?`
+    # preserves the nil.
+    #
     # @return [Boolean, nil] nil when the response did not carry +is_active+,
     #   rather than a guess
     def active?

@@ -75,7 +75,7 @@ else warns and is treated as off.
 Conexa.configure { |c| c.read_only = true }   # or CONEXA_READ_ONLY=1
 
 Conexa.read_only do                            # block-scoped, thread-local
-  Conexa::Charge.all(status: 'pending')
+  Conexa::Charge.all(status: 'unpaid')
 end
 ```
 
@@ -339,9 +339,17 @@ contract = Conexa::Contract.create_with_products(
 
 # Find contract
 contract = Conexa::Contract.find(456)
-contract.status       # => "active"
+contract.is_active    # => true   (contracts have no `status` field)
 contract.active?      # => true
 contract.ended?       # => false
+
+# An ACTIVE contract may carry a future end_date — a scheduled close is not a
+# close. Do not derive "ended" from end_date.
+contract.end_date     # => "2026-11-30" while still active?
+
+# active?/ended? return nil when the response did not carry is_active, rather
+# than guessing. Prefer ended? over !active?: !nil is true, which would read an
+# unknown contract as closed.
 
 # List contracts
 contracts = Conexa::Contract.all(
@@ -396,7 +404,9 @@ contract.destroy
 
 **Read-only attributes:**
 - `contract_id` - ID
-- `status` - active, ended, cancelled
+- `is_active` - whether the contract is open (there is **no** `status` field)
+- `end_date` - closing date; may be in the future on an active contract
+- `due_day`, `amount`, `payment_frequency`, `end_reason_id`, `first_due_date`
 
 **Helper methods:**
 - `active?` - Check if active
@@ -419,17 +429,19 @@ charge = Conexa::Charge.create(
 
 # Find charge
 charge = Conexa::Charge.find(789)
-charge.status      # => "pending"
+charge.status      # => "unpaid"
 charge.amount      # => 199.90
 charge.due_date    # => "2024-02-10"
 charge.paid?       # => false
-charge.pending?    # => true
-charge.overdue?    # => false
+charge.unpaid?     # => true    (the open state is `unpaid`, not `pending`)
+charge.cancelled?  # => false
+Conexa::Charge::STATUSES             # every value the field can take
+Conexa::Charge::FILTERABLE_STATUSES  # what ?status= accepts — not the same list
 
 # List charges
 charges = Conexa::Charge.all(
   customer_id: [127],
-  status: 'pending',
+  status: 'unpaid',
   due_date_from: '2024-01-01',
   due_date_to: '2024-01-31'
 )
@@ -486,8 +498,11 @@ Conexa::Charge.cancel(789)
 
 **Helper methods:**
 - `paid?` - Check if paid
-- `pending?` - Check if pending
-- `overdue?` - Check if overdue
+- `unpaid?` - Check if still open
+- `cancelled?` - Check if cancelled
+- `pending?` - **deprecated** alias of `unpaid?`; the API has no `pending`
+- `overdue?` - **deprecated**, always false. The API has no `overdue`: an overdue
+  charge is `unpaid` with a `due_date` in the past, so compare the date yourself
 
 **Special methods:**
 - `settle(params)` / `Charge.settle(id, params)` - Mark as paid
@@ -1250,7 +1265,7 @@ Conexa::Sale.all(status: 'notBilled')
 # Combined
 Conexa::Charge.all(
   customer_id: [127],
-  status: 'pending',
+  status: 'unpaid',
   due_date_from: '2024-01-01',
   page: 1,
   size: 100

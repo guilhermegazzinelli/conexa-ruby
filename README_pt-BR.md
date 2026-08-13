@@ -49,7 +49,7 @@ confiar na própria atenção.
 ```ruby
 Conexa.configure { |config| config.read_only = true }
 
-Conexa::Charge.all(status: 'pending')   # ok
+Conexa::Charge.all(status: 'unpaid')   # ok
 Conexa::Charge.settle(789)              # levanta Conexa::ReadOnlyError
 ```
 
@@ -200,7 +200,7 @@ Conexa::Company.all(
 )
 
 # Filtrar faturas por status
-Conexa::Bill.all(status: "pending", page: 1, size: 20)
+Conexa::Bill.all(status: "unpaid", limit: 20)
 
 # Filtrar vendas
 Conexa::Sale.all(page: 2, size: 6)
@@ -528,7 +528,7 @@ Conexa::Bill.destroy(bill_id)
 ##### Listando Faturas
 
 ```ruby
-faturas = Conexa::Bill.find({ status: 'pending' }, 1, 20)
+faturas = Conexa::Bill.find_by({ status: 'unpaid', limit: 20 })
 ```
 
 #### Cobranças (Charges)

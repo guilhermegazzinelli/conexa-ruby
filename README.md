@@ -44,7 +44,7 @@ writing off and let the gem refuse instead of trusting yourself to be careful.
 ```ruby
 Conexa.configure { |config| config.read_only = true }
 
-Conexa::Charge.all(status: 'pending')   # fine
+Conexa::Charge.all(status: 'unpaid')   # fine
 Conexa::Charge.settle(789)              # raises Conexa::ReadOnlyError
 ```
 
@@ -272,7 +272,7 @@ charge.due_date   # => "2024-02-10"
 # List charges
 charges = Conexa::Charge.all(
   customer_id: [127],
-  status: 'pending',
+  status: 'unpaid',
   due_date_from: '2024-01-01',
   due_date_to: '2024-12-31'
 )

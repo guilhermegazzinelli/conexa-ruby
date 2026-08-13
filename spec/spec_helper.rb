@@ -46,6 +46,9 @@ RSpec.configure do |config|
     FactoryBot.find_definitions
   end
 
+  # Deprecations warn once per process; specs that assert on them need a clean slate.
+  config.before(:each) { Conexa::Deprecation.reset! }
+
   config.before(:each) do
     Conexa.configure do |c|
       c.api_token = "test_token"

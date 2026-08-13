@@ -9,7 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.1] - 2026-08-13
 
-### Fixed
+Found validating 0.2.1 against a live tenant before publishing, and by reviewing
+the same release. Folded in rather than shipped separately — 0.2.1 was never
+published.
+
+### Fixed — found validating and reviewing
+- **`Charge::STATUSES` was the filter list, not the field list.** It shipped with
+  nine values, built from the 400 the API returns for an unrecognised filter. The
+  field itself can also hold `excluded`, which `?status=` does not accept — two
+  different lists, now `STATUSES` (10) and `FILTERABLE_STATUSES` (9).
+- **`REFERENCE.md` still documented the pre-0.2.1 behaviour** — `contract.status`,
+  `charge.pending?`, and `status` listed as `active, ended, cancelled` /
+  `pending, paid, overdue`. A reader following it wrote code against fields and
+  values that do not exist. Every doc example filtering charges by
+  `status: "pending"` was also rejected by the API; corrected to `unpaid`.
+- **Deprecations warn once per process.** `charges.select(&:pending?)` over one
+  page emitted a hundred identical lines, which is how a warning stops being read.
+- `HANDOFF-0.2.1` §2 offered `Charge.settle(1)` to verify read-only mode. That
+  calls `find` first — a GET the guard allows — so it answered `NotFound` and
+  never reached the guard; and making it work would require pointing a real
+  settlement at a real charge to test the brake. Replaced with a transport call.
+  (#26)
+
+### Changed
+- `Contract#active?` documents that `ended?` is the safe negation: `!active?`
+  reads an unknown contract as closed, because Ruby cannot tell `nil` from
+  `false` through `!`.
+
+### Fixed — the original issue #23
 - **`Contract#active?` and `#ended?` read `is_active`.** They compared a `status`
   field contracts have never had, so `active?` answered `false` for an active
   contract — the answer that biases a caller toward creating a second one. Both

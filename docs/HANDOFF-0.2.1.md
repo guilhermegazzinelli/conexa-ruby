@@ -63,9 +63,26 @@ A única exceção é `POST /auth`, sem a qual não daria para obter token.
 Confira que está valendo antes de continuar:
 
 ```ruby
-Conexa.read_only?                  # => true
-Conexa::Charge.settle(1)           # => Conexa::ReadOnlyError
+Conexa.read_only?
+# => true
+
+Conexa::Request.patch("/charge/settle/1", params: {}).run
+# => Conexa::ReadOnlyError
 ```
+
+A segunda linha é de propósito uma chamada de transporte, e não
+`Conexa::Charge.settle(1)`. Duas razões:
+
+O guard atua **antes da rede**, então essa chamada falha por `ReadOnlyError` em
+qualquer tenant, exista a cobrança 1 ou não. Já `Charge.settle(id)` faz
+`find(id)` primeiro — um `GET`, que o modo leitura permite —, e num tenant onde
+essa cobrança não existe você recebe `Conexa::NotFound` sem nunca alcançar o
+guard. Ficaria sem saber se o freio está ligado.
+
+E, mais importante: para `Charge.settle(1)` chegar ao guard, a cobrança 1
+precisaria **existir**. Seria apontar uma operação de quitação para uma cobrança
+real como forma de testar o freio — se o freio estivesse quebrado, o teste
+executaria exatamente o dano que ele existe para evitar.
 
 Para um trecho específico sem reconfigurar tudo: `Conexa.read_only { ... }`.
 Atenção: o bloco é fiber-local e **não alcança** uma `Thread` criada dentro dele.

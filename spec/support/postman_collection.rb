@@ -87,7 +87,16 @@ module PostmanCollection
       end
       return [] unless decoded.is_a?(Hash)
 
-      rows = decoded["data"].is_a?(Array) ? decoded["data"] : [decoded["data"] || decoded]
+      # `decoded["data"] || decoded` would fall through to the envelope when
+      # `data` is present but null, reporting "data"/"pagination" as if they
+      # were resource fields. Dormant today — no example is shaped that way —
+      # but a refresh could add one.
+      rows = if decoded.key?("data")
+               Array(decoded["data"])
+             else
+               [decoded]
+             end
+
       rows.flat_map { |row| row.is_a?(Hash) ? row.keys : [] }.uniq
     end
 
