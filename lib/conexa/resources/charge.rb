@@ -29,22 +29,51 @@ module Conexa
   class Charge < Model
     primary_key_attribute :charge_id
 
-    # Check if charge is paid
+    # The values `status` actually takes. The API names them in the 400 it
+    # returns for an unrecognised filter, so this list is the API's own, not a
+    # guess: `unpaid`, `negotiated`, `generatedByNegotiation`, `cancelled`,
+    # `paid`, `denied`, `thirdPartyCompany`, `protested`, `juridical`.
+    #
+    # `pending` and `overdue` are **not** among them — both were rejected
+    # outright — which is why the predicates built on them never matched.
+    STATUSES = %w[unpaid negotiated generatedByNegotiation cancelled paid
+                  denied thirdPartyCompany protested juridical].freeze
+
     # @return [Boolean]
     def paid?
       status == 'paid'
     end
 
-    # Check if charge is pending
+    # Is this charge still open?
     # @return [Boolean]
-    def pending?
-      status == 'pending'
+    def unpaid?
+      status == 'unpaid'
     end
 
-    # Check if charge is overdue
+    # @return [Boolean]
+    def cancelled?
+      status == 'cancelled'
+    end
+
+    # @deprecated The API has no `pending` status; the open state is `unpaid`.
+    #   This alias only exists so callers written against the old, never-matching
+    #   predicate keep working while they migrate.
+    # @return [Boolean]
+    def pending?
+      warn "DEPRECATION WARNING: `Charge#pending?` foi renomeado para `unpaid?` " \
+           "em conexa 0.2.1 — a API v2 não tem status `pending`, o estado em " \
+           "aberto chama-se `unpaid`. O alias será removido em 0.3.0."
+      unpaid?
+    end
+
+    # @deprecated The API has no `overdue` status. An overdue charge is `unpaid`
+    #   with a `due_date` in the past; compare the date yourself.
     # @return [Boolean]
     def overdue?
-      status == 'overdue'
+      warn "DEPRECATION WARNING: `Charge#overdue?` sempre devolveu false — a API " \
+           "v2 não tem status `overdue`. Use `unpaid?` e compare `due_date`. " \
+           "O método será removido em 0.3.0."
+      false
     end
 
     # Settle (pay) this charge

@@ -60,38 +60,76 @@ module Conexa
   # @example End a contract
   #   Conexa::Contract.set_end_date(456, date: '2026-12-31')
   #
+  # == Attributes
+  #
+  # Checked against a live response, not only the collection — which omits
+  # +isActive+, +extraFields+ and +firstDueDate+ from its `GET /contract/:id`
+  # examples even though the API returns them.
+  #
+  # **There is no +status+ field on a contract.** +is_active+ is how you tell an
+  # open contract from a closed one.
+  #
   # @!attribute [r] contract_id
   #   @return [Integer] Contract ID (also accessible as #id)
   # @!attribute [r] customer_id
   #   @return [Integer] Customer ID
   # @!attribute [r] plan_id
   #   @return [Integer, nil] Plan ID
-  # @!attribute [r] status
-  #   @return [String] Status: active, ended, cancelled
+  # @!attribute [r] is_active
+  #   @return [Boolean] whether the contract is open
   # @!attribute [r] start_date
   #   @return [String] Start date
   # @!attribute [r] end_date
-  #   @return [String, nil] End date
-  # @!attribute [r] payment_day
-  #   @return [Integer] Payment day (1-28)
-  # @!attribute [r] value
-  #   @return [Float] Contract value
-  # @!attribute [r] billing_day
-  #   @return [Integer] Billing day
+  #   @return [String, nil] closing date. May be in the future on an **active**
+  #     contract — a scheduled close is not a closed contract.
+  # @!attribute [r] end_reason_id
+  #   @return [Integer, nil] closing-reason id
+  # @!attribute [r] due_day
+  #   @return [Integer] day of the month the contract falls due
+  # @!attribute [r] first_due_date
+  #   @return [String, nil] due date of the first instalment
+  # @!attribute [r] amount
+  #   @return [Float] contract value
+  # @!attribute [r] payment_frequency
+  #   @return [String] monthly, bimonthly, quarterly, semester or yearly
+  # @!attribute [r] date_sales_generation
+  #   @return [String, nil] when sales are generated from the contract
+  # @!attribute [r] cost_center_id
+  #   @return [Integer, nil] cost centre — present on read, rejected on create
+  # @!attribute [r] seller_id
+  #   @return [Integer, nil] seller (user) id
+  # @!attribute [r] contract_summary
+  #   @return [String, nil] short description
+  # @!attribute [r] fidelity_date
+  #   @return [String, nil] loyalty date
+  # @!attribute [r] had_prorata
+  #   @return [Boolean] whether pro rata was applied
   #
   class Contract < Model
     primary_key_attribute :contract_id
 
-    # Check if contract is active
-    # @return [Boolean]
+    # Is this contract open?
+    #
+    # Reads +is_active+, which is what the API sends. It used to compare a
+    # +status+ field that contracts have never had, so it answered +false+ for an
+    # active contract — the answer that makes a caller create a second one.
+    #
+    # Deliberately not derived from +end_date+: an active contract can carry a
+    # future closing date, so a present +end_date+ does not mean closed.
+    #
+    # @return [Boolean, nil] nil when the response did not carry +is_active+,
+    #   rather than a guess
     def active?
-      status == 'active'
+      value = is_active
+      value.nil? ? nil : !!value
     end
 
-    # Check if contract is cancelled/ended
-    # @return [Boolean]
+    # Is this contract closed?
+    # @see #active?
+    # @return [Boolean, nil] nil when the response did not carry +is_active+
     def ended?
-      status == 'ended' || status == 'cancelled'
+      value = active?
+      value.nil? ? nil : !value
     end
 
     # Set this contract's end date — closing it, or amending an existing closure.

@@ -1,10 +1,10 @@
 # Defects
 
-Nine divergences between the gem and the documented API, found by verifying
+Ten divergences between the gem and the documented API, found by verifying
 [issue #20](https://github.com/guilhermegazzinelli/conexa-ruby/issues/20) against
 `docs/postman-collection.json` and by sweeping the gem against it.
 
-**All nine are fixed in 0.2.0.** The concepts are kept rather than deleted: each
+**Nine were fixed in 0.2.0, the tenth in 0.2.1.** The concepts are kept rather than deleted: each
 explains why a piece of code or a spec looks the way it does, and what to watch
 for if the area is touched again. `spec/contract/api_contract_spec.rb` now fails
 CI on a recurrence of the URL and verb families.
@@ -13,6 +13,7 @@ CI on a recurrence of the URL and verb families.
 
 * [Empty response body raises NoMethodError after a successful write](empty-body-nomethoderror.md) - a completed settlement reported as a crash, inviting a double-charge.
 * [Wrong HTTP verb on action endpoints](wrong-verb-on-action-endpoints.md) - three methods POSTed where the API documents PATCH, and `end_contract` sent the wrong field name.
+* [Status predicates read fields the API never sends](status-predicates-read-fields-that-do-not-exist.md) - `Contract#active?` answered false for an active contract, biasing callers toward creating a duplicate.
 * [Nested arrays were not camelized](nested-array-not-camelized.md) - snake_case keys inside arrays of objects were rejected across ten endpoints.
 * [page is accepted by the API and silently ignored](page-param-silently-ignored.md) - the legacy pagination path returned the first page forever and looked like real data.
 

@@ -4,10 +4,20 @@ title: Contract create and end
 description: POST /contract and PATCH /contract/end/:id — the conditional dueDay rule, the atomic create-and-settle option, and the fact that "end" also amends and reopens.
 resource: https://{tenant}.conexa.app/index.php/api/v2/contract
 tags: [contract, api-contract]
-timestamp: 2026-08-12T18:30:00Z
+timestamp: 2026-08-13T18:00:00Z
 ---
 
 # Overview
+
+**There is no `status` field on a contract.** `isActive` (boolean) is how you
+tell an open contract from a closed one, and `endDate` does not substitute for it:
+an **active** contract can carry a future closing date. The gem read a `status`
+that has never existed until 0.2.1 — see
+[the status predicates defect](../defects/status-predicates-read-fields-that-do-not-exist.md).
+
+The collection omits `isActive` from every `GET /contract/:id` example even though
+the API returns it, along with `firstDueDate` and `extraFields`. Reported to
+Conexa 2026-08-13.
 
 Contracts are the recurring-billing primitive: a customer plus a plan plus a
 frequency, which generates sales on a schedule. Two operations carry almost all
