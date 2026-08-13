@@ -1,0 +1,76 @@
+name: Push gem
+
+# Publishing is `git push --tags`. No API key is stored anywhere: the job
+# exchanges GitHub's OIDC token for a short-lived, push-scoped RubyGems
+# credential (Trusted Publishing). Configure the publisher once at
+# https://rubygems.org/gems/conexa/trusted_publishers — repository, this
+# workflow filename, and the `release` environment.
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  # The same gate a pull request gets — specs on every supported ruby, RuboCop,
+  # bundler-audit. 0.1.1 was built and pushed from an uncommitted working tree;
+  # a release that skips the suite is how that happens again.
+  verify:
+    uses: ./.github/workflows/ruby.yml
+
+  push:
+    needs: verify
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # create the GitHub Release
+      id-token: write   # mint the OIDC token
+
+    # Add required reviewers to this environment in repo settings to make
+    # publishing a deliberate act rather than a side effect of pushing a tag.
+    environment: release
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: ruby
+
+      # The v0.1.1 tag points at code carrying VERSION = "0.1.0", because the
+      # release was cut by hand from a tree that was never committed. This makes
+      # that mismatch fail the release instead of shipping it.
+      - name: Tag must match Conexa::VERSION
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(ruby -r./lib/conexa/version -e 'print Conexa::VERSION')"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match Conexa::VERSION ${version}"
+            exit 1
+          fi
+          echo "tag ${GITHUB_REF_NAME} matches Conexa::VERSION ${version}"
+
+      # Guards against shipping the repository again: 0.1.1 packaged
+      # docs/postman-collection.json (1.7 MB) against 58 KB of library code.
+      # Written in Ruby rather than shell because `grep -qv` differs between
+      # implementations, and a publish gate must not depend on which grep is on
+      # PATH.
+      - name: Packaged gem contains only lib and docs
+        run: |
+          ruby - <<'CHECK'
+            require "rubygems/package"
+
+            spec = Gem::Specification.load("conexa.gemspec")
+            allowed = /\A(lib\/|(README(_pt-BR)?|REFERENCE|CHANGELOG|CODE_OF_CONDUCT)\.md\z|LICENSE\z)/
+            unexpected = spec.files.reject { |f| f.match?(allowed) }
+
+            puts "#{spec.files.size} files, #{spec.files.sum { |f| File.size(f) } / 1024} KB"
+
+            unless unexpected.empty?
+              warn "::error::unexpected entries in the packaged gem: #{unexpected.join(', ')}"
+              exit 1
+            end
+          CHECK
+
+      - uses: rubygems/release-gem@v1

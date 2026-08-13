@@ -183,6 +183,12 @@ published documentation, and is now enforced by
   code is genuinely linted and CI can gate on it.
 - `rake spec:all` runs the suite across every supported Ruby via mise; `rake ci`
   adds RuboCop. CI uses `bundler-cache: true`.
+- **Releases publish from CI via Trusted Publishing.** Pushing a `v*` tag runs
+  the full gate and then exchanges GitHub's OIDC token for a short-lived,
+  push-scoped RubyGems credential — no API key is stored anywhere. Two gates run
+  first, both aimed at how 0.1.1 went out: the tag must match `Conexa::VERSION`
+  (the `v0.1.1` tag points at code carrying `0.1.0`), and the packaged gem must
+  contain only `lib/` and the documentation.
 
 ### Removed
 - **Breaking**: `Conexa::Client`, `Conexa::Authenticator` and
