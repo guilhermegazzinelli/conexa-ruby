@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-13
+
+### Fixed
+- **`Contract#active?` and `#ended?` read `is_active`.** They compared a `status`
+  field contracts have never had, so `active?` answered `false` for an active
+  contract — the answer that biases a caller toward creating a second one. Both
+  return `nil` rather than a guess when the response did not carry `is_active`.
+  Deliberately not derived from `end_date`: an active contract can carry a future
+  closing date, so a present `end_date` does not mean closed. (#23)
+- **`Charge#pending?` and `#overdue?` never matched anything.** API v2 has no
+  `pending` or `overdue` status — it rejects both and names the real set in the
+  400. The open state is **`unpaid`**. `#unpaid?` and `#cancelled?` are the
+  replacements; `pending?` stays as a deprecated alias, and `overdue?` warns and
+  returns false, since an overdue charge is `unpaid` with a `due_date` in the
+  past. `Charge::STATUSES` records the enum the API named.
+- **`Contract`'s attribute documentation** described `status`, `payment_day`,
+  `value` and `billing_day`. None of the four exists. Replaced with the real
+  fields, verified against a live response rather than the collection alone.
+
+`Sale`'s predicates were checked and left alone — `billed`, `paid` and
+`notBilled` are all real values.
+
+### Added
+- `PostmanCollection.response_fields`, and specs asserting that the attributes
+  the predicates depend on appear in a documented response. The contract layer
+  compared verbs and paths only, which is exactly how a predicate could read a
+  field that has never existed. It is deliberately a union across examples and
+  never an exact set: the collection under-documents responses, so an exact-match
+  check would report real fields as missing.
+
 ## [0.2.0] - 2026-08-11
 
 Aligns the gem with the published API v2 contract. **0.1.1 is broken**:
@@ -338,7 +368,8 @@ published documentation, and is now enforced by
 - Charge with settle and PIX methods
 - Pagination support
 
-[Unreleased]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/guilhermegazzinelli/conexa-ruby/compare/v0.0.9...v0.1.0

@@ -1,6 +1,12 @@
 # Update Log
 
 ## 2026-08-13
+* **Creation**: [Status predicates read fields the API never sends](defects/status-predicates-read-fields-that-do-not-exist.md) — issue #23, corrigido na 0.2.1. `Contract#active?` comparava um `status` que contrato nunca teve, e `Charge#pending?`/`#overdue?` comparavam valores que a API rejeita. Os três respondiam `false` sempre, e o primeiro empurrava o chamador a criar contrato duplicado.
+* **Update**: a camada de contrato passou a checar **atributos**, não só verbo e caminho — `PostmanCollection.response_fields`. Era a lacuna que deixou um predicado ler campo inexistente atravessar quatro rodadas de review e uma release.
+* **Update**: [collection atualizada](api/postman-collection.md) — 68 para 83 operações, e as duas rotas de refresh documentadas como não equivalentes (o export nativo traz Markdown e `url` como Hash; o documenter renderiza HTML).
+* **Note**: a lacuna de documentação do `isActive` foi reportada ao time do Conexa.
+
+## 2026-08-13
 * **Update**: **v0.2.0 publicada no RubyGems.** PR #21 mergeado (14 commits, 97 arquivos), issues #20, #11 e #12 fechadas. Publicada via [Trusted Publishing](operations/release-process.md) — nenhuma chave de API existe nesta máquina nem nos secrets do repositório.
 * **Update**: [Cutting a release](operations/release-process.md) deixou de ser teórico. O caminho completo rodou: `workflow_call` reusando o gate do PR, os dois gates novos (tag == `Conexa::VERSION`, conteúdo do pacote), aprovação obrigatória no environment `release`, e a troca OIDC → publicação.
 * **Update**: a tag `v0.1.1` foi reapontada de `fa815df` (que carregava `VERSION = "0.1.0"`) para `a7fdc6d`, cujo `lib/` é byte-idêntico ao gem publicado — verificado baixando o `.gem` do RubyGems e comparando. As oito tags do repositório agora batem com a versão do código que apontam.
