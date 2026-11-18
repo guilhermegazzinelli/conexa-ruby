@@ -182,6 +182,7 @@ Conexa::Customer.all(name: "João", page: 1, size: 10)
 
 # Filtrar por múltiplos IDs (sintaxe de array)
 Conexa::Customer.all("id[]": [102, 103])
+Conexa::Customer.all(id: [102, 103])   # `ids:` é um alias obsoleto (removido na 0.3.0)
 
 # Filtrar por empresa
 Conexa::Customer.all("company_id[]": [3])
@@ -215,7 +216,7 @@ Conexa::Sale.all(page: 2, size: 6)
 | Contract | `company_id[]`, `active` |
 | Bill | `status`, `company_id[]` |
 | Plan | `id[]` |
-| Sale | `date` |
+| Sale | `date_from`, `date_to` |
 | InvoicingMethod | `id[]`, `company_id[]`, `isActive`, `type` |
 
 ### Operações Específicas de Recursos (Sub-processos)

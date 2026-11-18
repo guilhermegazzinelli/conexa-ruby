@@ -269,7 +269,9 @@ charge.status     # => "paid"
 charge.amount     # => 299.90
 charge.due_date   # => "2024-02-10"
 
-# List charges
+# List charges. The API v2 rejects the old filter names (`start_due_date`,
+# `end_due_date`, `start_payment_date`, `end_payment_date`) with 400; the gem
+# still translates them in listings, with a deprecation warning, until 0.3.0.
 charges = Conexa::Charge.all(
   customer_id: [127],
   status: 'unpaid',

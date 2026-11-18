@@ -140,7 +140,12 @@ module Conexa
       def find_by(params = Hash.new, page = nil, size = nil)
         # extract_page_size_or_params always returns limit/offset now, and
         # validates them, so there is no page/size left here to guard.
-        params = extract_page_size_or_params(page, size, **params)
+        params = extract_page_size_or_params(page, size, **(params || {}))
+
+        # After the merge: a positional hash (`all({start_due_date: x})`) only
+        # becomes params inside extract_page_size_or_params, and the keywords
+        # win over it there. Translating earlier let it through untranslated.
+        params = normalize_list_params(params)
 
         result = Conexa::Request.get(url, params: params).call(
           underscored_class_name,
@@ -182,6 +187,14 @@ module Conexa
 
       def underscored_class_name
         self.name.split('::').last.gsub(/[a-z0-9][A-Z]/){|s| "#{s[0]}_#{s[1]}"}.downcase
+      end
+
+      # Hook for listing filters the API renamed. `all`/`where` go through
+      # `find_by`, which calls this once, so each listing is translated exactly
+      # once; `find`/`show` and create/update payloads never reach it.
+      # Resources override it with {Util.normalize_list_params}.
+      def normalize_list_params(params)
+        params
       end
 
       def extract_page_size_or_params(*args, **params)

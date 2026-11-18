@@ -541,8 +541,8 @@ sale.paid?       # => false
 sales = Conexa::Sale.all(
   customer_id: [450],
   status: 'notBilled',
-  reference_date_from: '2024-01-01',
-  reference_date_to: '2024-01-31'
+  date_from: '2024-01-01',
+  date_to: '2024-01-31'
 )
 
 # Update (only if notBilled)
@@ -1257,10 +1257,21 @@ Conexa::Charge.all(
 
 # Multiple IDs
 Conexa::Customer.all(company_id: [1, 2, 3])
+Conexa::Customer.all(id: [102, 103])   # `ids:` is a deprecated alias; non-empty `id`/`ids` are always sent as `id[]`
 
 # Status filters
 Conexa::Contract.all(status: 'active')
 Conexa::Sale.all(status: 'notBilled')
+
+# Date filters are named `*_from` / `*_to`. The API v2 rejects the old names with
+# 400; the gem still translates them in `all`/`where`/`find_by` (with a one-time
+# deprecation warning) until 0.3.0:
+#   Charge:   start_due_date/end_due_date         -> due_date_from/due_date_to
+#             start_payment_date/end_payment_date -> payment_date_from/payment_date_to
+#   Sale:     start_date/end_date                 -> date_from/date_to
+#   Customer: ids                                 -> id
+# Listings only: `start_date` is still the right field when creating a contract
+# or a sale, and Contract listings have no alias.
 
 # Combined
 Conexa::Charge.all(

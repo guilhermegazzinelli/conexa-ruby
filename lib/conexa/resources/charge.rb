@@ -129,6 +129,19 @@ module Conexa
     end
 
     class << self
+      # Listing filters renamed by the API v2 (the old names answer 400).
+      LIST_PARAM_RENAMES = {
+        start_due_date: :due_date_from,
+        end_due_date: :due_date_to,
+        start_payment_date: :payment_date_from,
+        end_payment_date: :payment_date_to
+      }.freeze
+
+      # @api private
+      def normalize_list_params(params)
+        Util.normalize_list_params(params, LIST_PARAM_RENAMES, resource: "Charge")
+      end
+
       # Settle a charge by ID
       # @param id [Integer, String] charge ID
       # @param params [Hash] optional payment details
