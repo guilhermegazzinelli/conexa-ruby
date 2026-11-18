@@ -90,6 +90,14 @@ module Conexa
     end
 
     class << self
+      # Listing filter renamed by the API v2 (`ids[]` answers 400, `id[]` works).
+      LIST_PARAM_RENAMES = { ids: :id }.freeze
+
+      # @api private
+      def normalize_list_params(params)
+        Util.normalize_list_params(params, LIST_PARAM_RENAMES, resource: "Customer")
+      end
+
       # List persons (requesters) for a customer without fetching the customer first
       # @param customer_id [Integer] Customer ID
       # @return [Result] List of persons

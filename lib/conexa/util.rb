@@ -76,6 +76,50 @@ module Conexa
         params
       end
 
+      # Renames listing filters the API v2 stopped accepting (it answers 400
+      # "field does not exist or is not available in the company"), so callers
+      # still using the old names keep working until 0.3.0.
+      #
+      # Only for listing params. `start_date` & co. are legitimate fields in
+      # create/update payloads, which must never go through here.
+      #
+      # Same rules as {normalize_end_date_param}: both key spellings are handled
+      # and both removed before camelize_hash (no colliding keys); an explicit
+      # new name wins; a key present with a nil value is not a value.
+      #
+      # @param params [Hash] caller params
+      # @param renames [Hash{Symbol=>Symbol}] legacy name => current name
+      # @param resource [String] resource label, used in the warning
+      # @return [Hash] a copy with the legacy names folded into the current ones
+      def normalize_list_params(params, renames, resource:)
+        params = params.dup
+
+        renames.each do |legacy_name, current_name|
+          legacy   = take_param(params, legacy_name)
+          explicit = take_param(params, current_name)
+
+          warn_list_param_renamed(resource, legacy_name, current_name) unless legacy.nil?
+
+          value = explicit.nil? ? legacy : explicit
+          params[current_name] = value unless value.nil?
+        end
+
+        params
+      end
+
+      # Removes both spellings (symbol and string) of a key, returns the first
+      # non-nil value found.
+      def take_param(params, name)
+        [params.delete(name), params.delete(name.to_s)].compact.first
+      end
+
+      def warn_list_param_renamed(resource, legacy_name, current_name)
+        Deprecation.warn_once([:list_param, resource, legacy_name],
+                              "`#{legacy_name}:` em #{resource}.all/where/find_by foi renomeado para " \
+                              "`#{current_name}:` (a API v2 rejeita o nome antigo com 400). " \
+                              "O alias será removido em 0.3.0.")
+      end
+
       def to_snake_case str
         str.gsub(/([A-Z])/, '_\1').downcase.sub(/^_/, '')
       end

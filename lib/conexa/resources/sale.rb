@@ -66,6 +66,14 @@ module Conexa
     end
 
     class << self
+      # Listing filters renamed by the API v2 (the old names answer 400).
+      LIST_PARAM_RENAMES = { start_date: :date_from, end_date: :date_to }.freeze
+
+      # @api private
+      def normalize_list_params(params)
+        Util.normalize_list_params(params, LIST_PARAM_RENAMES, resource: "Sale")
+      end
+
       def url(*params)
         ["/sales", *params].join '/'
       end

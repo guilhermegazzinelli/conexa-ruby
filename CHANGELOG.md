@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Listings with the old filter names no longer 400.** Around 2026-08-26 the
+  API v2 started rejecting the previous names ("field does not exist or is not
+  available in the company"). `all`/`where`/`find_by` now translate them, with a
+  one-time deprecation warning; the aliases go away in 0.3.0 (#29):
+  - `Charge`: `start_due_date`/`end_due_date` -> `due_date_from`/`due_date_to`;
+    `start_payment_date`/`end_payment_date` -> `payment_date_from`/`payment_date_to`
+  - `Sale`: `start_date`/`end_date` -> `date_from`/`date_to`
+  - `Customer`: `ids` -> `id`
+
+  Symbol and string keys are both handled, the new name wins when both are given
+  and a `nil` value does not count. Create/update payloads and `find` are not
+  touched (`start_date` is a legitimate write field), and `Contract` has no alias:
+  `/contracts` rejects both `startDate` and `dateFrom`.
+
 ## [0.2.1] - 2026-08-13
 
 Found validating 0.2.1 against a live tenant before publishing, and by reviewing

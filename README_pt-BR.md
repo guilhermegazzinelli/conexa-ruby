@@ -182,6 +182,7 @@ Conexa::Customer.all(name: "João", page: 1, size: 10)
 
 # Filtrar por múltiplos IDs (sintaxe de array)
 Conexa::Customer.all("id[]": [102, 103])
+Conexa::Customer.all(id: [102, 103])   # `ids:` é um alias obsoleto (removido na 0.3.0)
 
 # Filtrar por empresa
 Conexa::Customer.all("company_id[]": [3])
