@@ -20,7 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Symbol and string keys are both handled, in snake_case, camelCase or with a
   trailing `[]`; the new name wins when both are given and a `nil` value does not
   count. Positional hashes (`Charge.all({ start_due_date: x })`) are covered too,
-  and `Customer`'s `ids` is always sent as `id[]`. Create/update payloads and `find` are not
+  and `Customer`'s `id`/`ids`, when not empty, are always sent as `id[]` (a scalar
+  `id:` too); an empty array sends no filter. Create/update payloads and `find` are not
   touched (`start_date` is a legitimate write field), and `Contract` has no alias:
   `/contracts` rejects both `startDate` and `dateFrom`.
 

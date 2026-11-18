@@ -217,13 +217,13 @@ RSpec.describe "Listing filter aliases (issue #29)" do
     end
 
     it "does not mutate the caller's hash, even a frozen one" do
-      params = { start_due_date: "2026-01-01" }.freeze
+      params = { start_due_date: "2026-01-01", "ids" => [1] }.freeze
+      renames = { start_due_date: :due_date_from, ids: :id }
 
-      quietly { sent_query("/charges") { Conexa::Charge.all(**params) } }
-      WebMock.reset!
-      quietly { sent_query("/charges") { Conexa::Charge.find_by(params) } }
+      result = Conexa::Util.normalize_list_params(params, renames, resource: "Charge", arrays: [:id])
 
-      expect(params).to eq({ start_due_date: "2026-01-01" })
+      expect(result).to eq({ due_date_from: "2026-01-01", id: [1] })
+      expect(params).to eq({ start_due_date: "2026-01-01", "ids" => [1] })
     end
 
     it "sends no filter for a lone nil legacy key" do
@@ -264,6 +264,27 @@ RSpec.describe "Listing filter aliases (issue #29)" do
       WebMock.reset!
       query = quietly { sent_query("/customers") { Conexa::Customer.all("id[]": [1], ids: [2]) } }
       expect(query.select { |k, _| k == "id[]" }).to eq([["id[]", "1"]])
+    end
+
+    it "joins the spellings of the same array filter, as before" do
+      query = quietly { sent_query("/customers") { Conexa::Customer.all(id: [1], "id[]": [2]) } }
+
+      expect(query.select { |k, _| k == "id[]" }).to eq([["id[]", "1"], ["id[]", "2"]])
+    end
+
+    it "joins two legacy spellings" do
+      query = quietly { sent_query("/customers") { Conexa::Customer.all(ids: [1], "ids[]": [2]) } }
+
+      expect(query.select { |k, _| k == "id[]" }).to eq([["id[]", "1"], ["id[]", "2"]])
+    end
+
+    it "treats an empty array as no value" do
+      query = quietly { sent_query("/customers") { Conexa::Customer.all(ids: []) } }
+      expect(query.map(&:first)).to contain_exactly("limit", "offset")
+
+      WebMock.reset!
+      query = quietly { sent_query("/customers") { Conexa::Customer.all(id: [], ids: [2]) } }
+      expect(query.select { |k, _| k == "id[]" }).to eq([["id[]", "2"]])
     end
 
     it "always sends the ids alias as an array" do

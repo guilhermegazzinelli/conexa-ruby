@@ -1257,7 +1257,7 @@ Conexa::Charge.all(
 
 # Multiple IDs
 Conexa::Customer.all(company_id: [1, 2, 3])
-Conexa::Customer.all(id: [102, 103])   # `ids:` is a deprecated alias (always sent as `id[]`)
+Conexa::Customer.all(id: [102, 103])   # `ids:` is a deprecated alias; non-empty `id`/`ids` are always sent as `id[]`
 
 # Status filters
 Conexa::Contract.all(status: 'active')

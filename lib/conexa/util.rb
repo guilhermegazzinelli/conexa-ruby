@@ -99,31 +99,34 @@ module Conexa
         params = params.dup
 
         renames.each do |legacy_name, current_name|
-          legacy   = take_param(params, legacy_name)
-          explicit = take_param(params, current_name)
+          multi    = arrays.include?(current_name)
+          legacy   = take_param(params, legacy_name, multi: multi)
+          explicit = take_param(params, current_name, multi: multi)
 
           warn_list_param_renamed(resource, legacy_name, current_name) unless legacy.nil?
 
           value = explicit.nil? ? legacy : explicit
-          next if value.nil?
-
-          params[current_name] = arrays.include?(current_name) ? Array(value) : value
+          params[current_name] = multi ? Array(value) : value unless value.nil?
         end
 
         params
       end
 
-      # Removes every spelling of a key, returns the first non-nil value found.
-      def take_param(params, name)
-        keys = [name.to_s, camelize_str(name)].uniq.flat_map { |key| [key, "#{key}[]"] }
-        keys.flat_map { |key| [params.delete(key.to_sym), params.delete(key)] }.compact.first
+      # Removes every spelling of a key and returns its value, or nil if none.
+      #
+      # Scalars: the first non-nil value wins. With +multi+ (array filters) the
+      # values of all spellings are joined, as `id: [1], "id[]": [2]` always was,
+      # and an empty array counts as no value.
+      def take_param(params, name, multi: false)
+        keys   = [name.to_s, camelize_str(name)].uniq.flat_map { |key| [key, "#{key}[]"] }
+        values = keys.flat_map { |key| [params.delete(key.to_sym), params.delete(key)] }.compact
+        multi ? values.flat_map { |value| Array(value) }.uniq.then { |all| all unless all.empty? } : values.first
       end
 
       def warn_list_param_renamed(resource, legacy_name, current_name)
         Deprecation.warn_once([:list_param, resource, legacy_name],
-                              "`#{legacy_name}:` em #{resource}.all/where/find_by foi renomeado para " \
-                              "`#{current_name}:` (a API v2 rejeita o nome antigo com 400). " \
-                              "O alias será removido em 0.3.0.")
+                              "`#{legacy_name}:` em #{resource}.all/where/find_by agora é `#{current_name}:` " \
+                              "(a API v2 rejeita o nome antigo com 400). O alias será removido em 0.3.0.")
       end
 
       def to_snake_case str
