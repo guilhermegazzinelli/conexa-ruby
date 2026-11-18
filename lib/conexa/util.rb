@@ -162,7 +162,7 @@ module Conexa
       end
 
       def camelize_str(str)
-        str.to_s.gsub(/_([a-z0-9])/) {  Regexp.last_match[1].upcase }
+        str.to_s.gsub(/_([a-z0-9])/) { Regexp.last_match[1].upcase }
       end
 
       def camel_case_lower str
