@@ -95,7 +95,7 @@ module Conexa
 
       # @api private
       def normalize_list_params(params)
-        Util.normalize_list_params(params, LIST_PARAM_RENAMES, resource: "Customer")
+        Util.normalize_list_params(params, LIST_PARAM_RENAMES, resource: "Customer", arrays: [:id])
       end
 
       # List persons (requesters) for a customer without fetching the customer first

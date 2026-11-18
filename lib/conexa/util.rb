@@ -83,15 +83,19 @@ module Conexa
       # Only for listing params. `start_date` & co. are legitimate fields in
       # create/update payloads, which must never go through here.
       #
-      # Same rules as {normalize_end_date_param}: both key spellings are handled
-      # and both removed before camelize_hash (no colliding keys); an explicit
-      # new name wins; a key present with a nil value is not a value.
+      # Same rules as {normalize_end_date_param}: every spelling of a key is
+      # collected and removed before camelize_hash (no colliding keys); an
+      # explicit new name wins; a key present with a nil value is not a value.
+      # A spelling is snake_case or camelCase, with or without a trailing `[]`,
+      # as a Symbol or a String.
       #
-      # @param params [Hash] caller params
+      # @param params [Hash] caller params (not mutated)
       # @param renames [Hash{Symbol=>Symbol}] legacy name => current name
       # @param resource [String] resource label, used in the warning
+      # @param arrays [Array<Symbol>] current names whose value is always sent
+      #   as an array (`name[]=...`), however the caller wrote it
       # @return [Hash] a copy with the legacy names folded into the current ones
-      def normalize_list_params(params, renames, resource:)
+      def normalize_list_params(params, renames, resource:, arrays: [])
         params = params.dup
 
         renames.each do |legacy_name, current_name|
@@ -101,16 +105,18 @@ module Conexa
           warn_list_param_renamed(resource, legacy_name, current_name) unless legacy.nil?
 
           value = explicit.nil? ? legacy : explicit
-          params[current_name] = value unless value.nil?
+          next if value.nil?
+
+          params[current_name] = arrays.include?(current_name) ? Array(value) : value
         end
 
         params
       end
 
-      # Removes both spellings (symbol and string) of a key, returns the first
-      # non-nil value found.
+      # Removes every spelling of a key, returns the first non-nil value found.
       def take_param(params, name)
-        [params.delete(name), params.delete(name.to_s)].compact.first
+        keys = [name.to_s, camelize_str(name)].uniq.flat_map { |key| [key, "#{key}[]"] }
+        keys.flat_map { |key| [params.delete(key.to_sym), params.delete(key)] }.compact.first
       end
 
       def warn_list_param_renamed(resource, legacy_name, current_name)

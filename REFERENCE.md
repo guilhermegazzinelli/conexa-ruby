@@ -541,8 +541,8 @@ sale.paid?       # => false
 sales = Conexa::Sale.all(
   customer_id: [450],
   status: 'notBilled',
-  reference_date_from: '2024-01-01',
-  reference_date_to: '2024-01-31'
+  date_from: '2024-01-01',
+  date_to: '2024-01-31'
 )
 
 # Update (only if notBilled)
@@ -1257,7 +1257,7 @@ Conexa::Charge.all(
 
 # Multiple IDs
 Conexa::Customer.all(company_id: [1, 2, 3])
-Conexa::Customer.all(id: [102, 103])   # `ids:` is a deprecated alias
+Conexa::Customer.all(id: [102, 103])   # `ids:` is a deprecated alias (always sent as `id[]`)
 
 # Status filters
 Conexa::Contract.all(status: 'active')

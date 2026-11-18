@@ -216,7 +216,7 @@ Conexa::Sale.all(page: 2, size: 6)
 | Contract | `company_id[]`, `active` |
 | Bill | `status`, `company_id[]` |
 | Plan | `id[]` |
-| Sale | `date` |
+| Sale | `date_from`, `date_to` |
 | InvoicingMethod | `id[]`, `company_id[]`, `isActive`, `type` |
 
 ### Operações Específicas de Recursos (Sub-processos)

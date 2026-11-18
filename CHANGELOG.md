@@ -17,8 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `Sale`: `start_date`/`end_date` -> `date_from`/`date_to`
   - `Customer`: `ids` -> `id`
 
-  Symbol and string keys are both handled, the new name wins when both are given
-  and a `nil` value does not count. Create/update payloads and `find` are not
+  Symbol and string keys are both handled, in snake_case, camelCase or with a
+  trailing `[]`; the new name wins when both are given and a `nil` value does not
+  count. Positional hashes (`Charge.all({ start_due_date: x })`) are covered too,
+  and `Customer`'s `ids` is always sent as `id[]`. Create/update payloads and `find` are not
   touched (`start_date` is a legitimate write field), and `Contract` has no alias:
   `/contracts` rejects both `startDate` and `dateFrom`.
 

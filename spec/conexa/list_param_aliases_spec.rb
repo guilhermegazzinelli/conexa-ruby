@@ -23,7 +23,6 @@ RSpec.describe "Listing filter aliases (issue #29)" do
     end
   end
 
-  # Runs the block and returns the decoded query pairs of the one request sent.
   def json_response(body)
     { status: 200, body: body, headers: { "Content-Type" => "application/json" } }
   end
@@ -32,6 +31,7 @@ RSpec.describe "Listing filter aliases (issue #29)" do
     /\A#{Regexp.escape("#{api_base}#{path}")}(\?.*)?\z/
   end
 
+  # Runs the block and returns the decoded query pairs of the one request sent.
   def sent_query(path, method: :get, &block)
     stub = stub_request(method, url_for(path))
            .to_return(json_response(empty_body))
@@ -172,6 +172,111 @@ RSpec.describe "Listing filter aliases (issue #29)" do
 
       expect(query).to include(["id[]", "1"])
       expect(query).not_to include(["id[]", "9"])
+    end
+  end
+
+  describe "positional hashes and unusual callers" do
+    it "translates a positional hash in all/where/find_by" do
+      expect(quietly { sent_query("/charges") { Conexa::Charge.all({ start_due_date: "2026-01-01" }) } })
+        .to include(%w[dueDateFrom 2026-01-01])
+      WebMock.reset!
+      expect(quietly { sent_query("/sales") { Conexa::Sale.where({ start_date: "2026-01-01" }) } })
+        .to include(%w[dateFrom 2026-01-01])
+      WebMock.reset!
+      expect(quietly { sent_query("/customers") { Conexa::Customer.all({ "ids" => [1] }) } })
+        .to include(["id[]", "1"])
+      WebMock.reset!
+      expect(quietly { sent_query("/charges") { Conexa::Charge.find_by({}, { start_due_date: "2026-01-01" }) } })
+        .to include(%w[dueDateFrom 2026-01-01])
+    end
+
+    it "lets the new name win across a positional hash and keywords" do
+      query = quietly do
+        sent_query("/charges") do
+          Conexa::Charge.all({ due_date_from: "NEW" }, start_due_date: "OLD")
+        end
+      end
+
+      expect(query.select { |k, _| k == "dueDateFrom" }).to eq([%w[dueDateFrom NEW]])
+      expect(query.flatten).not_to include("OLD")
+    end
+
+    it "accepts nil params like main does" do
+      [Conexa::Charge, Conexa::Sale, Conexa::Customer].each do |klass|
+        WebMock.reset!
+        expect { sent_query(klass.url) { klass.find_by(nil) } }.not_to raise_error
+      end
+    end
+
+    it "accepts an object that responds to to_hash" do
+      holder = Class.new { def to_hash = { start_due_date: "2026-01-01" } }.new
+
+      query = quietly { sent_query("/charges") { Conexa::Charge.find_by(holder) } }
+
+      expect(query).to include(%w[dueDateFrom 2026-01-01])
+    end
+
+    it "does not mutate the caller's hash, even a frozen one" do
+      params = { start_due_date: "2026-01-01" }.freeze
+
+      quietly { sent_query("/charges") { Conexa::Charge.all(**params) } }
+      WebMock.reset!
+      quietly { sent_query("/charges") { Conexa::Charge.find_by(params) } }
+
+      expect(params).to eq({ start_due_date: "2026-01-01" })
+    end
+
+    it "sends no filter for a lone nil legacy key" do
+      query = nil
+      expect { query = sent_query("/charges") { Conexa::Charge.all(start_due_date: nil) } }
+        .not_to output.to_stderr
+
+      expect(query.map(&:first)).to contain_exactly("limit", "offset")
+    end
+  end
+
+  describe "camelCase and [] spellings" do
+    it "lets a camelCase new name win over a legacy one" do
+      query = quietly do
+        sent_query("/charges") { Conexa::Charge.all(dueDateFrom: "NEW", start_due_date: "OLD") }
+      end
+      expect(query.select { |k, _| k == "dueDateFrom" }).to eq([%w[dueDateFrom NEW]])
+
+      WebMock.reset!
+      query = quietly do
+        sent_query("/sales") { Conexa::Sale.all("dateFrom" => "NEW", start_date: "OLD") }
+      end
+      expect(query.select { |k, _| k == "dateFrom" }).to eq([%w[dateFrom NEW]])
+    end
+
+    it "translates a camelCase legacy name, with a warning" do
+      stub_request(:get, url_for("/charges")).to_return(json_response(empty_body))
+
+      expect { Conexa::Charge.all(startDueDate: "2026-01-01") }
+        .to output(/start_due_date.*due_date_from/m).to_stderr
+    end
+
+    it "translates ids[] and does not merge it with id[]" do
+      query = quietly { sent_query("/customers") { Conexa::Customer.all("ids[]": [1, 2]) } }
+      expect(query).to include(["id[]", "1"], ["id[]", "2"])
+      expect(query.map(&:first)).not_to include("ids[]")
+
+      WebMock.reset!
+      query = quietly { sent_query("/customers") { Conexa::Customer.all("id[]": [1], ids: [2]) } }
+      expect(query.select { |k, _| k == "id[]" }).to eq([["id[]", "1"]])
+    end
+
+    it "always sends the ids alias as an array" do
+      query = quietly { sent_query("/customers") { Conexa::Customer.all(ids: 5) } }
+
+      expect(query).to include(["id[]", "5"])
+      expect(query.map(&:first)).not_to include("id")
+    end
+
+    it "does not force date filters into arrays" do
+      query = quietly { sent_query("/charges") { Conexa::Charge.all(start_due_date: "2026-01-01") } }
+
+      expect(query).to include(%w[dueDateFrom 2026-01-01])
     end
   end
 
